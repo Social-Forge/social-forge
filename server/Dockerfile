@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Development
-FROM golang:1.22-alpine AS development
+FROM 1.25-alpine AS development
 
 # Install air for hot reload and other dependencies
 RUN go install github.com/cosmtrek/air@latest && \
@@ -26,7 +26,7 @@ EXPOSE 8080
 CMD ["air", "-c", ".air.toml"]
 
 # Stage 2: Builder
-FROM golang:1.22-alpine AS builder
+FROM 1.25-alpine AS builder
 
 # Install build dependencies with pinned versions
 RUN apk add --no-cache \
