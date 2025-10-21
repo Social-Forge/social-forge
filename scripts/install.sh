@@ -65,12 +65,12 @@ fi
 print_success "Docker found: $(docker --version)"
 
 # Check for Docker Compose
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     print_error "Docker Compose is not installed. Please install Docker Compose first."
     print_info "Visit: https://docs.docker.com/compose/install/"
     exit 1
 fi
-print_success "Docker Compose found: $(docker-compose --version)"
+print_success "Docker Compose found: $(docker compose --version)"
 
 # Check for Git
 if ! command -v git &> /dev/null; then
@@ -206,14 +206,14 @@ fi
 print_header "Docker Setup"
 
 print_info "Building Docker images..."
-docker-compose build
+docker compose build
 
 print_success "Docker images built successfully"
 
 print_header "Database Setup"
 
 print_info "Starting database containers..."
-docker-compose up -d postgres redis
+docker compose up -d postgres redis
 
 # Wait for database to be ready
 print_info "Waiting for database to be ready..."
@@ -236,7 +236,7 @@ print_info "Next steps:"
 echo "  1. Update your .env file with the generated secrets above"
 echo "  2. Configure your database credentials in .env"
 echo "  3. Configure external API keys (WhatsApp, Meta, Telegram, AI, etc.)"
-echo "  4. Start the development environment: docker-compose up -d"
+echo "  4. Start the development environment: docker compose up -d"
 echo "  5. Access the services:"
 echo "     - Frontend: http://localhost:5173"
 echo "     - Backend API: http://localhost:8080"
@@ -252,8 +252,8 @@ echo "  cd frontend && npm run dev"
 echo ""
 print_info "Useful commands:"
 echo "  make help              - Show all available commands"
-echo "  docker-compose logs -f - View all container logs"
-echo "  docker-compose ps      - Check container status"
+echo "  docker compose logs -f - View all container logs"
+echo "  docker compose ps      - Check container status"
 echo ""
 print_warning "Remember to:"
 echo "  - Update .env with production secrets before deploying"

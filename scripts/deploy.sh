@@ -71,7 +71,7 @@ mkdir -p "$BACKUP_DIR"
 # Backup database
 print_info "Creating database backup..."
 BACKUP_FILE="$BACKUP_DIR/db_backup_$(date +%Y%m%d_%H%M%S).sql.gz"
-docker-compose -f "$COMPOSE_FILE" exec -T postgres pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"
+docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"
 print_success "Database backed up to: $BACKUP_FILE"
 
 # Backup uploaded files (MinIO)
@@ -88,22 +88,22 @@ print_success "Code updated"
 
 # Pull latest Docker images
 print_info "Pulling latest Docker images..."
-docker-compose -f "$COMPOSE_FILE" pull
+docker compose -f "$COMPOSE_FILE" pull
 print_success "Images updated"
 
 # Stop services gracefully
 print_info "Stopping services..."
-docker-compose -f "$COMPOSE_FILE" stop frontend backend worker
+docker compose -f "$COMPOSE_FILE" stop frontend backend worker
 print_success "Services stopped"
 
 # Run database migrations
 print_info "Running database migrations..."
-docker-compose -f "$COMPOSE_FILE" run --rm backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+docker compose -f "$COMPOSE_FILE" run --rm backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
 print_success "Migrations completed"
 
 # Start services
 print_info "Starting services..."
-docker-compose -f "$COMPOSE_FILE" up -d
+docker compose -f "$COMPOSE_FILE" up -d
 print_success "Services started"
 
 # Wait for services to be healthy
@@ -118,8 +118,8 @@ if [ "$BACKEND_HEALTH" -eq 200 ]; then
 else
     print_error "Backend health check failed (HTTP $BACKEND_HEALTH)"
     print_warning "Rolling back..."
-    docker-compose -f "$COMPOSE_FILE" down
-    docker-compose -f "$COMPOSE_FILE" up -d
+    docker compose -f "$COMPOSE_FILE" down
+    docker compose -f "$COMPOSE_FILE" up -d
     exit 1
 fi
 
@@ -129,8 +129,8 @@ if [ "$FRONTEND_HEALTH" -eq 200 ]; then
 else
     print_error "Frontend health check failed (HTTP $FRONTEND_HEALTH)"
     print_warning "Rolling back..."
-    docker-compose -f "$COMPOSE_FILE" down
-    docker-compose -f "$COMPOSE_FILE" up -d
+    docker compose -f "$COMPOSE_FILE" down
+    docker compose -f "$COMPOSE_FILE" up -d
     exit 1
 fi
 
@@ -147,11 +147,11 @@ print_success "Old backups removed"
 
 # Display running containers
 print_header "Deployment Status"
-docker-compose -f "$COMPOSE_FILE" ps
+docker compose -f "$COMPOSE_FILE" ps
 
 # Show logs
 print_info "Recent logs:"
-docker-compose -f "$COMPOSE_FILE" logs --tail=20 backend frontend
+docker compose -f "$COMPOSE_FILE" logs --tail=20 backend frontend
 
 print_header "Deployment Complete!"
 print_success "Social Foger has been deployed successfully!"
@@ -167,6 +167,6 @@ echo "  Grafana: http://localhost:3001"
 echo ""
 print_warning "Next steps:"
 echo "  1. Verify the application is working correctly"
-echo "  2. Check logs: docker-compose -f $COMPOSE_FILE logs -f"
+echo "  2. Check logs: docker compose -f $COMPOSE_FILE logs -f"
 echo "  3. Monitor metrics in Grafana"
 echo ""

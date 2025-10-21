@@ -215,9 +215,9 @@ jobs:
       run: |
         ssh $USER@$HOST << 'EOF'
           cd /var/www/socialforge
-          docker-compose -f docker-compose.prod.yml pull backend worker
-          docker-compose -f docker-compose.prod.yml up -d backend worker
-          docker-compose -f docker-compose.prod.yml exec -T backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+          docker compose -f docker-compose.prod.yml pull backend worker
+          docker compose -f docker-compose.prod.yml up -d backend worker
+          docker compose -f docker-compose.prod.yml exec -T backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
           docker image prune -f
         EOF
 
@@ -295,9 +295,9 @@ jobs:
       run: |
         ssh $USER@$HOST << 'EOF'
           cd /var/www/socialforge-staging
-          docker-compose -f docker-compose.prod.yml pull backend worker
-          docker-compose -f docker-compose.prod.yml up -d backend worker
-          docker-compose -f docker-compose.prod.yml exec -T backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+          docker compose -f docker-compose.prod.yml pull backend worker
+          docker compose -f docker-compose.prod.yml up -d backend worker
+          docker compose -f docker-compose.prod.yml exec -T backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
           docker image prune -f
         EOF
 

@@ -61,7 +61,7 @@ print_info "Backing up PostgreSQL database..."
 DB_BACKUP_FILE="$BACKUP_DIR/postgres_${TIMESTAMP}.sql.gz"
 
 cd "$PROJECT_DIR"
-docker-compose -f "$COMPOSE_FILE" exec -T postgres pg_dump \
+docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dump \
     -U "${DB_USER}" \
     -d "${DB_NAME}" \
     --format=custom \
@@ -97,7 +97,7 @@ fi
 print_info "Backing up Redis data..."
 REDIS_BACKUP_FILE="$BACKUP_DIR/redis_${TIMESTAMP}.rdb"
 
-docker-compose -f "$COMPOSE_FILE" exec -T redis redis-cli SAVE
+docker compose -f "$COMPOSE_FILE" exec -T redis redis-cli SAVE
 docker cp socialforge-redis-prod:/data/dump.rdb "$REDIS_BACKUP_FILE"
 
 if [ -f "$REDIS_BACKUP_FILE" ]; then
@@ -142,10 +142,10 @@ Files:
 Database Info:
 - Host: ${DB_HOST}
 - Database: ${DB_NAME}
-- Tables: $(docker-compose -f "$COMPOSE_FILE" exec -T postgres psql -U "${DB_USER}" -d "${DB_NAME}" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" | tr -d ' ')
+- Tables: $(docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "${DB_USER}" -d "${DB_NAME}" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public';" | tr -d ' ')
 
 Docker Images:
-$(docker-compose -f "$COMPOSE_FILE" images)
+$(docker compose -f "$COMPOSE_FILE" images)
 
 Disk Usage:
 $(df -h "$BACKUP_DIR")

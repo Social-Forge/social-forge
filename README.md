@@ -116,10 +116,10 @@ nano .env
 
 ```bash
 # Development
-docker-compose up -d
+docker compose up -d
 
 # Production
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker compose.prod.yml up -d
 ```
 
 ### 5. Run migrations
@@ -213,19 +213,19 @@ npm run preview
 
 ```bash
 # Build images
-docker-compose build
+docker compose build
 
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # Clean up (⚠️ removes volumes)
-docker-compose down -v
+docker compose down -v
 ```
 
 ## 🚢 Deployment
@@ -249,13 +249,13 @@ cp .env.example .env.production
 3. **Deploy using Docker Compose**
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker compose.prod.yml up -d
 ```
 
 4. **Run migrations**
 
 ```bash
-docker-compose -f docker-compose.prod.yml exec backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+docker compose -f docker compose.prod.yml exec backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
 ```
 
 ### GitHub Actions

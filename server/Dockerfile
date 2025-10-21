@@ -22,7 +22,7 @@ COPY . .
 # Expose port
 EXPOSE 8080
 
-# Default command for development (will be overridden by docker-compose)
+# Default command for development (will be overridden by docker compose)
 CMD ["air", "-c", ".air.toml"]
 
 # Stage 2: Builder
