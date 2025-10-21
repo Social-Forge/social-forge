@@ -29,10 +29,10 @@ jobs:
         config: .hadolint.yaml
         failure-threshold: error
 
-    - name: Run Hadolint on Frontend Dockerfile
+    - name: Run Hadolint on Client Dockerfile
       uses: hadolint/hadolint-action@v3.1.0
       with:
-        dockerfile: frontend/Dockerfile
+        dockerfile: client/Dockerfile
         config: .hadolint.yaml
         failure-threshold: error
 
@@ -48,7 +48,7 @@ jobs:
 
     strategy:
       matrix:
-        component: [ backend, frontend ]
+        component: [ backend, client ]
 
     steps:
     - name: Checkout code
@@ -100,9 +100,9 @@ jobs:
         - name: backend
           context: ./server
           dockerfile: ./server/Dockerfile
-        - name: frontend
-          context: ./frontend
-          dockerfile: ./frontend/Dockerfile
+        - name: client
+          context: ./client
+          dockerfile: ./client/Dockerfile
 
     steps:
     - name: Checkout code
@@ -192,7 +192,7 @@ jobs:
         echo "JWT_SECRET=test-jwt-secret-key-32-characters" >> .env
         echo "PUBLIC_API_URL=http://localhost:8080" >> .env
         echo "PUBLIC_CENTRIFUGO_URL=ws://localhost:8000" >> .env
-        echo "FRONTEND_ORIGIN=http://localhost:5173" >> .env
+        echo "CLIENT_ORIGIN=http://localhost:5173" >> .env
 
     - name: Validate docker-compose.yml
       run: docker compose config -q
@@ -224,14 +224,14 @@ jobs:
         tags: backend:test
         target: production
 
-    - name: Build frontend image
+    - name: Build client image
       uses: docker/build-push-action@v5
       with:
-        context: ./frontend
-        file: ./frontend/Dockerfile
+        context: ./client
+        file: ./client/Dockerfile
         push: false
         load: true
-        tags: frontend:test
+        tags: client:test
         target: production
 
     - name: Check image sizes
@@ -241,19 +241,19 @@ jobs:
         echo "| Image | Size |" >> $GITHUB_STEP_SUMMARY
         echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
         echo "| Backend | $(docker images backend:test --format '{{.Size}}') |" >> $GITHUB_STEP_SUMMARY
-        echo "| Frontend | $(docker images frontend:test --format '{{.Size}}') |" >> $GITHUB_STEP_SUMMARY
+        echo "| Client | $(docker images client:test --format '{{.Size}}') |" >> $GITHUB_STEP_SUMMARY
 
     - name: Warn if images are too large
       run: |
         BACKEND_SIZE=$(docker images backend:test --format '{{.Size}}' | grep -oP '\d+' | head -1)
-        FRONTEND_SIZE=$(docker images frontend:test --format '{{.Size}}' | grep -oP '\d+' | head -1)
+        CLIENT_SIZE=$(docker images client:test --format '{{.Size}}' | grep -oP '\d+' | head -1)
 
         if [ "$BACKEND_SIZE" -gt 500 ]; then
           echo "::warning::Backend image is larger than 500MB"
         fi
 
-        if [ "$FRONTEND_SIZE" -gt 200 ]; then
-          echo "::warning::Frontend image is larger than 200MB"
+        if [ "$CLIENT_SIZE" -gt 200 ]; then
+          echo "::warning::Client image is larger than 200MB"
         fi
 
   # Notify on success

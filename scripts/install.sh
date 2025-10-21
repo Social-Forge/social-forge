@@ -87,9 +87,9 @@ else
     print_success "Go found: $(go version)"
 fi
 
-# Check for Node.js (for frontend development)
+# Check for Node.js (for client development)
 if ! command -v node &> /dev/null; then
-    print_warning "Node.js is not installed. You'll need it for frontend development."
+    print_warning "Node.js is not installed. You'll need it for client development."
     print_info "Visit: https://nodejs.org/"
 else
     print_success "Node.js found: $(node --version)"
@@ -121,7 +121,7 @@ mkdir -p server/database/migrations
 mkdir -p server/database/seeders
 mkdir -p server/logs
 mkdir -p server/storage/whatsapp
-mkdir -p frontend/static
+mkdir -p client/static
 mkdir -p docker/nginx/ssl
 mkdir -p docker/grafana/dashboards
 print_success "Directories created"
@@ -144,15 +144,15 @@ else
     print_info "server/.env file already exists"
 fi
 
-# Copy frontend environment file
-if [ ! -f frontend/.env ]; then
-    cat > frontend/.env << 'EOF'
+# Copy client environment file
+if [ ! -f client/.env ]; then
+    cat > client/.env << 'EOF'
 PUBLIC_API_URL=http://localhost:8080
 PUBLIC_CENTRIFUGO_URL=ws://localhost:8000/connection/websocket
 EOF
-    print_success "frontend/.env file created"
+    print_success "client/.env file created"
 else
-    print_info "frontend/.env file already exists"
+    print_info "client/.env file already exists"
 fi
 
 # Generate random secrets for production
@@ -187,16 +187,16 @@ if [ -d "server" ]; then
     cd ..
 fi
 
-# Install frontend dependencies
-if [ -d "frontend" ]; then
-    print_info "Installing frontend dependencies..."
-    cd frontend
+# Install client dependencies
+if [ -d "client" ]; then
+    print_info "Installing client dependencies..."
+    cd client
     
     if [ -f "package.json" ]; then
         npm install
-        print_success "Frontend dependencies installed"
+        print_success "Client dependencies installed"
     else
-        print_warning "package.json not found. Run 'npm init' in frontend directory"
+        print_warning "package.json not found. Run 'npm init' in client directory"
     fi
     
     cd ..
@@ -238,7 +238,7 @@ echo "  2. Configure your database credentials in .env"
 echo "  3. Configure external API keys (WhatsApp, Meta, Telegram, AI, etc.)"
 echo "  4. Start the development environment: docker compose up -d"
 echo "  5. Access the services:"
-echo "     - Frontend: http://localhost:5173"
+echo "     - Client: http://localhost:5173"
 echo "     - Backend API: http://localhost:8080"
 echo "     - Grafana: http://localhost:3001 (admin/admin123)"
 echo "     - MinIO Console: http://localhost:9001 (minioadmin/minioadmin123)"
@@ -247,8 +247,8 @@ echo ""
 print_info "For backend development:"
 echo "  cd server && make dev"
 echo ""
-print_info "For frontend development:"
-echo "  cd frontend && npm run dev"
+print_info "For client development:"
+echo "  cd client && npm run dev"
 echo ""
 print_info "Useful commands:"
 echo "  make help              - Show all available commands"

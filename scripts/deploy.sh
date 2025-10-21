@@ -93,7 +93,7 @@ print_success "Images updated"
 
 # Stop services gracefully
 print_info "Stopping services..."
-docker compose -f "$COMPOSE_FILE" stop frontend backend worker
+docker compose -f "$COMPOSE_FILE" stop client backend worker
 print_success "Services stopped"
 
 # Run database migrations
@@ -123,11 +123,11 @@ else
     exit 1
 fi
 
-FRONTEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-if [ "$FRONTEND_HEALTH" -eq 200 ]; then
-    print_success "Frontend is healthy"
+CLIENT_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+if [ "$CLIENT_HEALTH" -eq 200 ]; then
+    print_success "Client is healthy"
 else
-    print_error "Frontend health check failed (HTTP $FRONTEND_HEALTH)"
+    print_error "Client health check failed (HTTP $CLIENT_HEALTH)"
     print_warning "Rolling back..."
     docker compose -f "$COMPOSE_FILE" down
     docker compose -f "$COMPOSE_FILE" up -d
@@ -151,7 +151,7 @@ docker compose -f "$COMPOSE_FILE" ps
 
 # Show logs
 print_info "Recent logs:"
-docker compose -f "$COMPOSE_FILE" logs --tail=20 backend frontend
+docker compose -f "$COMPOSE_FILE" logs --tail=20 backend client
 
 print_header "Deployment Complete!"
 print_success "Social Forge has been deployed successfully!"
@@ -162,7 +162,7 @@ echo "  Files: $MINIO_BACKUP_FILE"
 echo ""
 print_info "Services:"
 echo "  Backend: http://localhost:8080"
-echo "  Frontend: http://localhost:3000"
+echo "  Client: http://localhost:3000"
 echo "  Grafana: http://localhost:3001"
 echo ""
 print_warning "Next steps:"

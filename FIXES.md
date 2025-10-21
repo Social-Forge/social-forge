@@ -21,7 +21,7 @@ services.deploy.replicas: can't set container_name and worker as container name 
 - ✅ Removed `container_name` from services with `deploy.replicas`:
   - `backend` (3 replicas)
   - `worker` (2 replicas)
-  - `frontend` (2 replicas)
+  - `client` (2 replicas)
   - `centrifugo` (2 replicas)
 - ✅ Kept `container_name` for single-instance services:
   - `postgres`
@@ -87,7 +87,7 @@ DL3007: Using latest is prone to errors
     tzdata=~2024a
   ```
 
-#### Frontend Dockerfile (`frontend/Dockerfile`):
+#### Client Dockerfile (`client/Dockerfile`):
 
 - ✅ Pinned dumb-init version:
   ```dockerfile
@@ -104,7 +104,7 @@ DL3007: Using latest is prone to errors
 **Files Changed:**
 
 - `server/Dockerfile`
-- `frontend/Dockerfile`
+- `client/Dockerfile`
 - `.hadolint.yaml` (new)
 - `.github/workflows/docker-build.yml`
 
@@ -122,7 +122,7 @@ docker compose -f docker-compose.prod.yml config -q
 
 # 2. Test Hadolint
 docker run --rm -i hadolint/hadolint < server/Dockerfile
-docker run --rm -i hadolint/hadolint < frontend/Dockerfile
+docker run --rm -i hadolint/hadolint < client/Dockerfile
 
 # 3. Build images
 docker compose build
@@ -177,7 +177,7 @@ This balances:
 
 - backend → `socialforge-backend-1`, `socialforge-backend-2`, `socialforge-backend-3`
 - worker → `socialforge-worker-1`, `socialforge-worker-2`
-- frontend → `socialforge-frontend-1`, `socialforge-frontend-2`
+- client → `socialforge-client-1`, `socialforge-client-2`
 - centrifugo → `socialforge-centrifugo-1`, `socialforge-centrifugo-2`
 
 ---

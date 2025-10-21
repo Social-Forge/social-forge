@@ -202,22 +202,22 @@ services:
         condition: service_healthy
     command: go run cmd/worker/main.go
 
-  # SvelteKit Frontend (Development)
-  frontend:
+  # SvelteKit Client (Development)
+  client:
     build:
-      context: ./frontend
+      context: ./client
       dockerfile: Dockerfile
       target: development
-    container_name: socialforge-frontend
+    container_name: socialforge-client
     restart: unless-stopped
     environment:
       PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
       PUBLIC_CENTRIFUGO_URL: ${PUBLIC_CENTRIFUGO_URL:-ws://localhost:8000/connection/websocket}
     volumes:
-      - ./frontend:/app
+      - ./client:/app
       - node_modules:/app/node_modules
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - "${CLIENT_PORT:-5173}:5173"
     networks:
       - socialforge-network
     depends_on:
@@ -239,7 +239,7 @@ services:
       - socialforge-network
     depends_on:
       - backend
-      - frontend
+      - client
     profiles:
       - production
 

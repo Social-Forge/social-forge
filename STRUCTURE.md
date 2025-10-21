@@ -2,7 +2,7 @@ social-forge/
 ├── .github/
 │ └── workflows/
 │ ├── backend-deploy.yml
-│ ├── frontend-deploy.yml
+│ ├── client-deploy.yml
 │ └── docker-build.yml
 ├── server/ # Backend Golang
 │ ├── cmd/
@@ -175,7 +175,7 @@ social-forge/
 │ ├── Makefile
 │ ├── go.mod
 │ └── go.sum
-├── frontend/ # SvelteKit Frontend
+├── client/ # SvelteKit Client
 │ ├── src/
 │ │ ├── lib/
 │ │ │ ├── components/

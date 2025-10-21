@@ -59,7 +59,7 @@ A powerful multi-tenant platform for managing customer conversations across mult
 - **Storage**: MinIO (S3-compatible)
 - **Monitoring**: Prometheus + Grafana
 
-### Frontend
+### Client
 
 - **Framework**: SvelteKit
 - **UI Library**: shadcn-svelte
@@ -132,7 +132,7 @@ make seed
 
 ### 6. Access the application
 
-- **Frontend**: http://localhost:5173
+- **Client**: http://localhost:5173
 - **Backend API**: http://localhost:8080
 - **Grafana**: http://localhost:3001 (admin/admin123)
 - **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin123)
@@ -149,7 +149,7 @@ socialforge/
 │   ├── database/          # Migrations & seeders
 │   ├── internal/          # Internal packages
 │   └── pkg/               # Public packages
-├── frontend/              # SvelteKit application
+├── client/                # SvelteKit application
 │   ├── src/
 │   │   ├── lib/          # Components & utilities
 │   │   └── routes/       # Page routes
@@ -191,10 +191,10 @@ make migrate-down
 make build
 ```
 
-### Frontend Development
+### Client Development
 
 ```bash
-cd frontend
+cd client
 
 # Install dependencies
 npm install
@@ -300,10 +300,10 @@ make test-integration  # Integration tests only
 make test-coverage     # Generate coverage report
 ```
 
-### Frontend Tests
+### Client Tests
 
 ```bash
-cd frontend
+cd client
 npm run test           # Run tests
 npm run test:watch     # Watch mode
 ```

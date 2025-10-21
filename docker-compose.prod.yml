@@ -249,17 +249,17 @@ services:
           cpus: "1"
           memory: 512M
 
-  # SvelteKit Frontend (Production)
-  frontend:
+  # SvelteKit Client (Production)
+  client:
     build:
-      context: ./frontend
+      context: ./client
       dockerfile: Dockerfile
       target: production
     restart: always
     environment:
       PUBLIC_API_URL: ${PUBLIC_API_URL}
       PUBLIC_CENTRIFUGO_URL: ${PUBLIC_CENTRIFUGO_URL}
-      ORIGIN: ${FRONTEND_ORIGIN}
+      ORIGIN: ${CLIENT_ORIGIN}
     networks:
       - socialforge-network
     depends_on:
@@ -290,7 +290,7 @@ services:
       - socialforge-network
     depends_on:
       - backend
-      - frontend
+      - client
     deploy:
       resources:
         limits:
