@@ -110,6 +110,38 @@ DL3007: Using latest is prone to errors
 
 ---
 
+### 4. Air Hot Reload Tool Repository Change ❌ → ✅
+
+**Problem:**
+
+```
+go: github.com/cosmtrek/air@latest: version constraints conflict:
+  module declares its path as: github.com/air-verse/air
+  but was required as: github.com/cosmtrek/air
+```
+
+**Root Cause:**
+
+- Air project moved from `github.com/cosmtrek/air` to `github.com/air-verse/air`
+- Old repository path no longer valid
+
+**Solution:**
+
+- ✅ Updated Dockerfile to use new repository:
+  ```dockerfile
+  RUN go install github.com/air-verse/air@latest
+  ```
+- ✅ Updated Makefile `install-tools` command
+- ✅ Updated README.md documentation
+
+**Files Changed:**
+
+- `server/Dockerfile`
+- `server/Makefile`
+- `README.md`
+
+---
+
 ## Testing
 
 ### Verify Fixes Locally:
@@ -169,16 +201,15 @@ This balances:
 
 **Single Instance (with container_name):**
 
-- postgres → `socialforge-postgres-prod`
-- redis → `socialforge-redis-prod`
-- minio → `socialforge-minio-prod`
+- postgres → `socialfoger-postgres-prod`
+- redis → `socialfoger-redis-prod`
+- minio → `socialfoger-minio-prod`
 
 **Multiple Replicas (auto-generated names):**
 
-- backend → `socialforge-backend-1`, `socialforge-backend-2`, `socialforge-backend-3`
-- worker → `socialforge-worker-1`, `socialforge-worker-2`
-- client → `socialforge-client-1`, `socialforge-client-2`
-- centrifugo → `socialforge-centrifugo-1`, `socialforge-centrifugo-2`
+- backend → `socialfoger-backend-1`, `socialfoger-backend-2`, `socialfoger-backend-3`
+- worker → `socialfoger-worker-1`, `socialfoger-worker-2`
+- client → `socialfoger-client-1`, `socialfoger-client-2`
 
 ---
 
@@ -196,8 +227,3 @@ Consider adding in the future:
 
 **Last Updated:** October 21, 2025  
 **Status:** ✅ All issues resolved
-**Next Steps:**
-
-- [ ] Test in production environment
-- [ ] Review and adjust any remaining warnings
-- [ ] Update documentation with new best practices

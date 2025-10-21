@@ -1,10 +1,10 @@
-# Social Forge Backend Makefile
+# Social Foger Backend Makefile
 # =================================
 
 .PHONY: help
 
 # Variables
-APP_NAME=socialforge
+APP_NAME=socialfoger
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 GO_VERSION=$(shell go version | awk '{print $$3}')
@@ -12,14 +12,14 @@ MIGRATION_DIR=database/migrations
 SEEDER_DIR=database/seeders
 
 # Docker variables
-DOCKER_COMPOSE=docker compose
-DOCKER_COMPOSE_PROD=docker compose -f docker-compose.prod.yml
+DOCKER_COMPOSE=docker-compose
+DOCKER_COMPOSE_PROD=docker-compose -f docker-compose.prod.yml
 
 # Database variables
 DB_HOST?=localhost
 DB_PORT?=5432
 DB_USER?=socialforge
-DB_PASSWORD?=socialforge123
+DB_PASSWORD?=JombSky@2305Ryan
 DB_NAME?=socialforge_db
 DB_SSL_MODE?=disable
 DB_URL=postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
@@ -33,7 +33,7 @@ NC=\033[0m # No Color
 
 ## help: Display this help message
 help:
-	@echo "$(CYAN)Social Forge - Backend Makefile Commands$(NC)"
+	@echo "$(CYAN)Social Foger - Backend Makefile Commands$(NC)"
 	@echo ""
 	@echo "$(GREEN)Available commands:$(NC)"
 	@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -277,7 +277,7 @@ docker-prod-down:
 ## install-tools: Install development tools
 install-tools:
 	@echo "$(GREEN)Installing development tools...$(NC)"
-	@go install github.com/cosmtrek/air@latest
+	@go install github.com/air-verse/air@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@echo "$(GREEN)Tools installed!$(NC)"

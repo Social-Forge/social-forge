@@ -1,4 +1,4 @@
-# 🚀 Social Forge
+# 🚀 Social Foger
 
 > **Omnichannel Customer Engagement Platform** with integrated Web Builder and WhatsApp Rotator
 
@@ -59,7 +59,7 @@ A powerful multi-tenant platform for managing customer conversations across mult
 - **Storage**: MinIO (S3-compatible)
 - **Monitoring**: Prometheus + Grafana
 
-### Client
+### client
 
 - **Framework**: SvelteKit
 - **UI Library**: shadcn-svelte
@@ -87,14 +87,15 @@ A powerful multi-tenant platform for managing customer conversations across mult
 - Node.js 20+ (for local development)
 - golang-migrate CLI
 - Make
+- Air (hot reload): `go install github.com/air-verse/air@latest`
 
 ## 🚀 Quick Start
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/socialforge.git
-cd socialforge
+git clone https://github.com/yourusername/socialfoger.git
+cd socialfoger
 ```
 
 ### 2. Run installation script
@@ -116,10 +117,10 @@ nano .env
 
 ```bash
 # Development
-docker compose up -d
+docker-compose up -d
 
 # Production
-docker compose -f docker compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### 5. Run migrations
@@ -141,7 +142,7 @@ make seed
 ## 📁 Project Structure
 
 ```
-socialforge/
+socialfoger/
 ├── .github/workflows/      # CI/CD pipelines
 ├── server/                 # Golang backend
 │   ├── cmd/               # Application entry points
@@ -149,7 +150,7 @@ socialforge/
 │   ├── database/          # Migrations & seeders
 │   ├── internal/          # Internal packages
 │   └── pkg/               # Public packages
-├── client/                # SvelteKit application
+├── client/              # SvelteKit application
 │   ├── src/
 │   │   ├── lib/          # Components & utilities
 │   │   └── routes/       # Page routes
@@ -213,19 +214,19 @@ npm run preview
 
 ```bash
 # Build images
-docker compose build
+docker-compose build
 
 # Start all services
-docker compose up -d
+docker-compose up -d
 
 # View logs
-docker compose logs -f
+docker-compose logs -f
 
 # Stop all services
-docker compose down
+docker-compose down
 
 # Clean up (⚠️ removes volumes)
-docker compose down -v
+docker-compose down -v
 ```
 
 ## 🚢 Deployment
@@ -249,13 +250,13 @@ cp .env.example .env.production
 3. **Deploy using Docker Compose**
 
 ```bash
-docker compose -f docker compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 4. **Run migrations**
 
 ```bash
-docker compose -f docker compose.prod.yml exec backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+docker-compose -f docker-compose.prod.yml exec backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
 ```
 
 ### GitHub Actions
@@ -358,4 +359,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by Social Forge Team
+Made with ❤️ by Social Foger Team
