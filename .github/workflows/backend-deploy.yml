@@ -1,0 +1,307 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+    - 'server/**'
+    - '.github/workflows/backend-deploy.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+    - 'server/**'
+
+env:
+  GO_VERSION: '1.22'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  # Test Job
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+        - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+        - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache-dependency-path: server/go.sum
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      working-directory: ./server
+      run: go mod download
+
+    - name: Run tests
+      working-directory: ./server
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: test_user
+        DB_PASSWORD: test_password
+        DB_NAME: test_db
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+      run: |
+        go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./server/coverage.out
+        flags: backend
+        name: backend-coverage
+
+  # Lint Job
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache-dependency-path: server/go.sum
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v4
+      with:
+        version: latest
+        working-directory: ./server
+        args: --timeout=5m
+
+  # Build Job
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [ test, lint ]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache-dependency-path: server/go.sum
+
+    - name: Build binaries
+      working-directory: ./server
+      run: |
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o bin/api cmd/api/main.go
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o bin/worker cmd/worker/main.go
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o bin/migrate cmd/migrate/main.go
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-binaries
+        path: server/bin/
+        retention-days: 7
+
+  # Docker Build & Push Job
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [ test, lint ]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./server
+        file: ./server/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        target: production
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [ docker ]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://api.socialforge.com
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to server
+      env:
+        HOST: ${{ secrets.PRODUCTION_HOST }}
+        USER: ${{ secrets.PRODUCTION_USER }}
+      run: |
+        ssh $USER@$HOST << 'EOF'
+          cd /var/www/socialforge
+          docker-compose -f docker-compose.prod.yml pull backend worker
+          docker-compose -f docker-compose.prod.yml up -d backend worker
+          docker-compose -f docker-compose.prod.yml exec -T backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+          docker image prune -f
+        EOF
+
+    - name: Health Check
+      run: |
+        sleep 10
+        curl -f https://api.socialforge.com/health || exit 1
+
+    - name: Notify Slack on Success
+      if: success()
+      uses: slackapi/slack-github-action@v1
+      with:
+        webhook: ${{ secrets.SLACK_WEBHOOK }}
+        payload: |
+          {
+            "text": "✅ Backend deployed successfully to production!",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Backend Deployment Successful*\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                }
+              }
+            ]
+          }
+
+    - name: Notify Slack on Failure
+      if: failure()
+      uses: slackapi/slack-github-action@v1
+      with:
+        webhook: ${{ secrets.SLACK_WEBHOOK }}
+        payload: |
+          {
+            "text": "❌ Backend deployment to production failed!",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Backend Deployment Failed*\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                }
+              }
+            ]
+          }
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [ docker ]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging-api.socialforge.com
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to staging server
+      env:
+        HOST: ${{ secrets.STAGING_HOST }}
+        USER: ${{ secrets.STAGING_USER }}
+      run: |
+        ssh $USER@$HOST << 'EOF'
+          cd /var/www/socialforge-staging
+          docker-compose -f docker-compose.prod.yml pull backend worker
+          docker-compose -f docker-compose.prod.yml up -d backend worker
+          docker-compose -f docker-compose.prod.yml exec -T backend /app/migrate -path /app/database/migrations -database "$DATABASE_URL" up
+          docker image prune -f
+        EOF
+
+    - name: Health Check
+      run: |
+        sleep 10
+        curl -f https://staging-api.socialforge.com/health || exit 1

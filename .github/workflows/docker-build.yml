@@ -1,0 +1,260 @@
+name: Docker Build & Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+  # Run security scan weekly
+  - cron: '0 0 * * 0'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # Hadolint - Dockerfile linting
+  hadolint:
+    name: Lint Dockerfiles
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Hadolint on Backend Dockerfile
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: server/Dockerfile
+        failure-threshold: warning
+
+    - name: Run Hadolint on Frontend Dockerfile
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: frontend/Dockerfile
+        failure-threshold: warning
+
+  # Trivy - Security vulnerability scanning
+  trivy-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [ hadolint ]
+
+    permissions:
+      contents: read
+      security-events: write
+
+    strategy:
+      matrix:
+        component: [ backend, frontend ]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./server
+        file: ./server/Dockerfile
+        push: false
+        load: true
+        tags: ${{ matrix.component }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        target: production
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ matrix.component }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Build multi-platform images
+  build-multiplatform:
+    name: Build Multi-Platform Images
+    runs-on: ubuntu-latest
+    needs: [ trivy-scan ]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        component:
+        - name: backend
+          context: ./server
+          dockerfile: ./server/Dockerfile
+        - name: frontend
+          context: ./frontend
+          dockerfile: ./frontend/Dockerfile
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component.name }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push multi-platform image
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ matrix.component.context }}
+        file: ${{ matrix.component.dockerfile }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        target: production
+        build-args: |
+          VERSION=${{ github.sha }}
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component.name }}:${{ github.sha }}
+        format: spdx-json
+        output-file: sbom-${{ matrix.component.name }}.spdx.json
+
+    - name: Upload SBOM artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom-${{ matrix.component.name }}
+        path: sbom-${{ matrix.component.name }}.spdx.json
+
+  # Docker Compose validation
+  docker-compose-validate:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Validate docker-compose.yml
+      run: docker-compose config -q
+
+    - name: Validate docker-compose.prod.yml
+      run: docker-compose -f docker-compose.prod.yml config -q
+
+  # Image size check
+  image-size-check:
+    name: Check Image Sizes
+    runs-on: ubuntu-latest
+    needs: [ build-multiplatform ]
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./server
+        file: ./server/Dockerfile
+        push: false
+        load: true
+        tags: backend:test
+        target: production
+
+    - name: Build frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: false
+        load: true
+        tags: frontend:test
+        target: production
+
+    - name: Check image sizes
+      run: |
+        echo "## Docker Image Sizes" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Image | Size |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend | $(docker images backend:test --format '{{.Size}}') |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend | $(docker images frontend:test --format '{{.Size}}') |" >> $GITHUB_STEP_SUMMARY
+
+    - name: Warn if images are too large
+      run: |
+        BACKEND_SIZE=$(docker images backend:test --format '{{.Size}}' | grep -oP '\d+' | head -1)
+        FRONTEND_SIZE=$(docker images frontend:test --format '{{.Size}}' | grep -oP '\d+' | head -1)
+
+        if [ "$BACKEND_SIZE" -gt 500 ]; then
+          echo "::warning::Backend image is larger than 500MB"
+        fi
+
+        if [ "$FRONTEND_SIZE" -gt 200 ]; then
+          echo "::warning::Frontend image is larger than 200MB"
+        fi
+
+  # Notify on success
+  notify-success:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: [ build-multiplatform ]
+    if: success() && github.event_name == 'push'
+
+    steps:
+    - name: Send Slack notification
+      uses: slackapi/slack-github-action@v1
+      if: github.ref == 'refs/heads/main'
+      with:
+        webhook: ${{ secrets.SLACK_WEBHOOK }}
+        payload: |
+          {
+            "text": "✅ Docker images built and pushed successfully!",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Docker Build Successful*\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                }
+              }
+            ]
+          }

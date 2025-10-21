@@ -1,0 +1,22 @@
+# Development
+make dev              # Run with hot reload
+make build            # Build binaries
+make clean            # Clean artifacts
+
+# Database
+make db-create        # Create database
+make migrate-create   # Create new migration
+make migrate-up       # Run migrations
+make migrate-down     # Rollback migration
+make seed             # Run seeders
+make db-reset         # Reset database
+
+# Testing
+make test             # Run all tests
+make test-coverage    # Generate coverage report
+make lint             # Run linter
+
+# Docker
+make docker-up        # Start containers
+make docker-down      # Stop containers
+make docker-logs      # View logs
