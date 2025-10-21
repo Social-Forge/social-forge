@@ -1,9 +1,7 @@
 aink.txt
 my-env-secret.txt
 # Environment files
-.env.example
 .env
-.env.local
 .env.local
 .env.*.local
 *.env

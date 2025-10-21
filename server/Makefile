@@ -1,4 +1,4 @@
-# Social Foger Backend Makefile
+# Social Forge Backend Makefile
 # =================================
 
 .PHONY: help
@@ -33,7 +33,7 @@ NC=\033[0m # No Color
 
 ## help: Display this help message
 help:
-	@echo "$(CYAN)Social Foger - Backend Makefile Commands$(NC)"
+	@echo "$(CYAN)Social Forge - Backend Makefile Commands$(NC)"
 	@echo ""
 	@echo "$(GREEN)Available commands:$(NC)"
 	@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

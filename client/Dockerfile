@@ -43,10 +43,10 @@ RUN npm run build
 RUN npm prune --production
 
 # Stage 3: Production
-FROM node:24.10.0-alpine3.22 AS production
+FROM node:24-alpine AS production
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init for proper signal handling with pinned version
+RUN apk add --no-cache dumb-init=~1.2
 
 # Create non-root user
 RUN addgroup -g 1000 appuser && \

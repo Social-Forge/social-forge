@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# Social Foger - Installation Script
+# Social Forge - Installation Script
 # ============================================
 
 set -e
@@ -51,7 +51,7 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
-print_header "Social Foger Installation"
+print_header "Social Forge Installation"
 
 # Check system requirements
 print_info "Checking system requirements..."
@@ -230,7 +230,7 @@ cd ..
 
 print_header "Installation Complete!"
 
-print_success "Social Foger has been installed successfully!"
+print_success "Social Forge has been installed successfully!"
 echo ""
 print_info "Next steps:"
 echo "  1. Update your .env file with the generated secrets above"

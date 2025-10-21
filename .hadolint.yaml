@@ -1,0 +1,45 @@
+# Hadolint configuration
+# https://github.com/hadolint/hadolint
+
+# Ignore specific rules
+ignored:
+# DL3007: Allow using 'latest' tag for base images in development stage
+# We pin versions in production stage only
+- DL3007
+
+# Trusted registries for base images
+trustedRegistries:
+- docker.io
+- ghcr.io
+- gcr.io
+
+# Override rule severity
+override:
+  error:
+  - DL3001
+  - DL3002
+  - DL3003
+  - DL3004
+  - DL3006
+  - DL3008
+  - DL3009
+  - DL3015
+  - DL3020
+  - DL3021
+  - DL3022
+  - DL3025
+  warning:
+  - DL3018 # We use approximate version pinning with ~
+  - DL3028
+  info:
+  - DL3013
+  - DL3032
+  - DL3033
+  style:
+  - DL3010
+  - DL3011
+
+# Label schema (optional)
+label-schema:
+  author: "Social Forge Team"
+  maintainer: "team@socialforge.com"

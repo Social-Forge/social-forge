@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# Social Foger - Deployment Script
+# Social Forge - Deployment Script
 # ============================================
 
 set -e
@@ -57,7 +57,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-print_header "Social Foger Deployment - $DEPLOY_ENV"
+print_header "Social Forge Deployment - $DEPLOY_ENV"
 
 # Navigate to project directory
 cd "$PROJECT_DIR" || {
@@ -154,7 +154,7 @@ print_info "Recent logs:"
 docker compose -f "$COMPOSE_FILE" logs --tail=20 backend frontend
 
 print_header "Deployment Complete!"
-print_success "Social Foger has been deployed successfully!"
+print_success "Social Forge has been deployed successfully!"
 echo ""
 print_info "Backup locations:"
 echo "  Database: $BACKUP_FILE"

@@ -26,13 +26,15 @@ jobs:
       uses: hadolint/hadolint-action@v3.1.0
       with:
         dockerfile: server/Dockerfile
-        failure-threshold: warning
+        config: .hadolint.yaml
+        failure-threshold: error
 
     - name: Run Hadolint on Frontend Dockerfile
       uses: hadolint/hadolint-action@v3.1.0
       with:
         dockerfile: frontend/Dockerfile
-        failure-threshold: warning
+        config: .hadolint.yaml
+        failure-threshold: error
 
   # Trivy - Security vulnerability scanning
   trivy-scan:
@@ -169,6 +171,28 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Create temporary .env file for validation
+      run: |
+        cp .env.example .env
+        # Set dummy values for required variables
+        echo "CENTRIFUGO_API_KEY=test-key" >> .env
+        echo "CENTRIFUGO_ADMIN_PASSWORD=test-pass" >> .env
+        echo "CENTRIFUGO_ADMIN_SECRET=test-secret" >> .env
+        echo "CENTRIFUGO_TOKEN_SECRET=test-token" >> .env
+        echo "MINIO_ROOT_USER=minioadmin" >> .env
+        echo "MINIO_ROOT_PASSWORD=minioadmin123" >> .env
+        echo "GRAFANA_ADMIN_USER=admin" >> .env
+        echo "GRAFANA_ADMIN_PASSWORD=admin123" >> .env
+        echo "GRAFANA_ROOT_URL=http://localhost:3001" >> .env
+        echo "DB_USER=socialforge" >> .env
+        echo "DB_PASSWORD=socialforge123" >> .env
+        echo "DB_NAME=socialforge_db" >> .env
+        echo "REDIS_PASSWORD=redis123" >> .env
+        echo "JWT_SECRET=test-jwt-secret-key-32-characters" >> .env
+        echo "PUBLIC_API_URL=http://localhost:8080" >> .env
+        echo "PUBLIC_CENTRIFUGO_URL=ws://localhost:8000" >> .env
+        echo "FRONTEND_ORIGIN=http://localhost:5173" >> .env
 
     - name: Validate docker-compose.yml
       run: docker compose config -q

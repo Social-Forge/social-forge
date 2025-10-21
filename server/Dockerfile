@@ -22,14 +22,16 @@ COPY . .
 # Expose port
 EXPOSE 8080
 
-# Default command for development (will be overridden by docker compose)
+# Default command for development (will be overridden by docker-compose)
 CMD ["air", "-c", ".air.toml"]
 
 # Stage 2: Builder
 FROM golang:1.22-alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache git make
+# Install build dependencies with pinned versions
+RUN apk add --no-cache \
+    git=~2.45 \
+    make=~4.4
 
 # Set working directory
 WORKDIR /app
@@ -49,10 +51,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o 
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o /app/bin/migrate ./cmd/migrate/main.go
 
 # Stage 3: Production
-FROM alpine:latest AS production
+FROM alpine:3.19 AS production
 
-# Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates tzdata
+# Install ca-certificates for HTTPS requests with pinned version
+RUN apk --no-cache add \
+    ca-certificates=~20240226 \
+    tzdata=~2024a
 
 # Set timezone
 ENV TZ=Asia/Jakarta

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# Social Foger - Backup Script
+# Social Forge - Backup Script
 # ============================================
 
 set -e
@@ -128,7 +128,7 @@ fi
 # Create backup manifest
 MANIFEST_FILE="$BACKUP_DIR/manifest_${TIMESTAMP}.txt"
 cat > "$MANIFEST_FILE" << EOF
-Social Foger Backup Manifest
+Social Forge Backup Manifest
 ============================
 Timestamp: $(date)
 Environment: ${APP_ENV:-production}

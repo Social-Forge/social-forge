@@ -1,4 +1,4 @@
-social-foger/
+social-forge/
 ├── .github/
 │ └── workflows/
 │ ├── backend-deploy.yml

@@ -1,4 +1,4 @@
-# 🚀 Social Foger
+# 🚀 Social Forge
 
 > **Omnichannel Customer Engagement Platform** with integrated Web Builder and WhatsApp Rotator
 
@@ -358,4 +358,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by Social Foger Team
+Made with ❤️ by Social Forge Team
