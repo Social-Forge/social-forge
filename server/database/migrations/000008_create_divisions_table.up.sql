@@ -4,13 +4,13 @@ CREATE TABLE divisions (
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) NOT NULL,
   description TEXT,
-  routing_type VARCHAR(255) DEFAULT 'equal' CHECK (routing_type IN ('equal', 'percentage', 'priority')),
+  routing_type VARCHAR(255) DEFAULT 'equal',
   routing_config JSONB,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   link_url VARCHAR(255) UNIQUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
   CONSTRAINT chk_division_slug_tenant_id UNIQUE (slug, tenant_id),
   CONSTRAINT chk_division_routing_type CHECK (routing_type IN ('equal', 'percentage', 'priority'))
 );

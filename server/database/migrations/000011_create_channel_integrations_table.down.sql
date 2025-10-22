@@ -13,6 +13,7 @@ DROP INDEX IF EXISTS idx_channel_integrations_updated_at;
 DROP INDEX IF EXISTS idx_channel_integrations_deleted_at;
 
 ALTER TABLE channel_integrations DROP CONSTRAINT IF EXISTS chk_channel_integration_tenant_id_identifier_channel_id;
+ALTER TABLE channel_integrations DROP CONSTRAINT IF EXISTS chk_channel_integration_type;
 
 DROP TABLE IF EXISTS channel_integrations CASCADE;
 

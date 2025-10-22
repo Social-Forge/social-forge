@@ -2,14 +2,13 @@ CREATE TABLE page_sections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     page_id UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
-    name VARCHAR(255),
     type VARCHAR(255) NOT NULL,
     order_index INTEGER NOT NULL,
     content JSONB NOT NULL,
     style_config JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP WITH TIME ZONE
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
 );
 
 -- Indexes

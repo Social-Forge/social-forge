@@ -1,13 +1,13 @@
 CREATE TABLE channels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) UNIQUE NOT NULL CHECK (name IN ('whatsapp', 'meta_whatsapp', 'meta_messenger', 'telegram', 'webchat', 'linkchat')),
+  name VARCHAR(255) UNIQUE NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
   icon_url VARCHAR(255),
   description TEXT,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_channels_name ON channels(name);
@@ -22,4 +22,4 @@ BEFORE UPDATE ON channels
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
-COMMENT ON TABLE channels IS 'Available communication channels';
+COMMENT ON TABLE channels IS 'Available communication channels whatsapp, meta_whatsapp, meta_messenger, telegram, webchat, linkchat';

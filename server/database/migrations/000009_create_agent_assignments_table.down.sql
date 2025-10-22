@@ -12,7 +12,8 @@ DROP INDEX IF EXISTS idx_agent_assignments_deleted_at;
 DROP INDEX IF EXISTS idx_agent_assignments_status;
 
 ALTER TABLE agent_assignments DROP CONSTRAINT IF EXISTS chk_agent_assignment_division_id_user_id;
+ALTER TABLE agent_assignments DROP CONSTRAINT IF EXISTS chk_agent_assignment_status;
 
-DROP TABLE IF EXISTS agent_assignments;
+DROP TABLE IF EXISTS agent_assignments CASCADE;
 
 COMMIT;

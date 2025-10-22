@@ -15,6 +15,6 @@ DROP INDEX IF EXISTS idx_conversations_deleted_at;
 
 ALTER TABLE conversations DROP CONSTRAINT IF EXISTS chk_conversation_tenant_id_division_id_assigned_agent_id_contact_id_channel_integration_id;
 
-DROP TABLE IF EXISTS conversations;
+DROP TABLE IF EXISTS conversations CASCADE;
 
 COMMIT;

@@ -1,10 +1,10 @@
-# Social Foger Backend Makefile
+# Social Forge Backend Makefile
 # =================================
 
 .PHONY: help
 
 # Variables
-APP_NAME=socialfoger
+APP_NAME=socialforge
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 GO_VERSION=$(shell go version | awk '{print $$3}')
@@ -33,7 +33,7 @@ NC=\033[0m # No Color
 
 ## help: Display this help message
 help:
-	@echo "$(CYAN)Social Foger - Backend Makefile Commands$(NC)"
+	@echo "$(CYAN)Social Forge - Backend Makefile Commands$(NC)"
 	@echo ""
 	@echo "$(GREEN)Available commands:$(NC)"
 	@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

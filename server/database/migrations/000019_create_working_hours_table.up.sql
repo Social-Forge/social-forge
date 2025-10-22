@@ -2,13 +2,14 @@ CREATE TABLE working_hours (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   division_id UUID NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
-  day_of_week VARCHAR(255) NOT NULL CHECK (day_of_week IN (1, 2, 3, 4, 5, 6, 7)),
+  day_of_week VARCHAR(255) NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  CONSTRAINT chk_working_hours_start_time_end_time CHECK (start_time < end_time),
   CONSTRAINT chk_working_hours_tenant_id_division_id_day_of_week UNIQUE (tenant_id, division_id, day_of_week)
 );
 

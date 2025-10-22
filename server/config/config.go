@@ -123,7 +123,7 @@ func Load() (*Config, error) {
 
 	config := &Config{
 		App: AppConfig{
-			Name:        getEnv("APP_NAME", "SocialFoger"),
+			Name:        getEnv("APP_NAME", "SocialForge"),
 			Env:         getEnv("APP_ENV", "development"),
 			Debug:       getEnv("APP_DEBUG", "true") == "true",
 			Port:        getEnv("APP_PORT", "8080"),
@@ -135,9 +135,9 @@ func Load() (*Config, error) {
 		Database: DatabaseConfig{
 			Host:            getEnv("DB_HOST", "localhost"),
 			Port:            getEnv("DB_PORT", "5432"),
-			User:            getEnv("DB_USER", "socialfoger"),
-			Password:        getEnv("DB_PASSWORD", "socialfoger123"),
-			Name:            getEnv("DB_NAME", "socialfoger_db"),
+			User:            getEnv("DB_USER", "socialforge"),
+			Password:        getEnv("DB_PASSWORD", "socialforge123"),
+			Name:            getEnv("DB_NAME", "socialforge_db"),
 			SSLMode:         getEnv("DB_SSL_MODE", "disable"),
 			MaxOpenConns:    getEnvAsInt("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getEnvAsInt("DB_MAX_IDLE_CONNS", 5),
@@ -166,7 +166,7 @@ func Load() (*Config, error) {
 			AccessKey:  getEnv("MINIO_ROOT_USER", "minioadmin"),
 			SecretKey:  getEnv("MINIO_ROOT_PASSWORD", "minioadmin123"),
 			UseSSL:     getEnv("MINIO_USE_SSL", "false") == "true",
-			BucketName: getEnv("MINIO_BUCKET_NAME", "socialfoger"),
+			BucketName: getEnv("MINIO_BUCKET_NAME", "socialforge"),
 			PublicURL:  getEnv("MINIO_PUBLIC_URL", "http://localhost:9000"),
 		},
 		Asynq: AsynqConfig{
@@ -194,8 +194,8 @@ func Load() (*Config, error) {
 			SMTPPort:     getEnv("SMTP_PORT", "587"),
 			SMTPUsername: getEnv("SMTP_USERNAME", ""),
 			SMTPPassword: getEnv("SMTP_PASSWORD", ""),
-			FromName:     getEnv("SMTP_FROM_NAME", "Social Foger"),
-			FromAddress:  getEnv("SMTP_FROM_ADDRESS", "noreply@socialfoger.com"),
+			FromName:     getEnv("SMTP_FROM_NAME", "Social Forge"),
+			FromAddress:  getEnv("SMTP_FROM_ADDRESS", "noreply@socialforge.com"),
 		},
 	}
 

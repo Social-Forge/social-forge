@@ -8,11 +8,17 @@ CREATE TABLE users (
   avatar_url VARCHAR(255),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
-  email_verified_at TIMESTAMP WITH TIME ZONE,
-  last_login_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE
+  email_verified_at TIMESTAMPTZ,
+  last_login_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  CONSTRAINT users_name_length_check 
+    CHECK (length(trim(full_name)) > 0),
+  CONSTRAINT users_username_length_check 
+    CHECK (length(trim(username)) > 0),
+  CONSTRAINT users_email_format_check 
+    CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
 CREATE INDEX idx_users_email ON users(email);

@@ -14,6 +14,6 @@ DROP INDEX IF EXISTS idx_labels_deleted_at;
 ALTER TABLE labels DROP CONSTRAINT IF EXISTS chk_label_agent_id_name;
 ALTER TABLE labels DROP CONSTRAINT IF EXISTS chk_label_agent_id_slug;
 
-DROP TABLE IF EXISTS labels;
+DROP TABLE IF EXISTS labels CASCADE;
 
 COMMIT;

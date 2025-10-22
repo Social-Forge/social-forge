@@ -11,6 +11,8 @@ DROP INDEX IF EXISTS idx_webhook_logs_created_at;
 DROP INDEX IF EXISTS idx_webhook_logs_updated_at;
 DROP INDEX IF EXISTS idx_webhook_logs_deleted_at;
 
+ALTER TABLE webhook_logs DROP CONSTRAINT IF EXISTS chk_webhook_logs_status;
+
 DROP TABLE IF EXISTS webhook_logs;
 
 COMMIT;

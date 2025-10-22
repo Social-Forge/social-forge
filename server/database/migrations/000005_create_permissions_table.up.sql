@@ -1,13 +1,16 @@
 CREATE TABLE permissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) UNIQUE NOT NULL;,
+  name VARCHAR(255) UNIQUE NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
-  resource VARCHAR(255) NOT NULL CHECK (resource IN ('tenants', 'users', 'roles', 'analytics', 'conversations', 'contacts', 'channels', 'quick_replies', 'pages', 'agents', 'webhooks', 'supervisors', 'admin', 'messages', 'labels', 'channels', 'channel_integrations')),
-  action VARCHAR(255) NOT NULL CHECK (action IN ('create', 'read', 'write', 'update', 'execute', 'delete', 'manage')),
+  resource VARCHAR(255) NOT NULL ,
+  action VARCHAR(255) NOT NULL,
   description TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  CONSTRAINT chk_permission_resource_action UNIQUE (resource, action),
+  CONSTRAINT chk_permission_resource CHECK (resource IN ('tenants', 'users', 'roles', 'analytics', 'conversations', 'contacts', 'channels', 'quick_replies', 'pages', 'agents', 'webhooks', 'supervisors', 'admin', 'messages', 'labels', 'channels', 'channel_integrations')),
+  CONSTRAINT chk_permission_action CHECK (action IN ('create', 'read', 'write', 'update', 'execute', 'delete', 'manage'))
 );
 
 CREATE INDEX idx_permissions_slug ON permissions(slug);

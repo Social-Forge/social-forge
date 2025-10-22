@@ -6,11 +6,11 @@ CREATE TABLE labels (
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) NOT NULL,
   description TEXT,
-  color VARCHAR(255) NOT NULL,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE,
+  color VARCHAR(255) NOT NULL DEFAULT '#000000',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
   CONSTRAINT chk_label_agent_id_name UNIQUE (agent_id, name),
   CONSTRAINT chk_label_agent_id_slug UNIQUE (agent_id, slug)
 );

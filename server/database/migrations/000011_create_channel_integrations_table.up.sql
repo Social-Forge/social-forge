@@ -4,20 +4,21 @@ CREATE TABLE channel_integrations (
   division_id UUID NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
   channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE RESTRICT,
   name VARCHAR(255) NOT NULL,
-  type VARCHAR(255) NOT NULL CHECK (type IN ('whatsapp', 'meta_whatsapp', 'meta_messenger', 'telegram', 'webchat', 'linkchat')),
+  type VARCHAR(255) NOT NULL,
   identifier VARCHAR(255),
   access_token VARCHAR(255),
   refresh_token VARCHAR(255),
   webhook_url VARCHAR(255),
   webhook_secret VARCHAR(255),
   config JSONB,
-  is_active BOOLEAN DEFAULT TRUE,
-  is_verified BOOLEAN DEFAULT FALSE,
-  last_sync_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE,
-  CONSTRAINT chk_channel_integration_tenant_id_identifier_channel_id UNIQUE (tenant_id, identifier, channel_id)
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  last_sync_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  CONSTRAINT chk_channel_integration_tenant_id_identifier_channel_id UNIQUE (tenant_id, identifier, channel_id),
+  CONSTRAINT chk_channel_integration_type CHECK (type IN ('whatsapp', 'meta_whatsapp', 'meta_messenger', 'telegram', 'webchat', 'linkchat'))
 );
 
 CREATE INDEX idx_channel_integrations_tenant_id ON channel_integrations(tenant_id);

@@ -14,7 +14,9 @@ DROP INDEX IF EXISTS idx_auto_replies_updated_at;
 DROP INDEX IF EXISTS idx_auto_replies_deleted_at;
 
 ALTER TABLE auto_replies DROP CONSTRAINT IF EXISTS chk_auto_replies_tenant_id_trigger_type;
+ALTER TABLE auto_replies DROP CONSTRAINT IF EXISTS chk_auto_replies_trigger_type;
+ALTER TABLE auto_replies DROP CONSTRAINT IF EXISTS chk_auto_replies_media_type;
 
-DROP TABLE IF EXISTS auto_replies;
+DROP TABLE IF EXISTS auto_replies CASCADE;
 
 COMMIT;

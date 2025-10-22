@@ -1,12 +1,20 @@
 CREATE TABLE roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) UNIQUE NOT NULL DEFAULT 'guest' CHECK (name IN ('superadmin', 'admin', 'tenant_owner', 'supervisor', 'agent', 'guest')),
+  name VARCHAR(255) UNIQUE NOT NULL DEFAULT 'guest',
   slug VARCHAR(255) UNIQUE NOT NULL,
   description TEXT,
-  level INTEGER NOT NULL DEFAULT 0 CHECK (level IN (0, 1, 2, 3, 4, 5)),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE
+  level INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  CONSTRAINT roles_name_length_check 
+    CHECK (length(trim(name)) > 0),
+  CONSTRAINT roles_slug_length_check 
+    CHECK (length(trim(slug)) > 0),
+  CONSTRAINT roles_level_check 
+    CHECK (level IN (0, 1, 2, 3, 4, 5)),
+  CONSTRAINT roles_name_check 
+    CHECK (name IN ('superadmin', 'admin', 'tenant_owner', 'supervisor', 'agent', 'guest'))
 );
 
 CREATE INDEX idx_roles_name ON roles(name);

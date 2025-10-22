@@ -2,16 +2,18 @@ CREATE TABLE auto_replies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   division_id UUID NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
-  trigger_type VARCHAR(255) NOT NULL DEFAULT 'first_message' CHECK (trigger_type IN ('first_message', 'keyword', 'outside_hour')),
+  trigger_type VARCHAR(255) NOT NULL DEFAULT 'first_message',
   trigger_value TEXT,
   message TEXT NOT NULL,
   media_url TEXT,
-  media_type VARCHAR(255) DEFAULT 'text' CHECK (media_type IN ('text', 'image', 'video', 'audio', 'file', 'location', 'contact', 'button', 'quick_reply')),
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE,
-  CONSTRAINT chk_auto_replies_tenant_id_trigger_type UNIQUE (tenant_id, trigger_type, trigger_value)
+  media_type VARCHAR(255) NOT NULL DEFAULT 'text',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+  CONSTRAINT chk_auto_replies_tenant_id_trigger_type UNIQUE (tenant_id, trigger_type, trigger_value),
+  CONSTRAINT chk_auto_replies_trigger_type CHECK (trigger_type IN ('first_message', 'keyword', 'outside_hour')),
+  CONSTRAINT chk_auto_replies_media_type CHECK (media_type IN ('text', 'image', 'video', 'audio', 'file', 'location', 'contact', 'button', 'quick_reply'))
 );
 
 CREATE INDEX idx_auto_replies_tenant_id ON auto_replies(tenant_id);

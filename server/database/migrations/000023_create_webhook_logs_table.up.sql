@@ -5,14 +5,15 @@ CREATE TABLE webhook_logs (
     event_type VARCHAR(255) NOT NULL,
     payload JSONB NOT NULL,
     headers JSONB,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'success', 'failed')),
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
     response_body JSONB,
-    processed_at TIMESTAMP WITH TIME ZONE,
+    processed_at TIMESTAMPTZ,
     error_message TEXT,
     retry_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP WITH TIME ZONE
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ,
+    CONSTRAINT chk_webhook_logs_status CHECK (status IN ('pending', 'processing', 'success', 'failed'))
 );
 
 CREATE INDEX idx_webhook_logs_tenant_id ON webhook_logs(tenant_id);

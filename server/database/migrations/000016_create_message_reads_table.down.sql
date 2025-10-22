@@ -11,6 +11,6 @@ DROP INDEX IF EXISTS idx_message_reads_deleted_at;
 
 ALTER TABLE message_reads DROP CONSTRAINT IF EXISTS chk_message_reads_user_id_message_id;
 
-DROP TABLE IF EXISTS message_reads;
+DROP TABLE IF EXISTS message_reads CASCADE;
 
 COMMIT;
