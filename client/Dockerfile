@@ -1,16 +1,20 @@
 # syntax=docker/dockerfile:1
 
+FROM node:24-alpine AS base
+# Install pnpm globally
+RUN npm install -g pnpm
+
 # Stage 1: Development
-FROM node:24-alpine AS development
+FROM base AS development
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -19,28 +23,28 @@ COPY . .
 EXPOSE 5173
 
 # Default command for development
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["pnpm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # Stage 2: Builder
-FROM node:24-alpine AS builder
+FROM base AS builder
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build application
-RUN npm run build
+RUN pnpm run build
 
 # Prune dev dependencies
-RUN npm prune --production
+RUN pnpm prune --prod
 
 # Stage 3: Production
 FROM node:24-alpine AS production
