@@ -4,6 +4,7 @@ DROP TRIGGER IF EXISTS update_messages_modtime ON messages;
 DROP TRIGGER IF EXISTS trigger_messages_search_update ON messages;
 DROP TRIGGER IF EXISTS trigger_refresh_message_mvs ON messages;
 
+DROP FUNCTION IF EXISTS update_messages_modtime();
 DROP FUNCTION IF EXISTS messages_search_update;
 DROP FUNCTION IF EXISTS refresh_message_materialized_views;
 DROP FUNCTION IF EXISTS refresh_conversation_threads;
@@ -47,11 +48,11 @@ DROP INDEX IF EXISTS idx_mv_message_search_tenant;
 DROP INDEX IF EXISTS idx_mv_message_search_sent_at;
 DROP INDEX IF EXISTS idx_mv_message_search_content;
 
-ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_messages_sender_type;
-ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_messages_message_type;
-ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_messages_status;
-ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_message_content;
-ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_sender_reference;
+-- ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_messages_sender_type;
+-- ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_messages_message_type;
+-- ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_messages_status;
+-- ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_message_content;
+-- ALTER TABLE messages DROP CONSTRAINT IF EXISTS chk_sender_reference;
 
 DROP TABLE IF EXISTS messages CASCADE;
 

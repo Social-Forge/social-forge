@@ -24,8 +24,15 @@ CREATE INDEX idx_agent_assignments_created_at ON agent_assignments(created_at);
 CREATE INDEX idx_agent_assignments_updated_at ON agent_assignments(updated_at);
 CREATE INDEX idx_agent_assignments_deleted_at ON agent_assignments(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_agent_assignments_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_agent_assignments_modtime
 BEFORE UPDATE ON agent_assignments
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_agent_assignments_modtime();

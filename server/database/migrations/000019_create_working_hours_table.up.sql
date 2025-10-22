@@ -23,8 +23,15 @@ CREATE INDEX idx_working_hours_created_at ON working_hours(created_at);
 CREATE INDEX idx_working_hours_updated_at ON working_hours(updated_at);
 CREATE INDEX idx_working_hours_deleted_at ON working_hours(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_working_hours_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_working_hours_modtime
 BEFORE UPDATE ON working_hours
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_working_hours_modtime();

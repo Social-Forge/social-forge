@@ -25,7 +25,15 @@ CREATE INDEX idx_webhook_logs_created_at ON webhook_logs(created_at);
 CREATE INDEX idx_webhook_logs_updated_at ON webhook_logs(updated_at);
 CREATE INDEX idx_webhook_logs_deleted_at ON webhook_logs(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_webhook_logs_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE TRIGGER update_webhook_logs_modtime
 BEFORE UPDATE ON webhook_logs
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_webhook_logs_modtime();

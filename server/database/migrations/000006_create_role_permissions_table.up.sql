@@ -13,7 +13,15 @@ CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_i
 CREATE INDEX idx_role_permissions_created_at ON role_permissions(created_at);
 CREATE INDEX idx_role_permissions_deleted_at ON role_permissions(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_role_permissions_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_role_permissions_modtime
 BEFORE UPDATE ON role_permissions
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_role_permissions_modtime();

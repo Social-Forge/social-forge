@@ -21,12 +21,18 @@ CREATE INDEX idx_permissions_created_at ON permissions(created_at);
 CREATE INDEX idx_permissions_updated_at ON permissions(updated_at);
 CREATE INDEX idx_permissions_deleted_at ON permissions(deleted_at);
 
-
+CREATE OR REPLACE FUNCTION update_permissions_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_permissions_modtime
 BEFORE UPDATE ON permissions
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_permissions_modtime();
 
 COMMENT ON TABLE permissions IS 'Granular permission control';
 COMMENT ON COLUMN permissions.resource IS 'Resource type: users, tenants, conversations, etc.';

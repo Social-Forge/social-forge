@@ -56,10 +56,18 @@ CREATE INDEX idx_messages_sent_at_brin ON messages USING BRIN(sent_at) WHERE del
 CREATE INDEX idx_messages_tenant_conversation ON messages(tenant_id, conversation_id, sent_at DESC) WHERE deleted_at IS NULL;
 CREATE INDEX idx_messages_tenant_status ON messages(tenant_id, status, sent_at DESC) WHERE deleted_at IS NULL;
 
+CREATE OR REPLACE FUNCTION update_messages_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_messages_modtime
 BEFORE UPDATE ON messages
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_messages_modtime();
 
 CREATE OR REPLACE FUNCTION messages_search_update()
 RETURNS TRIGGER AS $$

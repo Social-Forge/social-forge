@@ -61,10 +61,18 @@ CREATE INDEX idx_pages_featured ON pages(tenant_id, view_count DESC, published_a
 CREATE INDEX idx_pages_meta_keywords ON pages USING GIN(meta_keywords) WHERE deleted_at IS NULL AND is_published = true;
 CREATE INDEX idx_pages_article_tags ON pages USING GIN(meta_article_tags) WHERE deleted_at IS NULL AND is_published = true;
 
+CREATE OR REPLACE FUNCTION update_pages_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_pages_modtime
 BEFORE UPDATE ON pages
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_pages_modtime();
 
 CREATE OR REPLACE FUNCTION pages_manage_published()
 RETURNS TRIGGER AS $$

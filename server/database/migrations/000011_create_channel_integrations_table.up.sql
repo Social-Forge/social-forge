@@ -31,9 +31,17 @@ CREATE INDEX idx_channel_integrations_created_at ON channel_integrations(created
 CREATE INDEX idx_channel_integrations_updated_at ON channel_integrations(updated_at);
 CREATE INDEX idx_channel_integrations_deleted_at ON channel_integrations(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_channel_integrations_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_channel_integrations_modtime
 BEFORE UPDATE ON channel_integrations
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_channel_integrations_modtime();
 
 COMMENT ON TABLE channel_integrations IS 'Tenant channel integrations (WhatsApp, Messenger, etc.)';

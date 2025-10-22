@@ -6,6 +6,7 @@ DROP TRIGGER IF EXISTS trigger_pages_search_update ON pages;
 DROP TRIGGER IF EXISTS trigger_pages_updated_at ON pages;
 DROP TRIGGER IF EXISTS trigger_refresh_page_mvs ON pages;
 
+DROP FUNCTION IF EXISTS update_pages_modtime();
 DROP FUNCTION IF EXISTS pages_manage_published();
 DROP FUNCTION IF EXISTS pages_search_update();
 DROP FUNCTION IF EXISTS refresh_page_materialized_views();
@@ -49,11 +50,11 @@ DROP INDEX IF EXISTS idx_mv_page_management_tenant;
 DROP INDEX IF EXISTS idx_mv_page_management_status;
 DROP INDEX IF EXISTS idx_mv_page_management_readiness;
 
-ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_tenant_id_slug;
-ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_status;
-ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_slug_format;
-ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_view_count;
-ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_reading_time_minutes;
+-- ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_tenant_id_slug;
+-- ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_status;
+-- ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_slug_format;
+-- ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_view_count;
+-- ALTER TABLE pages DROP CONSTRAINT IF EXISTS chk_pages_reading_time_minutes;
 
 DROP TABLE IF EXISTS pages CASCADE;
 

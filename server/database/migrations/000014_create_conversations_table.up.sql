@@ -34,8 +34,15 @@ CREATE INDEX idx_conversations_created_at ON conversations(created_at);
 CREATE INDEX idx_conversations_updated_at ON conversations(updated_at);
 CREATE INDEX idx_conversations_deleted_at ON conversations(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_conversations_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_conversations_modtime
 BEFORE UPDATE ON conversations
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_conversations_modtime();

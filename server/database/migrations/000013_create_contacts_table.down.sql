@@ -48,9 +48,9 @@ DROP INDEX IF EXISTS idx_mv_contact_tags_tag;
 DROP INDEX IF EXISTS idx_mv_contact_tags_active;
 DROP INDEX IF EXISTS idx_mv_contact_tags_blocked;
 
-ALTER TABLE contacts DROP CONSTRAINT IF EXISTS chk_contact_tenant_id_channel_id_channel_user_id;
-ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_name_length_check;
-ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_email_format_check;
+-- ALTER TABLE contacts DROP CONSTRAINT IF EXISTS chk_contact_tenant_id_channel_id_channel_user_id;
+-- ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_name_length_check;
+-- ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_email_format_check;
 
 DROP TABLE IF EXISTS contacts CASCADE;
 

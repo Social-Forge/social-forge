@@ -28,10 +28,19 @@ CREATE INDEX idx_users_created_at ON users(created_at);
 CREATE INDEX idx_users_updated_at ON users(updated_at);
 CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_users_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
 CREATE TRIGGER update_users_modtime
 BEFORE UPDATE ON users
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_users_modtime();
 
 COMMENT ON TABLE users IS 'All user accounts in the system';
 COMMENT ON COLUMN users.password_hash IS 'Bcrypt hashed password';

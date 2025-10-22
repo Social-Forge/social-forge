@@ -16,7 +16,15 @@ CREATE INDEX idx_message_reads_created_at ON message_reads(created_at);
 CREATE INDEX idx_message_reads_updated_at ON message_reads(updated_at);
 CREATE INDEX idx_message_reads_deleted_at ON message_reads(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_message_reads_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_message_reads_modtime
 BEFORE UPDATE ON message_reads
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_message_reads_modtime();

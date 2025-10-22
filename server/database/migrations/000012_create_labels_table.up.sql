@@ -25,7 +25,15 @@ CREATE INDEX idx_labels_created_at ON labels(created_at);
 CREATE INDEX idx_labels_updated_at ON labels(updated_at);
 CREATE INDEX idx_labels_deleted_at ON labels(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_labels_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_labels_modtime
 BEFORE UPDATE ON labels
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_labels_modtime();

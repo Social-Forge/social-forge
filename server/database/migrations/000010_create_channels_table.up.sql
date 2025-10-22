@@ -17,9 +17,17 @@ CREATE INDEX idx_channels_created_at ON channels(created_at);
 CREATE INDEX idx_channels_updated_at ON channels(updated_at);
 CREATE INDEX idx_channels_deleted_at ON channels(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_channels_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_channels_modtime
 BEFORE UPDATE ON channels
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_channels_modtime();
 
 COMMENT ON TABLE channels IS 'Available communication channels whatsapp, meta_whatsapp, meta_messenger, telegram, webchat, linkchat';

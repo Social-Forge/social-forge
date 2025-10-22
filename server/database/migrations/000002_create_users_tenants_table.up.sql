@@ -37,11 +37,18 @@ CREATE INDEX idx_tenants_updated_at ON tenants(updated_at);
 CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at);
 CREATE INDEX idx_tenants_subscription_status ON tenants(subscription_status);
 
+CREATE OR REPLACE FUNCTION update_tenants_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_tenants_modtime
 BEFORE UPDATE ON tenants
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_tenants_modtime();
 
 COMMENT ON TABLE tenants IS 'Multi-tenant organizations/companies';
 COMMENT ON COLUMN tenants.slug IS 'URL-friendly unique identifier';

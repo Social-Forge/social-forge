@@ -26,7 +26,15 @@ CREATE INDEX idx_roles_level ON roles(level);
 COMMENT ON TABLE roles IS 'User roles in the system';
 COMMENT ON COLUMN roles.level IS '0=guest/default, 1=superadmin, 2=admin, 3=tenant_owner, 4=supervisor, 5=agent';
 
+CREATE OR REPLACE FUNCTION update_roles_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_roles_modtime
 BEFORE UPDATE ON roles
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_roles_modtime();

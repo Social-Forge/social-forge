@@ -18,7 +18,15 @@ CREATE INDEX idx_page_sections_created_at ON page_sections(created_at);
 CREATE INDEX idx_page_sections_updated_at ON page_sections(updated_at);
 CREATE INDEX idx_page_sections_deleted_at ON page_sections(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_page_sections_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE TRIGGER update_page_sections_modtime
 BEFORE UPDATE ON page_sections
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_page_sections_modtime();

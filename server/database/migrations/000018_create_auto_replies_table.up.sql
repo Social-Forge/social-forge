@@ -27,8 +27,15 @@ CREATE INDEX idx_auto_replies_created_at ON auto_replies(created_at);
 CREATE INDEX idx_auto_replies_updated_at ON auto_replies(updated_at);
 CREATE INDEX idx_auto_replies_deleted_at ON auto_replies(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_auto_replies_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_auto_replies_modtime
 BEFORE UPDATE ON auto_replies
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_auto_replies_modtime();

@@ -23,10 +23,18 @@ CREATE INDEX idx_divisions_created_at ON divisions(created_at);
 CREATE INDEX idx_divisions_updated_at ON divisions(updated_at);
 CREATE INDEX idx_divisions_deleted_at ON divisions(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_divisions_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_divisions_modtime
 BEFORE UPDATE ON divisions
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_divisions_modtime();
 
 COMMENT ON TABLE divisions IS 'Groups/teams within a tenant (rotator groups)';
 COMMENT ON COLUMN divisions.routing_type IS 'equal, percentage, or priority distribution';

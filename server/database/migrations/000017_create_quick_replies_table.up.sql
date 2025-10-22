@@ -31,7 +31,15 @@ CREATE INDEX idx_quick_replies_created_at ON quick_replies(created_at);
 CREATE INDEX idx_quick_replies_updated_at ON quick_replies(updated_at);
 CREATE INDEX idx_quick_replies_deleted_at ON quick_replies(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_quick_replies_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_quick_replies_modtime
 BEFORE UPDATE ON quick_replies
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_quick_replies_modtime();

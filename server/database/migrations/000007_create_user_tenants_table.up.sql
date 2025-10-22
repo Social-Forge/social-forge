@@ -18,9 +18,17 @@ CREATE INDEX idx_user_tenants_created_at ON user_tenants(created_at);
 CREATE INDEX idx_user_tenants_updated_at ON user_tenants(updated_at);
 CREATE INDEX idx_user_tenants_deleted_at ON user_tenants(deleted_at);
 
+CREATE OR REPLACE FUNCTION update_user_tenants_modtime()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TRIGGER update_user_tenants_modtime
 BEFORE UPDATE ON user_tenants
 FOR EACH ROW
-EXECUTE FUNCTION update_modified_column();
+EXECUTE FUNCTION update_user_tenants_modtime();
 
 COMMENT ON TABLE user_tenants IS 'Users can belong to multiple tenants with different roles';
