@@ -1,11 +1,13 @@
 aink.txt
 my-env-secret.txt
+docs.txt
 .rsync-exclude
 .vscode/
 # Environment files
 .env
 .env.local
 .env.*.local
+.env.dev
 *.env
 
 # Logs

@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-socialforge}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-socialforge123}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-JombSky@2305Ryan}
       POSTGRES_DB: ${DB_NAME:-socialforge_db}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
@@ -18,7 +18,11 @@ services:
     networks:
       - socialforge-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-socialforge}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-socialforge} -d ${DB_NAME:-socialforge_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,7 +32,7 @@ services:
     image: redis:7-alpine
     container_name: socialforge-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123} --appendonly yes
+    command: redis-server --requirepass ${REDIS_PASSWORD:-JombSky@2305Ryan} --appendonly yes
     volumes:
       - redis_data:/data
     ports:

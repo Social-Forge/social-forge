@@ -12,8 +12,8 @@ MIGRATION_DIR=database/migrations
 SEEDER_DIR=database/seeders
 
 # Docker variables
-DOCKER_COMPOSE=docker-compose
-DOCKER_COMPOSE_PROD=docker-compose -f docker-compose.prod.yml
+DOCKER_COMPOSE=docker compose
+DOCKER_COMPOSE_PROD=docker compose -f docker-compose.prod.yml
 
 # Database variables
 DB_HOST?=localhost

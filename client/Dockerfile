@@ -19,7 +19,7 @@ COPY . .
 EXPOSE 5173
 
 # Default command for development
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # Stage 2: Builder
 FROM node:24-alpine AS builder
