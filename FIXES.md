@@ -201,15 +201,15 @@ This balances:
 
 **Single Instance (with container_name):**
 
-- postgres → `socialfoger-postgres-prod`
-- redis → `socialfoger-redis-prod`
-- minio → `socialfoger-minio-prod`
+- postgres → `socialforge-postgres-prod`
+- redis → `socialforge-redis-prod`
+- minio → `socialforge-minio-prod`
 
 **Multiple Replicas (auto-generated names):**
 
-- backend → `socialfoger-backend-1`, `socialfoger-backend-2`, `socialfoger-backend-3`
-- worker → `socialfoger-worker-1`, `socialfoger-worker-2`
-- client → `socialfoger-client-1`, `socialfoger-client-2`
+- backend → `socialforge-backend-1`, `socialforge-backend-2`, `socialforge-backend-3`
+- worker → `socialforge-worker-1`, `socialforge-worker-2`
+- client → `socialforge-client-1`, `socialforge-client-2`
 
 ---
 

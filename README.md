@@ -1,4 +1,4 @@
-# 🚀 Social Foger
+# 🚀 Social Forge
 
 > **Omnichannel Customer Engagement Platform** with integrated Web Builder and WhatsApp Rotator
 
@@ -94,8 +94,8 @@ A powerful multi-tenant platform for managing customer conversations across mult
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/socialfoger.git
-cd socialfoger
+git clone https://github.com/yourusername/socialforge.git
+cd socialforge
 ```
 
 ### 2. Run installation script
@@ -142,7 +142,7 @@ make seed
 ## 📁 Project Structure
 
 ```
-socialfoger/
+socialforge/
 ├── .github/workflows/      # CI/CD pipelines
 ├── server/                 # Golang backend
 │   ├── cmd/               # Application entry points
@@ -359,4 +359,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by Social Foger Team
+Made with ❤️ by Social Forge Team
