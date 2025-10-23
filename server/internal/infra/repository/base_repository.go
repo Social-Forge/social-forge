@@ -198,29 +198,6 @@ func (qb *QueryBuilder) ChangeBase(newBase string) *QueryBuilder {
 	qb.BaseQuery = newBase
 	return qb
 }
-func isValidColumnName(name string) bool {
-	if name == "" || len(name) > 50 {
-		return false
-	}
-
-	// Hanya allow: letters, numbers, underscore
-	for _, r := range name {
-		if !((r >= 'a' && r <= 'z') ||
-			(r >= 'A' && r <= 'Z') ||
-			(r >= '0' && r <= '9') ||
-			r == '_') {
-			return false
-		}
-	}
-
-	// ❌ Block SQL keywords dan sensitive fields
-	blockedKeywords := map[string]bool{
-		"password": true, "secret": true, "token": true,
-		"delete": true, "drop": true, "insert": true, "update": true,
-	}
-
-	return !blockedKeywords[strings.ToLower(name)]
-}
 
 // Pagination holds pagination information
 type Pagination struct {
@@ -244,17 +221,21 @@ func (p *Pagination) CalculateTotalPages() {
 
 // Filter holds filter parameters
 type Filter struct {
-	Search          string                 `json:"search,omitempty"`
-	Status          string                 `json:"status,omitempty"`
-	IncludeDeleted  *bool                  `json:"include_deleted,omitempty"`
-	IsActive        *bool                  `json:"is_active,omitempty"`
-	TenantID        *uuid.UUID             `json:"tenant_id,omitempty"`
-	UserID          *uuid.UUID             `json:"user_id,omitempty"`
-	AssignedAgentID *uuid.UUID             `json:"assigned_agent_id,omitempty"`
-	DivisionID      *uuid.UUID             `json:"division_id,omitempty"`
-	ContactID       *uuid.UUID             `json:"contact_id,omitempty"`
-	ChannelID       *uuid.UUID             `json:"channel_id,omitempty"`
-	Extra           map[string]interface{} `json:"extra,omitempty"`
+	Search               string                 `json:"search,omitempty"`
+	Status               string                 `json:"status,omitempty"`
+	IncludeDeleted       *bool                  `json:"include_deleted,omitempty"`
+	IsActive             *bool                  `json:"is_active,omitempty"`
+	IsVerified           *bool                  `json:"is_verified,omitempty"`
+	TenantID             *uuid.UUID             `json:"tenant_id,omitempty"`
+	UserID               *uuid.UUID             `json:"user_id,omitempty"`
+	AssignedAgentID      *uuid.UUID             `json:"assigned_agent_id,omitempty"`
+	DivisionID           *uuid.UUID             `json:"division_id,omitempty"`
+	ContactID            *uuid.UUID             `json:"contact_id,omitempty"`
+	ChannelID            *uuid.UUID             `json:"channel_id,omitempty"`
+	ChannelIntegrationID *uuid.UUID             `json:"channel_integration_id,omitempty"`
+	SubscriptionPlanID   *string                `json:"subscription_plan_id,omitempty"`
+	RoutingType          *string                `json:"routing_type,omitempty"`
+	Extra                map[string]interface{} `json:"extra,omitempty"`
 }
 
 // ListOptions combines pagination and filtering
@@ -288,4 +269,27 @@ func sanitizeField(field string) string {
 		}
 	}
 	return result.String()
+}
+func isValidColumnName(name string) bool {
+	if name == "" || len(name) > 50 {
+		return false
+	}
+
+	// Hanya allow: letters, numbers, underscore
+	for _, r := range name {
+		if !((r >= 'a' && r <= 'z') ||
+			(r >= 'A' && r <= 'Z') ||
+			(r >= '0' && r <= '9') ||
+			r == '_') {
+			return false
+		}
+	}
+
+	// ❌ Block SQL keywords dan sensitive fields
+	blockedKeywords := map[string]bool{
+		"password": true, "secret": true, "token": true,
+		"delete": true, "drop": true, "insert": true, "update": true,
+	}
+
+	return !blockedKeywords[strings.ToLower(name)]
 }

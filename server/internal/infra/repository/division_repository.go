@@ -20,7 +20,7 @@ type DivisionRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Division, error)
 	FindBySlug(ctx context.Context, tenantID uuid.UUID, slug string) (*entity.Division, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
-	ListByTenant(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Division, int64, error)
+	Search(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Division, int64, error)
 	Update(ctx context.Context, division *entity.Division) (*entity.Division, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -120,7 +120,7 @@ func (r *divisionRepository) FindByID(ctx context.Context, id uuid.UUID) (*entit
 	err := pgxscan.Get(subCtx, r.db, &division, query, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("division with id %s not found: %w", id, err)
 		}
 		return nil, fmt.Errorf("failed to find division by id: %w", err)
 	}
@@ -136,7 +136,7 @@ func (r *divisionRepository) FindBySlug(ctx context.Context, tenantID uuid.UUID,
 	err := pgxscan.Get(subCtx, r.db, &division, query, tenantID, slug)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("division with slug %s for tenant %s not found: %w", slug, tenantID, err)
 		}
 		return nil, fmt.Errorf("failed to find division by slug: %w", err)
 	}
@@ -234,13 +234,13 @@ func (r *divisionRepository) Count(ctx context.Context, filter *Filter) (int64, 
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&count)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, nil
+			return 0, fmt.Errorf("no divisions found: %w", err)
 		}
 		return 0, fmt.Errorf("failed to count division: %w", err)
 	}
 	return count, nil
 }
-func (r *divisionRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Division, int64, error) {
+func (r *divisionRepository) Search(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Division, int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
@@ -307,16 +307,22 @@ func (r *divisionRepository) buildBaseQuery(baseQuery string, filter *Filter) *Q
 	} else {
 		qb.Where("deleted_at IS NULL")
 	}
-	if filter.TenantID != nil {
-		qb.Where("tenant_id = $?", *filter.TenantID)
+	if filter.UserID != nil {
+		qb.Where("owner_id = $?", *filter.UserID)
 	}
 
 	if filter.Search != "" {
 		searchPattern := "%" + filter.Search + "%"
-		qb.Where("(name ILIKE $? OR slug ILIKE $? OR description ILIKE $? OR routing_type ILIKE $?)", searchPattern, searchPattern, searchPattern, searchPattern)
+		qb.Where("(name ILIKE $? OR slug ILIKE $? OR subdomain ILIKE $? OR description ILIKE $? OR routing_type ILIKE $?)", searchPattern, searchPattern, searchPattern, searchPattern, searchPattern)
 	}
-	if filter.Status != "" {
-		qb.Where("subscription_status = $?", filter.Status)
+	if filter.TenantID != nil {
+		qb.Where("tenant_id = $?", *filter.TenantID)
+	}
+	if filter.RoutingType != nil {
+		qb.Where("routing_type = $?", *filter.RoutingType)
+	}
+	if filter.IsActive != nil {
+		qb.Where("is_active = $?", *filter.IsActive)
 	}
 	if filter.Extra != nil {
 		for key, value := range filter.Extra {

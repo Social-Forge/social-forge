@@ -19,14 +19,14 @@ type ConversationRepository interface {
 	Create(ctx context.Context, conv *entity.Conversation) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Conversation, error)
 	FindByContactID(ctx context.Context, contactID uuid.UUID) ([]*entity.Conversation, error)
-	ListByTenant(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Conversation, int64, error)
-	ListByAgent(ctx context.Context, agentID uuid.UUID, opts *ListOptions) ([]*entity.Conversation, int64, error)
-	ListByDivision(ctx context.Context, divisionID uuid.UUID, opts *ListOptions) ([]*entity.Conversation, int64, error)
-	Count(ctx context.Context, tenantID uuid.UUID, filter *Filter) (int64, error)
+	Search(ctx context.Context, opts *ListOptions) ([]*entity.Conversation, int64, error)
+	Count(ctx context.Context, filter *Filter) (int64, error)
 	Update(ctx context.Context, conv *entity.Conversation) (*entity.Conversation, error)
 	AssignToAgent(ctx context.Context, id uuid.UUID, agentID uuid.UUID) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) (string, error)
 	IncrementMessageCount(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	HardDelete(ctx context.Context, id uuid.UUID) error
 }
 
 type conversationRepository struct {
@@ -84,7 +84,7 @@ func (r *conversationRepository) FindByID(ctx context.Context, id uuid.UUID) (*e
 	err := pgxscan.Get(subCtx, r.db, conv, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("conversation not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to find conversation: %w", err)
 	}
@@ -100,143 +100,17 @@ func (r *conversationRepository) FindByContactID(ctx context.Context, contactID 
 	err := pgxscan.Select(subCtx, r.db, &conversations, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("no conversations found for contact id %s: %w", contactID.String(), err)
 		}
 		return nil, fmt.Errorf("failed to find conversations by contact id: %w", err)
 	}
 	return conversations, nil
 }
-func (r *conversationRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Conversation, int64, error) {
+func (r *conversationRepository) Count(ctx context.Context, filter *Filter) (int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
-	defer cancel()
-
-	if opts == nil {
-		opts = NewListOptions()
-	}
-
-	if opts.Filter == nil {
-		opts.Filter = &Filter{}
-	}
-	opts.Filter.TenantID = &tenantID
-
-	totalRows, err := r.Count(ctx, tenantID, opts.Filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Get data
-	qb := r.buildBaseQuery("SELECT * FROM conversations", opts.Filter)
-
-	if opts.OrderBy != "" {
-		qb.OrderByField(opts.OrderBy, opts.OrderDir)
-	}
-	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
-		qb.WithLimit(opts.Pagination.Limit)
-		if opts.Pagination.Page > 1 {
-			qb.WithOffset(opts.Pagination.GetOffset())
-		}
-	}
-
-	query, args := qb.Build()
-	var conversations []*entity.Conversation
-
-	err = pgxscan.Select(subCtx, r.db, &conversations, query, args...)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, 0, nil
-		}
-		return nil, 0, fmt.Errorf("failed to list conversations by tenant id: %w", err)
-	}
-	return conversations, totalRows, nil
-}
-func (r *conversationRepository) ListByAgent(ctx context.Context, agentID uuid.UUID, opts *ListOptions) ([]*entity.Conversation, int64, error) {
-	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
-	defer cancel()
-
-	if opts == nil {
-		opts = NewListOptions()
-	}
-	if opts.Filter == nil {
-		opts.Filter = &Filter{}
-	}
-	opts.Filter.AssignedAgentID = &agentID
-
-	totalRows, err := r.countQuery(ctx, opts.Filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Get data
-	qb := r.buildBaseQuery("SELECT * FROM conversations", opts.Filter)
-
-	if opts.OrderBy != "" {
-		qb.OrderByField(opts.OrderBy, opts.OrderDir)
-	}
-	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
-		qb.WithLimit(opts.Pagination.Limit)
-		if opts.Pagination.Page > 1 {
-			qb.WithOffset(opts.Pagination.GetOffset())
-		}
-	}
-	query, args := qb.Build()
-
-	var conversations []*entity.Conversation
-	err = pgxscan.Select(subCtx, r.db, &conversations, query, args...)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, 0, nil
-		}
-		return nil, 0, fmt.Errorf("failed to list conversations by agent id: %w", err)
-	}
-	return conversations, totalRows, nil
-}
-func (r *conversationRepository) ListByDivision(ctx context.Context, divisionID uuid.UUID, opts *ListOptions) ([]*entity.Conversation, int64, error) {
-	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
-	defer cancel()
-
-	if opts == nil {
-		opts = NewListOptions()
-	}
-	if opts.Filter == nil {
-		opts.Filter = &Filter{}
-	}
-	opts.Filter.DivisionID = &divisionID
-
-	totalRows, err := r.countQuery(ctx, opts.Filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	// Get data
-	qb := r.buildBaseQuery("SELECT * FROM conversations", opts.Filter)
-
-	if opts.OrderBy != "" {
-		qb.OrderByField(opts.OrderBy, opts.OrderDir)
-	}
-	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
-		qb.WithLimit(opts.Pagination.Limit)
-		if opts.Pagination.Page > 1 {
-			qb.WithOffset(opts.Pagination.GetOffset())
-		}
-	}
-	query, args := qb.Build()
-
-	var conversations []*entity.Conversation
-	err = pgxscan.Select(subCtx, r.db, &conversations, query, args...)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, 0, nil
-		}
-		return nil, 0, fmt.Errorf("failed to list conversations by division id: %w", err)
-	}
-	return conversations, totalRows, nil
-}
-func (r *conversationRepository) Count(ctx context.Context, tenantID uuid.UUID, filter *Filter) (int64, error) {
-	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
 	qb := r.buildBaseQuery("SELECT COUNT(*) FROM conversations", filter)
-	qb.Where("tenant_id = $?", tenantID)
 	query, args := qb.Build()
 
 	var count int64
@@ -248,6 +122,50 @@ func (r *conversationRepository) Count(ctx context.Context, tenantID uuid.UUID, 
 		return 0, fmt.Errorf("failed to count conversations: %w", err)
 	}
 	return count, nil
+}
+
+func (r *conversationRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.Conversation, int64, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
+	defer cancel()
+	if opts == nil {
+		opts = NewListOptions()
+	}
+
+	if opts.Filter == nil {
+		opts.Filter = &Filter{}
+	}
+
+	totalRows, err := r.Count(ctx, opts.Filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	qb := r.buildBaseQuery("SELECT * FROM conversations", opts.Filter)
+	if opts.OrderBy != "" {
+		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	}
+
+	if opts.OrderBy != "" {
+		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	}
+	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
+		qb.WithLimit(opts.Pagination.Limit)
+		if opts.Pagination.Page > 1 {
+			qb.WithOffset(opts.Pagination.GetOffset())
+		}
+	}
+
+	query, args := qb.Build()
+
+	var conversations []*entity.Conversation
+	err = pgxscan.Select(subCtx, r.db, &conversations, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, 0, nil
+		}
+		return nil, 0, fmt.Errorf("failed to list conversations: %w", err)
+	}
+	return conversations, totalRows, nil
 }
 func (r *conversationRepository) Update(ctx context.Context, conv *entity.Conversation) (*entity.Conversation, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
@@ -376,25 +294,52 @@ func (r *conversationRepository) IncrementMessageCount(ctx context.Context, id u
 	}
 	return nil
 }
-
-// Helpers
-func (r *conversationRepository) countQuery(ctx context.Context, filter *Filter) (int64, error) {
-	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+func (r *conversationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
 	defer cancel()
 
-	qb := r.buildBaseQuery("SELECT COUNT(*) FROM conversations", filter)
-	query, args := qb.Build()
+	query := `UPDATE conversations
+	SET deleted_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL`
 
-	var count int64
-	err := r.db.QueryRow(subCtx, query, args...).Scan(&count)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, nil
-		}
-		return 0, fmt.Errorf("failed to count conversations: %w", err)
+	args := []interface{}{
+		id,
 	}
-	return count, nil
+
+	row, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete conversation: %w", err)
+	}
+
+	rowsAffected := row.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("conversation not found: %w", pgx.ErrNoRows)
+	}
+	return nil
 }
+func (r *conversationRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
+	defer cancel()
+
+	query := `DELETE FROM conversations WHERE id = $1`
+
+	args := []interface{}{
+		id,
+	}
+
+	row, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to hard delete conversation: %w", err)
+	}
+
+	rowsAffected := row.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("conversation not found: %w", pgx.ErrNoRows)
+	}
+	return nil
+}
+
+// Helpers
 func (r *conversationRepository) buildBaseQuery(baseQuery string, filter *Filter) *QueryBuilder {
 	qb := NewQueryBuilder(baseQuery)
 
@@ -402,6 +347,11 @@ func (r *conversationRepository) buildBaseQuery(baseQuery string, filter *Filter
 	if filter == nil {
 		qb.Where("deleted_at IS NULL")
 		return qb
+	}
+	if filter.IncludeDeleted != nil && *filter.IncludeDeleted {
+		qb.Where("deleted_at IS NOT NULL")
+	} else {
+		qb.Where("deleted_at IS NULL")
 	}
 
 	// ✅ Tenant ID filter (jika ada)
@@ -418,14 +368,11 @@ func (r *conversationRepository) buildBaseQuery(baseQuery string, filter *Filter
 	if filter.DivisionID != nil {
 		qb.Where("division_id = $?", *filter.DivisionID)
 	}
-	// Deleted filter
-	if filter.IncludeDeleted != nil && *filter.IncludeDeleted {
-		qb.Where("deleted_at IS NOT NULL")
-	} else {
-		qb.Where("deleted_at IS NULL")
+	// ✅ Channel Integration ID filter (jika ada)
+	if filter.ChannelIntegrationID != nil {
+		qb.Where("channel_integration_id = $?", *filter.ChannelIntegrationID)
 	}
 
-	// Other filters
 	if filter.Search != "" {
 		searchPattern := "%" + filter.Search + "%"
 		qb.Where("(first_message_at::text ILIKE $? OR last_message_at::text ILIKE $?)",

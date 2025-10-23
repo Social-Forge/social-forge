@@ -8,6 +8,7 @@ import (
 	"social-forge/internal/infra/metrics"
 	minioclient "social-forge/internal/infra/minio-client"
 	redisclient "social-forge/internal/infra/redis-client"
+	"social-forge/internal/infra/repository"
 	"strings"
 	"time"
 
@@ -15,12 +16,21 @@ import (
 )
 
 type Container struct {
-	Logger       *zap.Logger
-	DBPool       *config.Database
-	AppMetrics   *metrics.AppMetrics
-	RedisMetrics *metrics.RedisMetrics
-	Redis        *redisclient.RedisClient
-	Minio        *minioclient.MinioClient
+	Config           *config.Config
+	Logger           *zap.Logger
+	DBPool           *config.Database
+	AppMetrics       *metrics.AppMetrics
+	RedisMetrics     *metrics.RedisMetrics
+	RedisClient      *redisclient.RedisClient
+	MinioClient      *minioclient.MinioClient
+	RoleRepo         *repository.RoleRepository
+	PermissionRepo   *repository.PermissionRepository
+	UserRepo         *repository.UserRepository
+	TenantRepo       *repository.TenantRepository
+	DivisionRepo     *repository.DivisionRepository
+	ConversationRepo *repository.ConversationRepository
+	MessageRepo      *repository.MessageRepository
+	ContactRepo      *repository.ContactRepository
 }
 
 func NewContainer(ctx context.Context) (*Container, error) {
@@ -28,6 +38,7 @@ func NewContainer(ctx context.Context) (*Container, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	logger := config.GetLogger(&init.App)
 	metrics.InitMetrics()
 
@@ -45,13 +56,32 @@ func NewContainer(ctx context.Context) (*Container, error) {
 		return nil, err
 	}
 
+	roleRepo := repository.NewRoleRepository(dbPool.Pool)
+	permissionRepo := repository.NewPermissionRepository(dbPool.Pool)
+	userRepo := repository.NewUserRepository(dbPool.Pool)
+	tenantRepo := repository.NewTenantRepository(dbPool.Pool)
+	divisionRepo := repository.NewDivisionRepository(dbPool.Pool)
+	// channelRepo := repository.NewChannelRepository(dbPool.Pool)
+	conversationRepo := repository.NewConversationRepository(dbPool.Pool)
+	messageRepo := repository.NewMessageRepository(dbPool.Pool)
+	contactRepo := repository.NewContactRepository(dbPool.Pool)
+
 	return &Container{
-		Logger:       logger,
-		AppMetrics:   metrics.GetAppMetrics(),
-		RedisMetrics: metrics.GetRedisMetrics(),
-		DBPool:       dbPool,
-		Redis:        redis,
-		Minio:        minio,
+		Config:           init,
+		Logger:           logger,
+		AppMetrics:       metrics.GetAppMetrics(),
+		RedisMetrics:     metrics.GetRedisMetrics(),
+		DBPool:           dbPool,
+		RedisClient:      redis,
+		MinioClient:      minio,
+		RoleRepo:         &roleRepo,
+		PermissionRepo:   &permissionRepo,
+		UserRepo:         &userRepo,
+		TenantRepo:       &tenantRepo,
+		DivisionRepo:     &divisionRepo,
+		ConversationRepo: &conversationRepo,
+		MessageRepo:      &messageRepo,
+		ContactRepo:      &contactRepo,
 	}, nil
 }
 func initRedis(
@@ -71,21 +101,21 @@ func initRedis(
 
 	return instance, nil
 }
-func (dep *Container) Close() error {
+func (cont *Container) Close() error {
 	var errs []error
 
-	if dep.DBPool != nil {
-		dep.DBPool.Close()
+	if cont.DBPool != nil {
+		cont.DBPool.Close()
 	}
-	if dep.Redis != nil {
-		if err := dep.Redis.Close(); err != nil {
-			dep.Logger.Error("Redis shutdown error", zap.Error(err))
+	if cont.RedisClient != nil {
+		if err := cont.RedisClient.Close(); err != nil {
+			cont.Logger.Error("Redis shutdown error", zap.Error(err))
 		} else {
-			dep.Logger.Info("Redis connection closed successfully")
+			cont.Logger.Info("Redis connection closed successfully")
 		}
 	}
-	if dep.Logger != nil {
-		if err := dep.Logger.Sync(); err != nil {
+	if cont.Logger != nil {
+		if err := cont.Logger.Sync(); err != nil {
 			// Handle known harmless errors (e.g., Windows file handle)
 			if !isHarmlessSyncError(err) {
 				errs = append(errs, fmt.Errorf("logger sync error: %w", err))

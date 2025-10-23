@@ -34,6 +34,41 @@ type Contact struct {
 // ContactMetadata holds custom fields
 type ContactMetadata map[string]interface{}
 
+type ContactSearch struct {
+	Contact
+	ChannelName string `db:"channel_name"`
+}
+
+type RecentContact struct {
+	Contact
+	ChannelName      string  `db:"channel_name"`
+	DaysSinceContact float64 `db:"days_since_contact"`
+}
+
+type ContactSummary struct {
+	TenantID            uuid.UUID `db:"tenant_id"`
+	ChannelID           uuid.UUID `db:"channel_id"`
+	TotalContacts       int       `db:"total_contacts"`
+	ActiveContacts      int       `db:"active_contacts"`
+	BlockedContacts     int       `db:"blocked_contacts"`
+	RecentContacts      int       `db:"recent_contacts"`
+	ContactsWithEmail   int       `db:"contacts_with_email"`
+	ContactsWithPhone   int       `db:"contacts_with_phone"`
+	AvgDaysSinceContact float64   `db:"avg_days_since_contact"`
+	LatestContact       time.Time `db:"latest_contact"`
+	OldestContact       time.Time `db:"oldest_contact"`
+}
+
+type TagAnalytics struct {
+	TenantID            uuid.UUID `db:"tenant_id"`
+	ChannelID           uuid.UUID `db:"channel_id"`
+	Tag                 string    `db:"tag"`
+	ContactCount        int       `db:"contact_count"`
+	ActiveCount         int       `db:"active_count"`
+	BlockedCount        int       `db:"blocked_count"`
+	AvgDaysSinceContact float64   `db:"avg_days_since_contact"`
+}
+
 func (cm ContactMetadata) Value() (driver.Value, error) {
 	if cm == nil {
 		return nil, nil

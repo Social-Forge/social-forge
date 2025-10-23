@@ -10,6 +10,7 @@ BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 GO_VERSION=$(shell go version | awk '{print $$3}')
 MIGRATION_DIR=database/migrations
 SEEDER_DIR=database/seeders
+TOML_FILE=.air.toml
 
 # Docker variables
 DOCKER_COMPOSE=docker compose
@@ -43,13 +44,13 @@ help:
 ## run: Run the application in development mode
 run:
 	@echo "$(GREEN)Starting application...$(NC)"
-	@air -c .air.toml
+	@air -c $(TOML_FILE) 
 
 ## dev: Run the application with hot reload
 dev:
 	@echo "$(GREEN)Starting development server with hot reload...$(NC)"
-	@air -c .air.toml
-
+	@air -c $(TOML_FILE)
+		
 ## build: Build the application binaries
 build:
 	@echo "$(GREEN)Building application...$(NC)"

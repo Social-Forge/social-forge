@@ -104,7 +104,7 @@ func (r *messageRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity
 	err := pgxscan.Get(subCtx, r.db, &msg, query, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("message %s not found", id)
 		}
 		return nil, fmt.Errorf("failed to find message: %w", err)
 	}

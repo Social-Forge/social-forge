@@ -19,7 +19,9 @@ type PermissionRepository interface {
 	Create(ctx context.Context, permission *entity.Permission) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Permission, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Permission, error)
-	List(ctx context.Context, opts *ListOptions) ([]*entity.Permission, error)
+	Count(ctx context.Context, filter *Filter) (int64, error)
+	Search(ctx context.Context, opts *ListOptions) ([]*entity.Permission, int64, error)
+	GetAll(ctx context.Context) ([]*entity.Permission, error)
 	FindByRoleID(ctx context.Context, roleID uuid.UUID) ([]*entity.Permission, error)
 	Update(ctx context.Context, permission *entity.Permission) (*entity.Permission, error)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -133,7 +135,7 @@ func (r *permissionRepository) FindByID(ctx context.Context, id uuid.UUID) (*ent
 	err := pgxscan.Get(subCtx, r.db, &permission, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("permission %s not found", id)
 		}
 		return nil, fmt.Errorf("failed to find permission by id: %w", err)
 	}
@@ -157,32 +159,27 @@ func (r *permissionRepository) FindBySlug(ctx context.Context, slug string) (*en
 	err := pgxscan.Get(subCtx, r.db, &permission, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("permission %s not found", slug)
 		}
 		return nil, fmt.Errorf("failed to find permission by slug: %w", err)
 	}
 	return &permission, nil
 }
-func (r *permissionRepository) List(ctx context.Context, opts *ListOptions) ([]*entity.Permission, error) {
+func (r *permissionRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.Permission, int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
 	if opts == nil {
 		opts = NewListOptions()
 	}
-	qb := NewQueryBuilder("SELECT * FROM permissions")
-	if opts.Filter.IncludeDeleted != nil && *opts.Filter.IncludeDeleted {
-		qb.Where("deleted_at IS NOT NULL")
-	} else {
-		qb.Where("deleted_at IS NULL")
+
+	totalRows, err := r.Count(subCtx, opts.Filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count permissions: %w", err)
 	}
-	if opts.Filter != nil {
-		if opts.Filter.Search != "" {
-			searchPattern := "%" + opts.Filter.Search + "%"
-			qb.Where("(name ILIKE $? OR slug ILIKE $? OR resource ILIKE $? OR action ILIKE $?)",
-				searchPattern, searchPattern, searchPattern)
-		}
-	}
+
+	qb := r.buildBaseQuery("SELECT * FROM permissions", opts.Filter)
+
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
 	} else {
@@ -198,7 +195,23 @@ func (r *permissionRepository) List(ctx context.Context, opts *ListOptions) ([]*
 	query, args := qb.Build()
 
 	var permissions []*entity.Permission
-	err := pgxscan.Select(subCtx, r.db, &permissions, query, args...)
+	err = pgxscan.Select(subCtx, r.db, &permissions, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, totalRows, fmt.Errorf("no permissions found")
+		}
+		return nil, totalRows, fmt.Errorf("failed to list permissions: %w", err)
+	}
+	return permissions, totalRows, nil
+}
+func (r *permissionRepository) GetAll(ctx context.Context) ([]*entity.Permission, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `SELECT * FROM permissions WHERE deleted_at IS NULL`
+
+	var permissions []*entity.Permission
+	err := pgxscan.Select(subCtx, r.db, &permissions, query)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -206,6 +219,20 @@ func (r *permissionRepository) List(ctx context.Context, opts *ListOptions) ([]*
 		return nil, fmt.Errorf("failed to list permissions: %w", err)
 	}
 	return permissions, nil
+}
+func (r *permissionRepository) Count(ctx context.Context, filter *Filter) (int64, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	qb := r.buildBaseQuery("SELECT COUNT(*) FROM permissions", filter)
+	query, args := qb.Build()
+
+	var count int64
+	err := r.db.QueryRow(subCtx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count permissions: %w", err)
+	}
+	return count, nil
 }
 func (r *permissionRepository) FindByRoleID(ctx context.Context, roleID uuid.UUID) ([]*entity.Permission, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
@@ -227,7 +254,7 @@ func (r *permissionRepository) FindByRoleID(ctx context.Context, roleID uuid.UUI
 	err := pgxscan.Select(subCtx, r.db, &permissions, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("no permissions found for role %s", roleID)
 		}
 		return nil, fmt.Errorf("failed to find permissions by role id: %w", err)
 	}
@@ -248,12 +275,12 @@ func (r *permissionRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	`
 	args := []interface{}{id}
 
-	_, err := r.db.Exec(subCtx, query, args...)
+	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("permission %s not found", id)
-		}
 		return fmt.Errorf("failed to delete permission: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("permission %s not found", id)
 	}
 	return nil
 }
@@ -271,12 +298,12 @@ func (r *permissionRepository) HardDelete(ctx context.Context, id uuid.UUID) err
 	`
 	args := []interface{}{id}
 
-	_, err := r.db.Exec(subCtx, query, args...)
+	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("permission %s not found", id)
-		}
 		return fmt.Errorf("failed to hard delete permission: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("permission %s not found", id)
 	}
 	return nil
 }
@@ -295,12 +322,33 @@ func (r *permissionRepository) Restore(ctx context.Context, id uuid.UUID) error 
 	`
 	args := []interface{}{id}
 
-	_, err := r.db.Exec(subCtx, query, args...)
+	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return entity.ErrorDataNotFound("Permission", id)
-		}
 		return fmt.Errorf("failed to restore permission: %w", err)
 	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("permission %s not found", id)
+	}
 	return nil
+}
+func (r *permissionRepository) buildBaseQuery(baseQuery string, filter *Filter) *QueryBuilder {
+	qb := NewQueryBuilder(baseQuery)
+
+	if filter == nil {
+		qb.Where("deleted_at IS NULL")
+		return qb
+	}
+
+	if filter.IncludeDeleted != nil && *filter.IncludeDeleted {
+		qb.Where("deleted_at IS NOT NULL")
+	} else {
+		qb.Where("deleted_at IS NULL")
+	}
+
+	if filter.Search != "" {
+		searchPattern := "%" + filter.Search + "%"
+		qb.Where("(name ILIKE $? OR slug ILIKE $? OR description ILIKE $? OR resource ILIKE $? OR action ILIKE $?)", searchPattern, searchPattern, searchPattern)
+	}
+
+	return qb
 }

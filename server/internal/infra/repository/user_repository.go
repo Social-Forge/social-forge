@@ -26,7 +26,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByUsername(ctx context.Context, username string) (*entity.User, error)
-	List(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error)
+	Search(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
 
 	// Update operations
@@ -142,7 +142,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Us
 	err := pgxscan.Get(subCtx, r.db, &user, query, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("user not found")
 		}
 		return nil, fmt.Errorf("failed to find user by id: %w", err)
 	}
@@ -159,7 +159,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entity
 	err := pgxscan.Get(subCtx, r.db, &user, query, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("user not found")
 		}
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
@@ -176,13 +176,13 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 	err := pgxscan.Get(subCtx, r.db, &user, query, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("user not found")
 		}
 		return nil, fmt.Errorf("failed to find user by username: %w", err)
 	}
 	return &user, nil
 }
-func (r *userRepository) List(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error) {
+func (r *userRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error) {
 	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
@@ -214,7 +214,7 @@ func (r *userRepository) List(ctx context.Context, opts *ListOptions) ([]*entity
 	err = pgxscan.Select(subCtx, r.db, &users, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, 0, nil
+			return nil, 0, fmt.Errorf("no users found")
 		}
 		return nil, 0, fmt.Errorf("failed to list users: %w", err)
 	}
@@ -232,7 +232,7 @@ func (r *userRepository) Count(ctx context.Context, filter *Filter) (int64, erro
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&count)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, nil
+			return 0, fmt.Errorf("no users found")
 		}
 		return 0, fmt.Errorf("failed to count users: %w", err)
 	}
@@ -546,6 +546,9 @@ func (r *userRepository) buildBaseQuery(baseQuery string, filter *Filter) *Query
 	}
 	if filter.UserID != nil {
 		qb.Where("id = $?", *filter.UserID)
+	}
+	if filter.IsVerified != nil {
+		qb.Where("is_verified = $?", *filter.IsVerified)
 	}
 
 	return qb

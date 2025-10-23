@@ -19,7 +19,9 @@ type RoleRepository interface {
 	Create(ctx context.Context, role *entity.Role) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Role, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Role, error)
-	List(ctx context.Context, opts *ListOptions) ([]*entity.Role, error)
+	Count(ctx context.Context, filter *Filter) (int64, error)
+	Search(ctx context.Context, opts *ListOptions) ([]*entity.Role, int64, error)
+	GetAll(ctx context.Context) ([]*entity.Role, error)
 	Update(ctx context.Context, role *entity.Role) (*entity.Role, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -108,19 +110,51 @@ func (r *roleRepository) FindBySlug(ctx context.Context, slug string) (*entity.R
 	}
 	return &role, nil
 }
-func (r *roleRepository) List(ctx context.Context, opts *ListOptions) ([]*entity.Role, error) {
+func (r *roleRepository) Count(ctx context.Context, filter *Filter) (int64, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	qb := r.buildBaseQuery("SELECT COUNT(*) FROM roles", filter)
+	query, args := qb.Build()
+
+	var count int64
+	err := r.db.QueryRow(subCtx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count roles: %w", err)
+	}
+	return count, nil
+}
+func (r *roleRepository) GetAll(ctx context.Context) ([]*entity.Role, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `SELECT * FROM roles WHERE deleted_at IS NULL`
+
+	var roles []*entity.Role
+	err := pgxscan.Select(subCtx, r.db, &roles, query)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list roles: %w", err)
+	}
+	return roles, nil
+}
+func (r *roleRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.Role, int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
 	if opts == nil {
 		opts = NewListOptions()
 	}
-	qb := NewQueryBuilder("SELECT * FROM roles")
-	if opts.Filter.IncludeDeleted != nil && *opts.Filter.IncludeDeleted {
-		qb.Where("deleted_at IS NOT NULL")
-	} else {
-		qb.Where("deleted_at IS NULL")
+
+	totalRows, err := r.Count(subCtx, opts.Filter)
+	if err != nil {
+		return nil, 0, err
 	}
+
+	qb := r.buildBaseQuery("SELECT * FROM roles", opts.Filter)
+
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
 	} else {
@@ -136,14 +170,14 @@ func (r *roleRepository) List(ctx context.Context, opts *ListOptions) ([]*entity
 	query, args := qb.Build()
 
 	var roles []*entity.Role
-	err := pgxscan.Select(subCtx, r.db, &roles, query, args...)
+	err = pgxscan.Select(subCtx, r.db, &roles, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, totalRows, nil
 		}
-		return nil, fmt.Errorf("failed to list roles: %w", err)
+		return nil, totalRows, fmt.Errorf("failed to list roles: %w", err)
 	}
-	return roles, nil
+	return roles, totalRows, nil
 }
 func (r *roleRepository) Update(ctx context.Context, role *entity.Role) (*entity.Role, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
@@ -209,9 +243,6 @@ func (r *roleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("role not found or already deleted")
-		}
 		return fmt.Errorf("failed to delete role: %w", err)
 	}
 
@@ -233,9 +264,6 @@ func (r *roleRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 
 	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("role not found or already deleted")
-		}
 		return fmt.Errorf("failed to hard delete role: %w", err)
 	}
 
@@ -257,9 +285,6 @@ func (r *roleRepository) Restore(ctx context.Context, id uuid.UUID) error {
 
 	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("role not found or not deleted")
-		}
 		return fmt.Errorf("failed to restore role: %w", err)
 	}
 
@@ -268,4 +293,25 @@ func (r *roleRepository) Restore(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
+}
+func (r *roleRepository) buildBaseQuery(baseQuery string, filter *Filter) *QueryBuilder {
+	qb := NewQueryBuilder(baseQuery)
+
+	if filter == nil {
+		qb.Where("deleted_at IS NULL")
+		return qb
+	}
+
+	if filter.IncludeDeleted != nil && *filter.IncludeDeleted {
+		qb.Where("deleted_at IS NOT NULL")
+	} else {
+		qb.Where("deleted_at IS NULL")
+	}
+
+	if filter.Search != "" {
+		searchPattern := "%" + filter.Search + "%"
+		qb.Where("(name ILIKE $? OR slug ILIKE $? OR description ILIKE $?)", searchPattern, searchPattern, searchPattern)
+	}
+
+	return qb
 }

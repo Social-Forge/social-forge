@@ -22,7 +22,7 @@ type TenantRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Tenant, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Tenant, error)
 	FindByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]*entity.Tenant, error)
-	List(ctx context.Context, opts *ListOptions) ([]*entity.Tenant, int64, error)
+	Search(ctx context.Context, opts *ListOptions) ([]*entity.Tenant, int64, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
 	Update(ctx context.Context, tenant *entity.Tenant) (*entity.Tenant, error)
 	UpdateTx(ctx context.Context, tx pgx.Tx, tenant *entity.Tenant) (*entity.Tenant, error)
@@ -164,7 +164,7 @@ func (r *tenantRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.
 	err := pgxscan.Get(subCtx, r.db, &tenant, query, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("tenant not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to find tenant by id: %w", err)
 	}
@@ -184,7 +184,7 @@ func (r *tenantRepository) FindBySlug(ctx context.Context, slug string) (*entity
 	err := pgxscan.Get(subCtx, r.db, &tenant, query, slug)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("tenant not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to find tenant by slug: %w", err)
 	}
@@ -205,13 +205,13 @@ func (r *tenantRepository) FindByOwnerID(ctx context.Context, ownerID uuid.UUID)
 	err := pgxscan.Select(subCtx, r.db, &tenants, query, ownerID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("tenant not found: %w", err)
 		}
 		return nil, fmt.Errorf("failed to find tenant by owner id: %w", err)
 	}
 	return tenants, nil
 }
-func (r *tenantRepository) List(ctx context.Context, opts *ListOptions) ([]*entity.Tenant, int64, error) {
+func (r *tenantRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.Tenant, int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
@@ -243,7 +243,7 @@ func (r *tenantRepository) List(ctx context.Context, opts *ListOptions) ([]*enti
 	err = pgxscan.Select(subCtx, r.db, &tenants, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, 0, nil
+			return nil, 0, fmt.Errorf("tenant not found: %w", err)
 		}
 		return nil, 0, fmt.Errorf("failed to get list tenant: %w", err)
 	}
@@ -260,7 +260,7 @@ func (r *tenantRepository) Count(ctx context.Context, filter *Filter) (int64, er
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&count)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, nil
+			return 0, fmt.Errorf("tenant not found: %w", err)
 		}
 		return 0, fmt.Errorf("failed to count tenant: %w", err)
 	}
@@ -443,9 +443,6 @@ func (r *tenantRepository) Delete(ctx context.Context, id uuid.UUID) error {
 
 	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("tenant not found or already deleted")
-		}
 		return fmt.Errorf("failed to delete tenant: %w", err)
 	}
 
@@ -468,9 +465,6 @@ func (r *tenantRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 
 	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("tenant not found or already deleted")
-		}
 		return fmt.Errorf("failed to hard delete tenant: %w", err)
 	}
 
@@ -495,9 +489,6 @@ func (r *tenantRepository) Restore(ctx context.Context, id uuid.UUID) error {
 
 	cmdTag, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("tenant not found or already restored")
-		}
 		return fmt.Errorf("failed to restore tenant: %w", err)
 	}
 
@@ -524,7 +515,7 @@ func (r *tenantRepository) ExistsBySlug(ctx context.Context, slug string) (bool,
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&exists)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return false, fmt.Errorf("tenant not found or already deleted")
+			return false, nil
 		}
 		return false, fmt.Errorf("failed to check tenant existence by slug: %w", err)
 	}
