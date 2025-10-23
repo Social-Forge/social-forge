@@ -1,4 +1,4 @@
-CREATE TABLE channels (
+CREATE TABLE IF NOT EXISTS channels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) UNIQUE NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
@@ -10,12 +10,12 @@ CREATE TABLE channels (
   deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_channels_name ON channels(name);
-CREATE INDEX idx_channels_slug ON channels(slug); 
-CREATE INDEX idx_channels_is_active ON channels(is_active);
-CREATE INDEX idx_channels_created_at ON channels(created_at);
-CREATE INDEX idx_channels_updated_at ON channels(updated_at);
-CREATE INDEX idx_channels_deleted_at ON channels(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_channels_name ON channels(name);
+CREATE INDEX IF NOT EXISTS idx_channels_slug ON channels(slug); 
+CREATE INDEX IF NOT EXISTS idx_channels_is_active ON channels(is_active);
+CREATE INDEX IF NOT EXISTS idx_channels_created_at ON channels(created_at);
+CREATE INDEX IF NOT EXISTS idx_channels_updated_at ON channels(updated_at);
+CREATE INDEX IF NOT EXISTS idx_channels_deleted_at ON channels(deleted_at);
 
 CREATE OR REPLACE FUNCTION update_channels_modtime()
 RETURNS TRIGGER AS $$
@@ -25,7 +25,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_channels_modtime
+CREATE OR REPLACE TRIGGER update_channels_modtime
 BEFORE UPDATE ON channels
 FOR EACH ROW
 EXECUTE FUNCTION update_channels_modtime();

@@ -1,4 +1,4 @@
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) UNIQUE NOT NULL DEFAULT 'guest',
   slug VARCHAR(255) UNIQUE NOT NULL,
@@ -17,10 +17,10 @@ CREATE TABLE roles (
     CHECK (name IN ('superadmin', 'admin', 'tenant_owner', 'supervisor', 'agent', 'guest'))
 );
 
-CREATE INDEX idx_roles_name ON roles(name);
-CREATE INDEX idx_roles_slug ON roles(slug);
-CREATE INDEX idx_roles_created_at ON roles(created_at);
-CREATE INDEX idx_roles_level ON roles(level);
+CREATE INDEX IF NOT EXISTS idx_roles_name ON roles(name);
+CREATE INDEX IF NOT EXISTS idx_roles_slug ON roles(slug);
+CREATE INDEX IF NOT EXISTS idx_roles_created_at ON roles(created_at);
+CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level);
 
 -- Add comments
 COMMENT ON TABLE roles IS 'User roles in the system';
@@ -34,7 +34,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_roles_modtime
+CREATE OR REPLACE TRIGGER update_roles_modtime
 BEFORE UPDATE ON roles
 FOR EACH ROW
 EXECUTE FUNCTION update_roles_modtime();

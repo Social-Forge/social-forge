@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username VARCHAR(255) UNIQUE NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -21,12 +21,12 @@ CREATE TABLE users (
     CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_is_active ON users(is_active);
-CREATE INDEX idx_users_created_at ON users(created_at);
-CREATE INDEX idx_users_updated_at ON users(updated_at);
-CREATE INDEX idx_users_deleted_at ON users(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+CREATE INDEX IF NOT EXISTS idx_users_updated_at ON users(updated_at);
+CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at);
 
 CREATE OR REPLACE FUNCTION update_users_modtime()
 RETURNS TRIGGER AS $$
@@ -37,7 +37,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER update_users_modtime
+CREATE OR REPLACE TRIGGER update_users_modtime
 BEFORE UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_users_modtime();

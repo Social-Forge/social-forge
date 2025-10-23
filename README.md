@@ -198,16 +198,16 @@ make build
 cd client
 
 # Install dependencies
-npm install
+pnpm install
 
 # Run dev server
-npm run dev
+pnpm run dev
 
 # Build for production
-npm run build
+pnpm run build
 
 # Preview production build
-npm run preview
+pnpm run preview
 ```
 
 ### Docker Commands
@@ -305,8 +305,8 @@ make test-coverage     # Generate coverage report
 
 ```bash
 cd client
-npm run test           # Run tests
-npm run test:watch     # Watch mode
+pnpm run test           # Run tests
+pnpm run test:watch     # Watch mode
 ```
 
 ## 📊 Monitoring

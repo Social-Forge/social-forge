@@ -11,8 +11,9 @@ CREATE TABLE IF NOT EXISTS tenants (
   max_quick_replies INTEGER NOT NULL DEFAULT 1000,
   max_pages INTEGER NOT NULL DEFAULT 20,
   max_whatsapp INTEGER NOT NULL DEFAULT 1,
-  max_max_whatsapp_meta INTEGER NOT NULL DEFAULT 1,
+  max_meta_whatsapp INTEGER NOT NULL DEFAULT 1,
   max_meta_messenger INTEGER NOT NULL DEFAULT 10,
+  max_instagram INTEGER NOT NULL DEFAULT 10,
   max_telegram INTEGER NOT NULL DEFAULT 10,
   max_webchat INTEGER NOT NULL DEFAULT 10,
   max_linkchat INTEGER NOT NULL DEFAULT 10,
@@ -28,14 +29,14 @@ CREATE TABLE IF NOT EXISTS tenants (
 
 );
 
-CREATE INDEX idx_tenants_slug ON tenants(slug);
-CREATE INDEX idx_tenants_owner_id ON tenants(owner_id);
-CREATE INDEX idx_tenants_is_active ON tenants(is_active);
-CREATE INDEX idx_tenants_subdomain ON tenants(subdomain);   
-CREATE INDEX idx_tenants_created_at ON tenants(created_at);
-CREATE INDEX idx_tenants_updated_at ON tenants(updated_at);
-CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at);
-CREATE INDEX idx_tenants_subscription_status ON tenants(subscription_status);
+CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_tenants_owner_id ON tenants(owner_id);
+CREATE INDEX IF NOT EXISTS idx_tenants_is_active ON tenants(is_active);
+CREATE INDEX IF NOT EXISTS idx_tenants_subdomain ON tenants(subdomain);   
+CREATE INDEX IF NOT EXISTS idx_tenants_created_at ON tenants(created_at);
+CREATE INDEX IF NOT EXISTS idx_tenants_updated_at ON tenants(updated_at);
+CREATE INDEX IF NOT EXISTS idx_tenants_deleted_at ON tenants(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_tenants_subscription_status ON tenants(subscription_status);
 
 CREATE OR REPLACE FUNCTION update_tenants_modtime()
 RETURNS TRIGGER AS $$
@@ -45,7 +46,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_tenants_modtime
+CREATE OR REPLACE TRIGGER update_tenants_modtime
 BEFORE UPDATE ON tenants
 FOR EACH ROW
 EXECUTE FUNCTION update_tenants_modtime();

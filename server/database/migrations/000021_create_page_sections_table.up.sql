@@ -1,6 +1,5 @@
-CREATE TABLE page_sections (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS page_sections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     page_id UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
     type VARCHAR(255) NOT NULL,
     order_index INTEGER NOT NULL,
@@ -12,11 +11,10 @@ CREATE TABLE page_sections (
 );
 
 -- Indexes
-CREATE INDEX idx_page_sections_tenant_id ON page_sections(tenant_id);
-CREATE INDEX idx_page_sections_page_id ON page_sections(page_id);
-CREATE INDEX idx_page_sections_created_at ON page_sections(created_at);
-CREATE INDEX idx_page_sections_updated_at ON page_sections(updated_at);
-CREATE INDEX idx_page_sections_deleted_at ON page_sections(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_page_sections_page_id ON page_sections(page_id);
+CREATE INDEX IF NOT EXISTS idx_page_sections_created_at ON page_sections(created_at);
+CREATE INDEX IF NOT EXISTS idx_page_sections_updated_at ON page_sections(updated_at);
+CREATE INDEX IF NOT EXISTS idx_page_sections_deleted_at ON page_sections(deleted_at);
 
 CREATE OR REPLACE FUNCTION update_page_sections_modtime()
 RETURNS TRIGGER AS $$

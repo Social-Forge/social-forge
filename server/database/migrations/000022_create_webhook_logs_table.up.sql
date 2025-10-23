@@ -1,7 +1,7 @@
-CREATE TABLE webhook_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS webhook_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    channel_integration_id UUID REFERENCES channel_integrations(id) ON DELETE SET NULL,,
+    channel_integration_id UUID REFERENCES channel_integrations(id) ON DELETE SET NULL,
     event_type VARCHAR(255) NOT NULL,
     payload JSONB NOT NULL,
     headers JSONB,
@@ -16,14 +16,14 @@ CREATE TABLE webhook_logs (
     CONSTRAINT chk_webhook_logs_status CHECK (status IN ('pending', 'processing', 'success', 'failed'))
 );
 
-CREATE INDEX idx_webhook_logs_tenant_id ON webhook_logs(tenant_id);
-CREATE INDEX idx_webhook_logs_channel_integration_id ON webhook_logs(channel_integration_id);
-CREATE INDEX idx_webhook_logs_event_type ON webhook_logs(event_type);
-CREATE INDEX idx_webhook_logs_status ON webhook_logs(status);
-CREATE INDEX idx_webhook_logs_processed_at ON webhook_logs(processed_at);
-CREATE INDEX idx_webhook_logs_created_at ON webhook_logs(created_at);
-CREATE INDEX idx_webhook_logs_updated_at ON webhook_logs(updated_at);
-CREATE INDEX idx_webhook_logs_deleted_at ON webhook_logs(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_tenant_id ON webhook_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_channel_integration_id ON webhook_logs(channel_integration_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_event_type ON webhook_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_status ON webhook_logs(status);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_processed_at ON webhook_logs(processed_at);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_created_at ON webhook_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_updated_at ON webhook_logs(updated_at);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_deleted_at ON webhook_logs(deleted_at);
 
 CREATE OR REPLACE FUNCTION update_webhook_logs_modtime()
 RETURNS TRIGGER AS $$

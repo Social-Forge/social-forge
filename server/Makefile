@@ -154,6 +154,23 @@ migrate-version:
 migrate-reset: migrate-down-all migrate-up
 	@echo "$(GREEN)Database reset complete!$(NC)"
 
+## migrate-force-reset: Force reset with schema cleanup
+migrate-hard-reset:
+	@echo "$(RED)HARD RESETTING DATABASE...$(NC)"
+	@echo "$(RED)THIS WILL DELETE ALL DATA!$(NC)"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(MAKE) db-drop; \
+		$(MAKE) db-create; \
+		$(MAKE) migrate-up; \
+		echo "$(GREEN)Hard reset complete!$(NC)"; \
+	else \
+		echo "$(YELLOW)Cancelled!$(NC)"; \
+	fi
+	
+## migrate-force-reset: Alias for hard reset
+migrate-force-reset: migrate-hard-reset
+
 ## seed: Run database seeders
 seed:
 	@echo "$(GREEN)Running seeders...$(NC)"

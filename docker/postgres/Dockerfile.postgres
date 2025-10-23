@@ -1,24 +1,16 @@
-FROM postgres:16-alpine
+FROM postgres:16-bookworm
 
-# Single layer installation untuk efficiency
-RUN apk update && apk add --no-cache \
-    # Editors
+# Install packages untuk Debian
+RUN apt-get update && apt-get install -y \
     vim nano \
-    # PostgreSQL extensions
     postgresql-contrib \
-    postgresql16-pg_cron \
-    # Network tools untuk debugging
+    postgresql-16-cron \
     net-tools \
-    iputils \
-    # Process monitoring
+    iputils-ping \
     htop \
-    # File operations
     tree \
-    # SSL certificates
-    ca-certificates
-
-# Buat symlink untuk pg_config (kadang diperlukan)
-RUN ln -sf /usr/local/bin/pg_config /usr/bin/pg_config 2>/dev/null || true
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Setup custom config
 RUN mkdir -p /etc/postgresql

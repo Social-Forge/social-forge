@@ -1,4 +1,4 @@
-CREATE TABLE pages (
+CREATE TABLE IF NOT EXISTS pages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   division_id UUID REFERENCES divisions(id) ON DELETE SET NULL,
@@ -44,22 +44,22 @@ CREATE TABLE pages (
   CONSTRAINT chk_pages_reading_time_minutes CHECK (reading_time_minutes >= 0)
 );
 
-CREATE INDEX idx_pages_tenant_active ON pages(tenant_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pages_division_active ON pages(division_id) WHERE deleted_at IS NULL AND division_id IS NOT NULL;
-CREATE INDEX idx_pages_status_published ON pages(status) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_slug_active ON pages(tenant_id, slug) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pages_published_at ON pages(published_at DESC) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_view_count ON pages(view_count DESC) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_created_at_desc ON pages(created_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pages_updated_at_desc ON pages(updated_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pages_deleted_at ON pages(deleted_at);
-CREATE INDEX idx_pages_search_vector ON pages USING GIN(search_vector) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pages_search_published ON pages USING GIN(search_vector) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_tenant_published ON pages(tenant_id, published_at DESC) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_tenant_status ON pages(tenant_id, status, updated_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pages_featured ON pages(tenant_id, view_count DESC, published_at DESC) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_meta_keywords ON pages USING GIN(meta_keywords) WHERE deleted_at IS NULL AND is_published = true;
-CREATE INDEX idx_pages_article_tags ON pages USING GIN(meta_article_tags) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_tenant_active ON pages(tenant_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_division_active ON pages(division_id) WHERE deleted_at IS NULL AND division_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_status_published ON pages(status) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_slug_active ON pages(tenant_id, slug) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_published_at ON pages(published_at DESC) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_view_count ON pages(view_count DESC) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_created_at_desc ON pages(created_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_updated_at_desc ON pages(updated_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_deleted_at ON pages(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_pages_search_vector ON pages USING GIN(search_vector) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_search_published ON pages USING GIN(search_vector) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_tenant_published ON pages(tenant_id, published_at DESC) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_tenant_status ON pages(tenant_id, status, updated_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_pages_featured ON pages(tenant_id, view_count DESC, published_at DESC) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_meta_keywords ON pages USING GIN(meta_keywords) WHERE deleted_at IS NULL AND is_published = true;
+CREATE INDEX IF NOT EXISTS idx_pages_article_tags ON pages USING GIN(meta_article_tags) WHERE deleted_at IS NULL AND is_published = true;
 
 CREATE OR REPLACE FUNCTION update_pages_modtime()
 RETURNS TRIGGER AS $$
@@ -69,7 +69,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_pages_modtime
+CREATE OR REPLACE TRIGGER update_pages_modtime
 BEFORE UPDATE ON pages
 FOR EACH ROW
 EXECUTE FUNCTION update_pages_modtime();
@@ -104,7 +104,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_pages_manage_published
+CREATE OR REPLACE TRIGGER trigger_pages_manage_published
 BEFORE INSERT OR UPDATE ON pages
 FOR EACH ROW
 EXECUTE FUNCTION pages_manage_published();
@@ -124,12 +124,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_pages_search_update
+CREATE OR REPLACE TRIGGER trigger_pages_search_update
 BEFORE INSERT OR UPDATE OF title, description, content, meta_title, meta_description, meta_keywords, meta_article_tags ON pages
 FOR EACH ROW
 EXECUTE FUNCTION pages_search_update();
 
-CREATE TRIGGER trigger_pages_updated_at
+CREATE OR REPLACE TRIGGER trigger_pages_updated_at
 BEFORE UPDATE ON pages
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
@@ -178,13 +178,13 @@ WHERE NOT p.deleted_at IS NULL
   AND p.is_published = true
   AND p.published_at IS NOT NULL;
 
-CREATE UNIQUE INDEX idx_mv_published_pages_pk ON mv_published_pages (id);
-CREATE INDEX idx_mv_published_pages_tenant ON mv_published_pages (tenant_id);
-CREATE INDEX idx_mv_published_pages_slug ON mv_published_pages (tenant_id, slug);
-CREATE INDEX idx_mv_published_pages_search ON mv_published_pages USING GIN(search_vector);
-CREATE INDEX idx_mv_published_pages_published ON mv_published_pages (published_at DESC);
-CREATE INDEX idx_mv_published_pages_popularity ON mv_published_pages (popularity_score DESC);
-CREATE INDEX idx_mv_published_pages_views ON mv_published_pages (view_count DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_published_pages_pk ON mv_published_pages (id);
+CREATE INDEX IF NOT EXISTS idx_mv_published_pages_tenant ON mv_published_pages (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mv_published_pages_slug ON mv_published_pages (tenant_id, slug);
+CREATE INDEX IF NOT EXISTS idx_mv_published_pages_search ON mv_published_pages USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_mv_published_pages_published ON mv_published_pages (published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mv_published_pages_popularity ON mv_published_pages (popularity_score DESC);
+CREATE INDEX IF NOT EXISTS idx_mv_published_pages_views ON mv_published_pages (view_count DESC);
 
 CREATE MATERIALIZED VIEW mv_page_analytics AS
 SELECT 
@@ -214,9 +214,9 @@ WHERE NOT p.deleted_at IS NULL
   AND p.published_at IS NOT NULL
 GROUP BY p.tenant_id, p.division_id, DATE(p.published_at);
 
-CREATE UNIQUE INDEX idx_mv_page_analytics_pk ON mv_page_analytics (tenant_id, division_id, publish_date);
-CREATE INDEX idx_mv_page_analytics_tenant ON mv_page_analytics (tenant_id);
-CREATE INDEX idx_mv_page_analytics_date ON mv_page_analytics (publish_date DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_page_analytics_pk ON mv_page_analytics (tenant_id, division_id, publish_date);
+CREATE INDEX IF NOT EXISTS idx_mv_page_analytics_tenant ON mv_page_analytics (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mv_page_analytics_date ON mv_page_analytics (publish_date DESC);
 
 CREATE MATERIALIZED VIEW mv_sitemap_pages AS
 SELECT 
@@ -241,14 +241,14 @@ SELECT
         ELSE 'yearly'
     END as change_frequency
 FROM pages p
-WHERE NOT p.is_deleted 
+WHERE NOT p.deleted_at IS NULL 
   AND p.is_published = true
   AND p.published_at IS NOT NULL
 ORDER BY p.published_at DESC;
 
-CREATE UNIQUE INDEX idx_mv_sitemap_pages_pk ON mv_sitemap_pages (id);
-CREATE INDEX idx_mv_sitemap_pages_tenant ON mv_sitemap_pages (tenant_id);
-CREATE INDEX idx_mv_sitemap_pages_priority ON mv_sitemap_pages (sitemap_priority DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_sitemap_pages_pk ON mv_sitemap_pages (id);
+CREATE INDEX IF NOT EXISTS idx_mv_sitemap_pages_tenant ON mv_sitemap_pages (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mv_sitemap_pages_priority ON mv_sitemap_pages (sitemap_priority DESC);
 
 CREATE MATERIALIZED VIEW mv_page_management AS
 SELECT 
@@ -282,12 +282,12 @@ SELECT
     EXTRACT(DAYS FROM NOW() - p.created_at) as days_since_creation,
     EXTRACT(DAYS FROM NOW() - COALESCE(p.updated_at, p.created_at)) as days_since_update
 FROM pages p
-WHERE NOT p.is_deleted;
+WHERE NOT p.deleted_at IS NULL;
 
-CREATE UNIQUE INDEX idx_mv_page_management_pk ON mv_page_management (id);
-CREATE INDEX idx_mv_page_management_tenant ON mv_page_management (tenant_id);
-CREATE INDEX idx_mv_page_management_status ON mv_page_management (management_status);
-CREATE INDEX idx_mv_page_management_readiness ON mv_page_management (content_readiness);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_page_management_pk ON mv_page_management (id);
+CREATE INDEX IF NOT EXISTS idx_mv_page_management_tenant ON mv_page_management (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mv_page_management_status ON mv_page_management (management_status);
+CREATE INDEX IF NOT EXISTS idx_mv_page_management_readiness ON mv_page_management (content_readiness);
 
 CREATE OR REPLACE FUNCTION refresh_page_materialized_views()
 RETURNS TRIGGER AS $$
@@ -297,20 +297,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_refresh_page_mvs
+CREATE OR REPLACE TRIGGER trigger_refresh_page_mvs
     AFTER INSERT OR UPDATE OR DELETE ON pages
     FOR EACH STATEMENT
     EXECUTE FUNCTION refresh_page_materialized_views();
 
 -- Scheduled refresh
-SELECT cron.schedule('refresh-published-pages', '*/3 * * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_published_pages');
+-- SELECT cron.schedule('refresh-published-pages', '*/3 * * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_published_pages');
     
-SELECT cron.schedule('refresh-page-analytics', '0 */6 * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_page_analytics');
+-- SELECT cron.schedule('refresh-page-analytics', '0 */6 * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_page_analytics');
     
-SELECT cron.schedule('refresh-sitemap-pages', '0 2 * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_sitemap_pages');
+-- SELECT cron.schedule('refresh-sitemap-pages', '0 2 * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_sitemap_pages');
     
-SELECT cron.schedule('refresh-page-management', '0 3 * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_page_management');
+-- SELECT cron.schedule('refresh-page-management', '0 3 * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_page_management');

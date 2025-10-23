@@ -1,4 +1,4 @@
-CREATE TABLE conversations (
+CREATE TABLE IF NOT EXISTS conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   division_id UUID NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
@@ -23,16 +23,16 @@ CREATE TABLE conversations (
   deleted_at TIMESTAMPTZ,
   CONSTRAINT chk_conversation_tenant_id_division_id_assigned_agent_id_contact_id_channel_integration_id UNIQUE (tenant_id, division_id, assigned_agent_id, contact_id, channel_integration_id)
 );
-CREATE INDEX idx_conversations_tenant_id ON conversations(tenant_id);
-CREATE INDEX idx_conversations_division_id ON conversations(division_id);
-CREATE INDEX idx_conversations_assigned_agent_id ON conversations(assigned_agent_id);
-CREATE INDEX idx_conversations_contact_id ON conversations(contact_id);
-CREATE INDEX idx_conversations_channel_integration_id ON conversations(channel_integration_id);
-CREATE INDEX idx_conversations_status ON conversations(status);
-CREATE INDEX idx_conversations_priority ON conversations(priority);
-CREATE INDEX idx_conversations_created_at ON conversations(created_at);
-CREATE INDEX idx_conversations_updated_at ON conversations(updated_at);
-CREATE INDEX idx_conversations_deleted_at ON conversations(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_conversations_tenant_id ON conversations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_division_id ON conversations(division_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_assigned_agent_id ON conversations(assigned_agent_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_contact_id ON conversations(contact_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_channel_integration_id ON conversations(channel_integration_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_status ON conversations(status);
+CREATE INDEX IF NOT EXISTS idx_conversations_priority ON conversations(priority);
+CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
+CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);
+CREATE INDEX IF NOT EXISTS idx_conversations_deleted_at ON conversations(deleted_at);
 
 CREATE OR REPLACE FUNCTION update_conversations_modtime()
 RETURNS TRIGGER AS $$
@@ -42,7 +42,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_conversations_modtime
+CREATE OR REPLACE TRIGGER update_conversations_modtime
 BEFORE UPDATE ON conversations
 FOR EACH ROW
 EXECUTE FUNCTION update_conversations_modtime();

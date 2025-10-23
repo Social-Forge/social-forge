@@ -1,9 +1,9 @@
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   sender_type VARCHAR(255) NOT NULL DEFAULT 'system',
-  sender_id UUID  -- user_id if agent, contact_id if contact
+  sender_id UUID,  -- user_id if agent, contact_id if contact
   message_type VARCHAR(255) NOT NULL DEFAULT 'text',
   content TEXT,
   media_url TEXT,
@@ -37,24 +37,24 @@ CREATE TABLE messages (
   )
 );
 
-CREATE INDEX idx_messages_conversation_active ON messages(conversation_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_tenant_active ON messages(tenant_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_sender_active ON messages(sender_type, sender_id) WHERE deleted_at IS NULL AND sender_id IS NOT NULL;
-CREATE INDEX idx_messages_channel_msg_id ON messages(channel_message_id) WHERE deleted_at IS NULL AND channel_message_id IS NOT NULL;
-CREATE INDEX idx_messages_reply_to ON messages(reply_to_id) WHERE deleted_at IS NULL AND reply_to_id IS NOT NULL;
-CREATE INDEX idx_messages_status_active ON messages(status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_sent_at_desc ON messages(sent_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_delivered_active ON messages(delivered_at) WHERE deleted_at IS NULL AND delivered_at IS NOT NULL;
-CREATE INDEX idx_messages_read_active ON messages(read_at) WHERE deleted_at IS NULL AND read_at IS NOT NULL;
-CREATE INDEX idx_messages_failed_active ON messages(failed_at) WHERE deleted_at IS NULL AND failed_at IS NOT NULL;
-CREATE INDEX idx_messages_created_at ON messages(created_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_updated_at ON messages(updated_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_deleted_at ON messages(deleted_at) WHERE deleted_at IS NOT NULL;
-CREATE INDEX idx_messages_conversation_sent ON messages(conversation_id, sent_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_search_vector ON messages USING GIN(search_vector) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_sent_at_brin ON messages USING BRIN(sent_at) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_tenant_conversation ON messages(tenant_id, conversation_id, sent_at DESC) WHERE deleted_at IS NULL;
-CREATE INDEX idx_messages_tenant_status ON messages(tenant_id, status, sent_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_active ON messages(conversation_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_tenant_active ON messages(tenant_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_sender_active ON messages(sender_type, sender_id) WHERE deleted_at IS NULL AND sender_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_channel_msg_id ON messages(channel_message_id) WHERE deleted_at IS NULL AND channel_message_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_id) WHERE deleted_at IS NULL AND reply_to_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_status_active ON messages(status) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_sent_at_desc ON messages(sent_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_delivered_active ON messages(delivered_at) WHERE deleted_at IS NULL AND delivered_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_read_active ON messages(read_at) WHERE deleted_at IS NULL AND read_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_failed_active ON messages(failed_at) WHERE deleted_at IS NULL AND failed_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_updated_at ON messages(updated_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_deleted_at ON messages(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_sent ON messages(conversation_id, sent_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_search_vector ON messages USING GIN(search_vector) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_sent_at_brin ON messages USING BRIN(sent_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_tenant_conversation ON messages(tenant_id, conversation_id, sent_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_tenant_status ON messages(tenant_id, status, sent_at DESC) WHERE deleted_at IS NULL;
 
 CREATE OR REPLACE FUNCTION update_messages_modtime()
 RETURNS TRIGGER AS $$
@@ -64,7 +64,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_messages_modtime
+CREATE OR REPLACE TRIGGER update_messages_modtime
 BEFORE UPDATE ON messages
 FOR EACH ROW
 EXECUTE FUNCTION update_messages_modtime();
@@ -80,7 +80,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_messages_search_update
+CREATE OR REPLACE TRIGGER trigger_messages_search_update
 BEFORE INSERT OR UPDATE OF content, media_url, error_message ON messages
 FOR EACH ROW
 EXECUTE FUNCTION messages_search_update();
@@ -102,9 +102,9 @@ SELECT
     m.metadata,
     -- Denormalized data untuk performance
     c.contact_id,
-    c.subject as conversation_subject,
+    c.assigned_agent_id as conversation_assigned_agent,
     cont.name as contact_name,
-    u.name as agent_name,
+    u.full_name as agent_name,
     -- Analytics fields
     LAG(m.id) OVER (PARTITION BY m.conversation_id ORDER BY m.sent_at) as prev_message_id,
     LEAD(m.id) OVER (PARTITION BY m.conversation_id ORDER BY m.sent_at) as next_message_id,
@@ -115,11 +115,11 @@ LEFT JOIN contacts cont ON m.sender_type = 'contact' AND m.sender_id = cont.id A
 LEFT JOIN users u ON m.sender_type = 'agent' AND m.sender_id = u.id AND u.is_active AND NOT u.deleted_at IS NULL
 WHERE NOT m.deleted_at IS NULL;
 
-CREATE UNIQUE INDEX idx_mv_conversation_threads_pk ON mv_conversation_threads (id);
-CREATE INDEX idx_mv_conversation_threads_conversation_id ON mv_conversation_threads (conversation_id, sent_at DESC);
-CREATE INDEX idx_mv_conversation_threads_tenant ON mv_conversation_threads (tenant_id);
-CREATE INDEX idx_mv_conversation_threads_sender ON mv_conversation_threads (sender_type, sender_id);
-CREATE INDEX idx_mv_conversation_threads_sent_at ON mv_conversation_threads (sent_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_conversation_threads_pk ON mv_conversation_threads (id);
+CREATE INDEX IF NOT EXISTS idx_mv_conversation_threads_conversation_id ON mv_conversation_threads (conversation_id, sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mv_conversation_threads_tenant ON mv_conversation_threads (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mv_conversation_threads_sender ON mv_conversation_threads (sender_type, sender_id);
+CREATE INDEX IF NOT EXISTS idx_mv_conversation_threads_sent_at ON mv_conversation_threads (sent_at DESC);
 
 CREATE MATERIALIZED VIEW mv_message_analytics AS
 SELECT 
@@ -143,19 +143,19 @@ WHERE NOT deleted_at IS NULL
   AND sent_at >= CURRENT_DATE - INTERVAL '90 days'
 GROUP BY tenant_id, DATE(sent_at), sender_type, message_type, status;
 
-CREATE UNIQUE INDEX idx_mv_message_analytics_pk ON mv_message_analytics (tenant_id, message_date, sender_type, message_type, status);
-CREATE INDEX idx_mv_message_analytics_date ON mv_message_analytics (message_date DESC);
-CREATE INDEX idx_mv_message_analytics_tenant ON mv_message_analytics (tenant_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_message_analytics_pk ON mv_message_analytics (tenant_id, message_date, sender_type, message_type, status);
+CREATE INDEX IF NOT EXISTS idx_mv_message_analytics_date ON mv_message_analytics (message_date DESC);
+CREATE INDEX IF NOT EXISTS idx_mv_message_analytics_tenant ON mv_message_analytics (tenant_id);
 
 CREATE MATERIALIZED VIEW mv_recent_messages AS
 SELECT 
     m.*,
-    c.contact_id,
+    conv.contact_id,
     cont.name as contact_name,
     cont.avatar_url as contact_avatar,
-    u.name as agent_name,
+    u.full_name as agent_name,
     u.avatar_url as agent_avatar,
-    conv.subject as conversation_subject,
+    conv.assigned_agent_id as conversation_assigned_agent,
     EXTRACT(EPOCH FROM (NOW() - m.sent_at)) as seconds_ago
 FROM messages m
 JOIN conversations conv ON m.conversation_id = conv.id AND NOT conv.deleted_at IS NULL
@@ -165,9 +165,9 @@ WHERE NOT m.deleted_at IS NULL
   AND m.sent_at >= NOW() - INTERVAL '7 days'
 ORDER BY m.sent_at DESC;
 
-CREATE UNIQUE INDEX idx_mv_recent_messages_pk ON mv_recent_messages (id);
-CREATE INDEX idx_mv_recent_messages_tenant ON mv_recent_messages (tenant_id, sent_at DESC);
-CREATE INDEX idx_mv_recent_messages_conversation ON mv_recent_messages (conversation_id, sent_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_recent_messages_pk ON mv_recent_messages (id);
+CREATE INDEX IF NOT EXISTS idx_mv_recent_messages_tenant ON mv_recent_messages (tenant_id, sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mv_recent_messages_conversation ON mv_recent_messages (conversation_id, sent_at DESC);
 
 CREATE MATERIALIZED VIEW mv_message_search AS
 SELECT 
@@ -183,19 +183,19 @@ SELECT
     m.search_vector,
     -- Denormalized untuk search context
     cont.name as contact_name,
-    u.name as agent_name,
-    conv.subject as conversation_subject
+    u.full_name as agent_name,
+    conv.assigned_agent_id as conversation_assigned_agent
 FROM messages m
 LEFT JOIN conversations conv ON m.conversation_id = conv.id AND NOT conv.deleted_at IS NULL
 LEFT JOIN contacts cont ON m.sender_type = 'contact' AND m.sender_id = cont.id AND NOT cont.deleted_at IS NULL
 LEFT JOIN users u ON m.sender_type = 'agent' AND m.sender_id = u.id AND u.is_active AND NOT u.deleted_at IS NULL
 WHERE NOT m.deleted_at IS NULL;
 
-CREATE UNIQUE INDEX idx_mv_message_search_pk ON mv_message_search (id);
-CREATE INDEX idx_mv_message_search_vector ON mv_message_search USING GIN(search_vector);
-CREATE INDEX idx_mv_message_search_tenant ON mv_message_search (tenant_id);
-CREATE INDEX idx_mv_message_search_sent_at ON mv_message_search (sent_at DESC);
-CREATE INDEX idx_mv_message_search_content ON mv_message_search USING GIN(to_tsvector('english', content));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_message_search_pk ON mv_message_search (id);
+CREATE INDEX IF NOT EXISTS idx_mv_message_search_vector ON mv_message_search USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_mv_message_search_tenant ON mv_message_search (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_mv_message_search_sent_at ON mv_message_search (sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mv_message_search_content ON mv_message_search USING GIN(to_tsvector('english', content));
 
 
 CREATE OR REPLACE FUNCTION refresh_message_materialized_views()
@@ -208,7 +208,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER trigger_refresh_message_mvs
+CREATE OR REPLACE TRIGGER trigger_refresh_message_mvs
     AFTER INSERT OR UPDATE OR DELETE ON messages
     FOR EACH STATEMENT
     EXECUTE FUNCTION refresh_message_materialized_views();
@@ -229,11 +229,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Scheduled refresh dengan pg_cron
-SELECT cron.schedule('refresh-conversation-threads', '*/2 * * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_conversation_threads');
+-- SELECT cron.schedule('refresh-conversation-threads', '*/2 * * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_conversation_threads');
     
-SELECT cron.schedule('refresh-recent-messages', '*/5 * * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_recent_messages');
+-- SELECT cron.schedule('refresh-recent-messages', '*/5 * * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_recent_messages');
     
-SELECT cron.schedule('refresh-message-analytics', '0 * * * *', 
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_message_analytics');
+-- SELECT cron.schedule('refresh-message-analytics', '0 * * * *', 
+--     'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_message_analytics');

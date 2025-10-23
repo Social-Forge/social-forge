@@ -35,19 +35,19 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./client
-      run: npm ci
+      run: pnpm ci
 
     - name: Run linter
       working-directory: ./client
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Run type check
       working-directory: ./client
-      run: npm run check
+      run: pnpm run check
 
     - name: Run tests
       working-directory: ./client
-      run: npm run test:unit
+      run: pnpm run test:unit
       continue-on-error: true
 
     - name: Build application
@@ -55,7 +55,7 @@ jobs:
       env:
         PUBLIC_API_URL: https://api.socialforge.com
         PUBLIC_CENTRIFUGO_URL: wss://api.socialforge.com/centrifugo
-      run: npm run build
+      run: pnpm run build
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -79,21 +79,21 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
+        cache: 'pnpm'
         cache-dependency-path: client/package-lock.json
 
     - name: Install dependencies
       working-directory: ./client
-      run: npm ci
+      run: pnpm ci
 
     - name: Build application
       working-directory: ./client
-      run: npm run build
+      run: pnpm run build
 
     - name: Run Lighthouse CI
       working-directory: ./client
       run: |
-        npm install -g @lhci/cli
+        pnpm install -g @lhci/cli
         lhci autorun
       continue-on-error: true
 

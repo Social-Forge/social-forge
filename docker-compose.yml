@@ -236,7 +236,7 @@ services:
       - socialforge-network
     depends_on:
       - backend
-    command: npm run dev -- --host
+    command: pnpm run dev -- --host
 
   # Nginx Reverse Proxy (Optional for production-like setup)
   nginx:

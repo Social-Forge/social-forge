@@ -93,7 +93,7 @@ if ! command -v node &> /dev/null; then
     print_info "Visit: https://nodejs.org/"
 else
     print_success "Node.js found: $(node --version)"
-    print_success "npm found: $(npm --version)"
+    print_success "pnpm found: $(pnpm --version)"
 fi
 
 # Check for golang-migrate
@@ -193,10 +193,10 @@ if [ -d "client" ]; then
     cd client
     
     if [ -f "package.json" ]; then
-        npm install
+        pnpm install
         print_success "Client dependencies installed"
     else
-        print_warning "package.json not found. Run 'npm init' in client directory"
+        print_warning "package.json not found. Run 'pnpm init' in client directory"
     fi
     
     cd ..
@@ -248,7 +248,7 @@ print_info "For backend development:"
 echo "  cd server && make dev"
 echo ""
 print_info "For client development:"
-echo "  cd client && npm run dev"
+echo "  cd client && pnpm run dev"
 echo ""
 print_info "Useful commands:"
 echo "  make help              - Show all available commands"

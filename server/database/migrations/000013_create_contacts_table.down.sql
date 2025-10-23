@@ -5,6 +5,7 @@ DROP TRIGGER IF EXISTS tsvector_update ON contacts;
 DROP TRIGGER IF EXISTS refresh_contact_summaries ON contacts;
 DROP TRIGGER IF EXISTS refresh_contact_materialized_views ON contacts;
 
+DROP FUNCTION IF EXISTS update_contacts_modtime;
 DROP FUNCTION IF EXISTS contact_search_update;
 DROP FUNCTION IF EXISTS refresh_contact_summaries;
 DROP FUNCTION IF EXISTS refresh_contact_materialized_views;
@@ -18,8 +19,8 @@ DROP MATERIALIZED VIEW IF EXISTS mv_contact_tags_analytics;
 DROP INDEX IF EXISTS idx_contacts_tenant_id;
 DROP INDEX IF EXISTS idx_contacts_channel_id;
 DROP INDEX IF EXISTS idx_contacts_channel_user_id;
-DROP INDEX IF EXISTS idx_contacts_phone;
-DROP INDEX IF EXISTS idx_contacts_email;
+DROP INDEX IF EXISTS idx_contacts_unique_non_null_phone;
+DROP INDEX IF EXISTS idx_contacts_unique_non_null_email;
 DROP INDEX IF EXISTS idx_contacts_is_active;
 DROP INDEX IF EXISTS idx_contacts_created_at;
 DROP INDEX IF EXISTS idx_contacts_updated_at;
