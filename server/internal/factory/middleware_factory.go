@@ -15,7 +15,7 @@ func NewMiddlewareFactory(cont *dependencies.Container) *MiddlewareFactory {
 	ctxinject := middlewares.NewContextMiddleware(cont.Logger)
 	return &MiddlewareFactory{
 		ContextMiddleware: ctxinject,
-		Recovery:          middlewares.NewRecoveryMiddleware(ctxinject, cont.Logger),
+		Recovery:          middlewares.NewRecoveryMiddleware(ctxinject, cont.Logger, cont.Notifier),
 		RateLimiter:       middlewares.NewRateLimiterMiddleware(ctxinject, cont.RedisClient),
 	}
 }

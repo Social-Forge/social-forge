@@ -13,9 +13,12 @@ type WebhookLog struct {
 	TenantID             *uuid.UUID           `json:"tenant_id,omitempty" db:"tenant_id"`
 	ChannelIntegrationID *uuid.UUID           `json:"channel_integration_id,omitempty" db:"channel_integration_id"`
 	EventType            string               `json:"event_type" db:"event_type" validate:"required,max=100"`
+	EventID              string               `json:"event_id" db:"event_id" validate:"required,max=100"`
+	URL                  string               `json:"url" db:"url" validate:"required,url"`
+	Method               string               `json:"method" db:"method" validate:"required,oneof=GET POST PUT DELETE"`
 	Payload              *WebhookPayload      `json:"payload" db:"payload" validate:"required"`
 	Headers              *WebhookHeaders      `json:"headers,omitempty" db:"headers"`
-	Status               string               `json:"status" db:"status" validate:"required,oneof=pending processing success failed"`
+	ResponseStatus       string               `json:"response_status" db:"response_status" validate:"required,oneof=pending processing success failed unknown"`
 	ResponseBody         *WebhookResponseBody `json:"response_body,omitempty" db:"response_body"`
 	ProcessedAt          *time.Time           `json:"processed_at,omitempty" db:"processed_at"`
 	ErrorMessage         *string              `json:"error_message,omitempty" db:"error_message"`
@@ -98,18 +101,18 @@ func (WebhookLog) TableName() string {
 }
 
 func (wl *WebhookLog) MarkAsProcessing() {
-	wl.Status = WebhookStatusProcessing
+	wl.ResponseStatus = WebhookStatusProcessing
 }
 
 func (wl *WebhookLog) MarkAsSuccess() {
 	now := time.Now()
-	wl.Status = WebhookStatusSuccess
+	wl.ResponseStatus = WebhookStatusSuccess
 	wl.ProcessedAt = &now
 }
 
 func (wl *WebhookLog) MarkAsFailed(errorMsg string) {
 	now := time.Now()
-	wl.Status = WebhookStatusFailed
+	wl.ResponseStatus = WebhookStatusFailed
 	wl.ProcessedAt = &now
 	wl.ErrorMessage = &errorMsg
 	wl.RetryCount++

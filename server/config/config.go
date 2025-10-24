@@ -86,6 +86,7 @@ type AsynqConfig struct {
 	RedisAddr     string
 	RedisPassword string
 	Concurrency   int
+	DB            int
 }
 type MetaConfig struct {
 	AppID              string
@@ -95,6 +96,7 @@ type MetaConfig struct {
 }
 type TelegramConfig struct {
 	BotToken string
+	ChatID   string
 }
 type AIConfig struct {
 	OpenAIKey      string
@@ -102,6 +104,7 @@ type AIConfig struct {
 	AnthropicKey   string
 	AnthropicModel string
 	GeminiKey      string
+	GeminiProject  string
 	GeminiModel    string
 }
 type EmailConfig struct {
@@ -173,6 +176,7 @@ func Load() (*Config, error) {
 			RedisAddr:     fmt.Sprintf("%s:%s", getEnv("REDIS_HOST", "localhost"), getEnv("REDIS_PORT", "6379")),
 			RedisPassword: getEnv("REDIS_PASSWORD", ""),
 			Concurrency:   getEnvAsInt("ASYNQ_CONCURRENCY", 10),
+			DB:            getEnvAsInt("ASYNQ_DB", 1),
 		},
 		Meta: MetaConfig{
 			AppID:              getEnv("META_APP_ID", ""),
@@ -182,12 +186,16 @@ func Load() (*Config, error) {
 		},
 		Telegram: TelegramConfig{
 			BotToken: getEnv("TELEGRAM_BOT_TOKEN", ""),
+			ChatID:   getEnv("TELEGRAM_CHAT_ID", ""),
 		},
 		AI: AIConfig{
 			OpenAIKey:      getEnv("OPENAI_API_KEY", ""),
 			OpenAIModel:    getEnv("OPENAI_MODEL", "gpt-4-turbo-preview"),
 			AnthropicKey:   getEnv("ANTHROPIC_API_KEY", ""),
 			AnthropicModel: getEnv("ANTHROPIC_MODEL", "claude-3-sonnet-20240229"),
+			GeminiKey:      getEnv("GEMINI_API_KEY", ""),
+			GeminiProject:  getEnv("GEMINI_PROJECT_ID", ""),
+			GeminiModel:    getEnv("GEMINI_MODEL", "gemini-1.5-pro-latest"),
 		},
 		Email: EmailConfig{
 			SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),
@@ -219,7 +227,6 @@ func getEnvAsInt(key string, defaultValue int) int {
 	return value
 }
 
-// GetDSN returns database connection string
 func (c *DatabaseConfig) GetDSN() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
@@ -227,7 +234,6 @@ func (c *DatabaseConfig) GetDSN() string {
 	)
 }
 
-// GetRedisAddr returns Redis connection address
 func (c *RedisConfig) GetAddr() string {
 	return fmt.Sprintf("%s:%s", c.Host, c.Port)
 }
@@ -235,12 +241,10 @@ func (c *RedisConfig) GetInstance() string {
 	return c.Instance
 }
 
-// IsDevelopment checks if app is in development mode
 func (c *AppConfig) IsDevelopment() bool {
 	return c.Env == "development"
 }
 
-// IsProduction checks if app is in production mode
 func (c *AppConfig) IsProduction() bool {
 	return c.Env == "production"
 }

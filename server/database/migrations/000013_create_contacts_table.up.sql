@@ -17,8 +17,6 @@ CREATE TABLE IF NOT EXISTS contacts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   deleted_at TIMESTAMPTZ,
-  CONSTRAINT chk_contact_phone_email_check 
-    CHECK (phone IS NOT NULL UNIQUE OR email IS NOT NULL UNIQUE),
   CONSTRAINT contacts_name_length_check 
     CHECK (length(trim(name)) > 0),
   CONSTRAINT contacts_email_format_check 

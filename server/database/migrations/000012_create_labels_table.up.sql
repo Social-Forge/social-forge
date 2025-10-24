@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS labels (
 );
 
 CREATE INDEX IF NOT EXISTS idx_labels_tenant_id ON labels(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_labels_division_id ON labels(division_id);
 CREATE INDEX IF NOT EXISTS idx_labels_agent_owner_id ON labels(agent_owner_id);
 CREATE INDEX IF NOT EXISTS idx_labels_name ON labels(name);
 CREATE INDEX IF NOT EXISTS idx_labels_slug ON labels(slug);

@@ -63,27 +63,6 @@ func (rc *RedisClient) withMetrics(ctx context.Context, cmd string, fn func() er
 	return err
 }
 
-func (rc *RedisClient) Ping(ctx context.Context) (string, error) {
-	ctx, cancel := contextpool.WithTimeoutFallback(ctx, 5*time.Second)
-	defer cancel()
-
-	var res string
-	err := rc.withMetrics(ctx, "ping", func() error {
-		var err error
-		if res, err = rc.client.Ping(ctx).Result(); err != nil {
-			rc.isUp = false
-			return err
-		}
-		rc.isUp = true
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	return res, nil
-}
-
 func (rc *RedisClient) Get(key string) ([]byte, error) {
 	ctx, cancel := contextpool.WithTimeoutFallback(context.Background(), 5*time.Second)
 	defer cancel()
@@ -500,9 +479,7 @@ func (rc *RedisClient) Publish(ctx context.Context, channel string, message inte
 	}
 	return cmd, nil
 }
-func (rc *RedisClient) IsUp() bool {
-	return rc.isUp
-}
+
 func (rc *RedisClient) Reset() error {
 	ctx, cancel := contextpool.WithTimeoutFallback(context.Background(), 5*time.Second)
 	defer cancel()
@@ -534,7 +511,6 @@ func (rc *RedisClient) Restore(ctx context.Context, key string, value string, tt
 
 }
 func (rc *RedisClient) Close() error {
-	// Penanganan nil pointer
 	if rc == nil {
 		return nil
 	}
@@ -548,14 +524,19 @@ func (rc *RedisClient) Close() error {
 	defer cancel()
 
 	return rc.withMetrics(ctx, "close", func() error {
-		err := rc.client.Close()
-		if err != nil {
-			config.Logger.Error("failed to close Redis connection", zap.Error(err))
+		rc.mu.Lock()
+		defer rc.mu.Unlock()
+
+		if rc.client != nil {
+			err := rc.client.Close()
+			if err != nil {
+				config.Logger.Error("failed to close Redis connection", zap.Error(err))
+				rc.isUp = false
+				return fmt.Errorf("redis shutdown error: %w", err)
+			}
+			rc.client = nil
 			rc.isUp = false
-			return fmt.Errorf("redis shutdown error: %w", err)
 		}
-		rc.client = nil
-		rc.isUp = false
 		return nil
 	})
 }
@@ -584,7 +565,4 @@ func (rc *RedisClient) CloseClient(ctx context.Context) error {
 		rc.isUp = false
 		return nil
 	})
-}
-func (rc *RedisClient) IsClosed() bool {
-	return rc.client == nil
 }

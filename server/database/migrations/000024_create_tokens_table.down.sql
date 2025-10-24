@@ -10,6 +10,6 @@ DROP INDEX IF EXISTS idx_tokens_created_at;
 DROP INDEX IF EXISTS idx_tokens_updated_at;
 DROP INDEX IF EXISTS idx_tokens_type;
 
-DROP TABLE IF EXISTS tokens;
+DROP TABLE IF EXISTS tokens CASCADE;
 
 COMMIT;

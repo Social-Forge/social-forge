@@ -50,6 +50,28 @@ type Page struct {
 	DeletedAt                *time.Time     `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
+type PageMetaData struct {
+	MetaTitle                *string        `json:"meta_title,omitempty" db:"meta_title"`
+	MetaDescription          *string        `json:"meta_description,omitempty" db:"meta_description"`
+	MetaKeywords             pq.StringArray `json:"meta_keywords,omitempty" db:"meta_keywords"`
+	MetaImageURL             *string        `json:"meta_image_url,omitempty" db:"meta_image_url"`
+	MetaOGTitle              *string        `json:"meta_og_title,omitempty" db:"meta_og_title"`
+	MetaOGDescription        *string        `json:"meta_og_description,omitempty" db:"meta_og_description"`
+	MetaOGImageURL           *string        `json:"meta_og_image_url,omitempty" db:"meta_og_image_url"`
+	MetaOGType               *string        `json:"meta_og_type,omitempty" db:"meta_og_type"`
+	MetaOGURL                *string        `json:"meta_og_url,omitempty" db:"meta_og_url"`
+	MetaOGSiteName           *string        `json:"meta_og_site_name,omitempty" db:"meta_og_site_name"`
+	MetaTwitterCard          *string        `json:"meta_twitter_card,omitempty" db:"meta_twitter_card"`
+	MetaTwitterTitle         *string        `json:"meta_twitter_title,omitempty" db:"meta_twitter_title"`
+	MetaTwitterDescription   *string        `json:"meta_twitter_description,omitempty" db:"meta_twitter_description"`
+	MetaTwitterImageURL      *string        `json:"meta_twitter_image_url,omitempty" db:"meta_twitter_image_url"`
+	MetaArticlePublishedTime *time.Time     `json:"meta_article_published_time,omitempty" db:"meta_article_published_time"`
+	MetaArticleModifiedTime  *time.Time     `json:"meta_article_modified_time,omitempty" db:"meta_article_modified_time"`
+	MetaArticleAuthor        *string        `json:"meta_article_author,omitempty" db:"meta_article_author"`
+	MetaArticleSection       *string        `json:"meta_article_section,omitempty" db:"meta_article_section"`
+	MetaArticleTags          pq.StringArray `json:"meta_article_tags,omitempty" db:"meta_article_tags"`
+}
+
 type ThemeConfig map[string]interface{}
 
 func (tc ThemeConfig) Value() (driver.Value, error) {

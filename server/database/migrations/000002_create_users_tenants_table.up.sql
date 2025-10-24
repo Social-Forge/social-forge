@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
   owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  subdomain VARCHAR(100) UNIQUE,
+  subdomain VARCHAR(100),
   logo_url VARCHAR(255),
   description TEXT,
   max_divisions INTEGER NOT NULL DEFAULT 10,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS tenants (
 CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
 CREATE INDEX IF NOT EXISTS idx_tenants_owner_id ON tenants(owner_id);
 CREATE INDEX IF NOT EXISTS idx_tenants_is_active ON tenants(is_active);
-CREATE INDEX IF NOT EXISTS idx_tenants_subdomain ON tenants(subdomain);   
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_tenants_subdomain ON tenants(subdomain) WHERE subdomain IS NOT NULL;   
 CREATE INDEX IF NOT EXISTS idx_tenants_created_at ON tenants(created_at);
 CREATE INDEX IF NOT EXISTS idx_tenants_updated_at ON tenants(updated_at);
 CREATE INDEX IF NOT EXISTS idx_tenants_deleted_at ON tenants(deleted_at);

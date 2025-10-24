@@ -31,6 +31,9 @@ type MessageRepository interface {
 	UpdateTx(ctx context.Context, tx pgx.Tx, msg *entity.Message) (*string, *string, error)
 	UpdateWithRecovery(ctx context.Context, msg *entity.Message) (*string, *string, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) (string, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	BulkDelete(ctx context.Context, ids []uuid.UUID) error
+	CleanUpDeletedMessages(ctx context.Context) error
 	MarkAsDelivered(ctx context.Context, id uuid.UUID) error
 	MarkAsRead(ctx context.Context, id uuid.UUID) error
 	RefreshMessageViews(ctx context.Context) error
@@ -202,6 +205,55 @@ func (r *messageRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 	}
 	return oldStatus, nil
 }
+func (r *messageRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE messages SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	args := []interface{}{
+		id,
+	}
+	cmdTag, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete message: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("message with id %s not found", id)
+	}
+	return nil
+}
+func (r *messageRepository) BulkDelete(ctx context.Context, ids []uuid.UUID) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE messages SET deleted_at = NOW() WHERE id = ANY($1) AND deleted_at IS NULL`
+	args := []interface{}{
+		ids,
+	}
+	cmdTag, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to delete messages: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("no messages found with ids %v", ids)
+	}
+	return nil
+}
+func (r *messageRepository) CleanUpDeletedMessages(ctx context.Context) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `DELETE FROM messages WHERE deleted_at IS NOT NULL`
+	cmdTag, err := r.db.Exec(subCtx, query)
+	if err != nil {
+		return fmt.Errorf("failed to clean up deleted messages: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("no deleted messages found")
+	}
+	return nil
+}
+
 func (r *messageRepository) MarkAsDelivered(ctx context.Context, id uuid.UUID) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()

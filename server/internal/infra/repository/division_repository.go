@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,7 +21,7 @@ type DivisionRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Division, error)
 	FindBySlug(ctx context.Context, tenantID uuid.UUID, slug string) (*entity.Division, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
-	Search(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Division, int64, error)
+	Search(ctx context.Context, opts *ListOptions) ([]*entity.Division, int64, error)
 	Update(ctx context.Context, division *entity.Division) (*entity.Division, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -56,8 +57,16 @@ func (r *divisionRepository) Create(ctx context.Context, division *entity.Divisi
 
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&division.ID, &division.CreatedAt, &division.UpdatedAt)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("division with slug %s already exists for tenant %s: %w", division.Slug, division.TenantID, err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "chk_division_slug_tenant_id":
+				return fmt.Errorf("division with slug %s already exists for tenant %s: %w", division.Slug, division.TenantID, err)
+			case "chk_division_routing_type":
+				return fmt.Errorf("division with routing type %s already exists for tenant %s: %w", division.RoutingType, division.TenantID, err)
+			default:
+				return fmt.Errorf("failed to create division: %w", err)
+			}
 		}
 		return fmt.Errorf("failed to create division: %w", err)
 	}
@@ -72,13 +81,6 @@ func (r *divisionRepository) Update(ctx context.Context, division *entity.Divisi
 			name = $1, description = $2, routing_type = $3, routing_config = $4,
 			is_active = $5, link_url = $6
 		WHERE id = $7 AND tenant_id = $8 AND deleted_at IS NULL
-		ON CONFLICT ON CONSTRAINT chk_division_slug_tenant_id DO UPDATE SET
-			name = EXCLUDED.name, 
-			description = EXCLUDED.description, 
-			routing_type = EXCLUDED.routing_type,
-			routing_config = EXCLUDED.routing_config, 
-			is_active = EXCLUDED.is_active, 
-			link_url = EXCLUDED.link_url
 		RETURNING id, tenant_id, name, slug, description, 
 			routing_type, routing_config, is_active, link_url, created_at, updated_at`
 
@@ -102,8 +104,16 @@ func (r *divisionRepository) Update(ctx context.Context, division *entity.Divisi
 		&updateDivision.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("division with id %s and tenant %s not found: %w", division.ID, division.TenantID, err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "chk_division_slug_tenant_id":
+				return nil, fmt.Errorf("division with slug %s already exists for tenant %s: %w", division.Slug, division.TenantID, err)
+			case "chk_division_routing_type":
+				return nil, fmt.Errorf("division with routing type %s already exists for tenant %s: %w", division.RoutingType, division.TenantID, err)
+			default:
+				return nil, fmt.Errorf("failed to create division: %w", err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update division: %w", err)
 	}
@@ -240,7 +250,7 @@ func (r *divisionRepository) Count(ctx context.Context, filter *Filter) (int64, 
 	}
 	return count, nil
 }
-func (r *divisionRepository) Search(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.Division, int64, error) {
+func (r *divisionRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.Division, int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
@@ -258,6 +268,8 @@ func (r *divisionRepository) Search(ctx context.Context, tenantID uuid.UUID, opt
 	// Add ordering & pagination
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	} else {
+		qb.OrderByField("created_at", "DESC")
 	}
 	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
 		qb.WithLimit(opts.Pagination.Limit)
@@ -318,18 +330,12 @@ func (r *divisionRepository) buildBaseQuery(baseQuery string, filter *Filter) *Q
 	if filter.TenantID != nil {
 		qb.Where("tenant_id = $?", *filter.TenantID)
 	}
-	if filter.RoutingType != nil {
-		qb.Where("routing_type = $?", *filter.RoutingType)
-	}
 	if filter.IsActive != nil {
 		qb.Where("is_active = $?", *filter.IsActive)
 	}
 	if filter.Extra != nil {
-		for key, value := range filter.Extra {
-			if !isValidColumnName(key) {
-				continue // Skip invalid keys
-			}
-			qb.Where(key+" = $?", value)
+		if routingType, ok := filter.Extra["routing_type"].(string); ok {
+			qb.Where("routing_type = $?", routingType)
 		}
 	}
 

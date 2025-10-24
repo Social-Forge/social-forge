@@ -11,39 +11,39 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserRepository interface {
 	BaseRepository
-
 	// Create operations
 	Create(ctx context.Context, user *entity.User) error
 	CreateTx(ctx context.Context, tx pgx.Tx, user *entity.User) error
 	CreateWithRecovery(ctx context.Context, user *entity.User) error
-
 	// Read operations
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByUsername(ctx context.Context, username string) (*entity.User, error)
 	Search(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
-
 	// Update operations
 	Update(ctx context.Context, user *entity.User) (*entity.User, error)
 	UpdateTx(ctx context.Context, tx pgx.Tx, user *entity.User) (*entity.User, error)
 	UpdateWithRecovery(ctx context.Context, user *entity.User) (*entity.User, error)
 	UpdateLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateLastLoginTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) error
-
+	UpdateTwoFaSecret(ctx context.Context, id uuid.UUID, twoFaSecret *string) error
+	RemoveTwoFaSecret(ctx context.Context, id uuid.UUID) error
 	// Delete operations
 	Delete(ctx context.Context, id uuid.UUID) error // Soft delete
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
-
 	// Check operations
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	ExistsByUsername(ctx context.Context, username string) (bool, error)
+	// Check two factor authentication
+	IsTwoFaEnabled(ctx context.Context, id uuid.UUID) (bool, error)
 }
 type userRepository struct {
 	*baseRepository
@@ -83,8 +83,20 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 		&user.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("user already registerd")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "users_username_key":
+				return fmt.Errorf("username %s is already taken", user.Username)
+			case "users_email_key":
+				return fmt.Errorf("email %s is already registered", user.Email)
+			case "users_name_length_check":
+				return fmt.Errorf("full name %s is invalid, must be between 2 and 50 characters", user.FullName)
+			case "users_username_length_check":
+				return fmt.Errorf("username %s is invalid, must be between 3 and 20 characters", user.Username)
+			default:
+				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return fmt.Errorf("failed to create new user: %w", err)
 	}
@@ -119,8 +131,20 @@ func (r *userRepository) CreateTx(ctx context.Context, tx pgx.Tx, user *entity.U
 		&user.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("user already registerd")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "users_username_key":
+				return fmt.Errorf("username %s is already taken", user.Username)
+			case "users_email_key":
+				return fmt.Errorf("email %s is already registered", user.Email)
+			case "users_name_length_check":
+				return fmt.Errorf("full name %s is invalid, must be between 2 and 50 characters", user.FullName)
+			case "users_username_length_check":
+				return fmt.Errorf("username %s is invalid, must be between 3 and 20 characters", user.Username)
+			default:
+				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return fmt.Errorf("failed to create new user: %w", err)
 	}
@@ -195,12 +219,12 @@ func (r *userRepository) Search(ctx context.Context, opts *ListOptions) ([]*enti
 		return nil, 0, err
 	}
 
-	// Get data
 	qb := r.buildBaseQuery("SELECT * FROM users", opts.Filter)
 
-	// Add ordering & pagination
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	} else {
+		qb.OrderByField("created_at", "DESC")
 	}
 	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
 		qb.WithLimit(opts.Pagination.Limit)
@@ -288,8 +312,20 @@ func (r *userRepository) Update(ctx context.Context, user *entity.User) (*entity
 	)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found or already updated")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "users_username_key":
+				return nil, fmt.Errorf("username %s is already taken", user.Username)
+			case "users_email_key":
+				return nil, fmt.Errorf("email %s is already registered", user.Email)
+			case "users_name_length_check":
+				return nil, fmt.Errorf("full name %s is invalid, must be between 2 and 50 characters", user.FullName)
+			case "users_username_length_check":
+				return nil, fmt.Errorf("username %s is invalid, must be between 3 and 20 characters", user.Username)
+			default:
+				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
@@ -341,8 +377,20 @@ func (r *userRepository) UpdateTx(ctx context.Context, tx pgx.Tx, user *entity.U
 	)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user not found or already updated")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "users_username_key":
+				return nil, fmt.Errorf("username %s is already taken", user.Username)
+			case "users_email_key":
+				return nil, fmt.Errorf("email %s is already registered", user.Email)
+			case "users_name_length_check":
+				return nil, fmt.Errorf("full name %s is invalid, must be between 2 and 50 characters", user.FullName)
+			case "users_username_length_check":
+				return nil, fmt.Errorf("username %s is invalid, must be between 3 and 20 characters", user.Username)
+			default:
+				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
@@ -365,6 +413,41 @@ func (r *userRepository) UpdateWithRecovery(ctx context.Context, user *entity.Us
 	}
 
 	return updatedUser, nil
+}
+func (r *userRepository) UpdateTwoFaSecret(ctx context.Context, id uuid.UUID, twoFaSecret *string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE users SET two_fa_secret = $1 WHERE id = $2 AND deleted_at IS NULL`
+	args := []interface{}{
+		twoFaSecret,
+		id,
+	}
+	result, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update two fa secret: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found or already updated")
+	}
+	return nil
+}
+func (r *userRepository) RemoveTwoFaSecret(ctx context.Context, id uuid.UUID) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE users SET two_fa_secret = NULL WHERE id = $1 AND deleted_at IS NULL`
+	args := []interface{}{
+		id,
+	}
+	result, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to remove two fa secret: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found or already updated")
+	}
+	return nil
 }
 
 func (r *userRepository) UpdateLastLogin(ctx context.Context, id uuid.UUID) error {
@@ -516,6 +599,26 @@ func (r *userRepository) ExistsByUsername(ctx context.Context, username string) 
 		return false, fmt.Errorf("failed to check if user exists by username: %w", err)
 	}
 	return exists, nil
+}
+func (r *userRepository) IsTwoFaEnabled(ctx context.Context, id uuid.UUID) (bool, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT two_fa_secret IS NOT NULL FROM users WHERE id = $1 AND deleted_at IS NULL
+	`
+	args := []interface{}{
+		id,
+	}
+	var isEnabled bool
+	err := pgxscan.Get(subCtx, r.db, &isEnabled, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check if two fa is enabled: %w", err)
+	}
+	return isEnabled, nil
 }
 
 // Helpers :

@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -64,8 +65,24 @@ func (r *permissionRepository) Create(ctx context.Context, permission *entity.Pe
 		&permission.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("permission %s already exists", permission.Name)
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "permissions_name_key":
+				return fmt.Errorf("permission name %s already exists", permission.Name)
+			case "permissions_slug_key":
+				return fmt.Errorf("permission slug %s already exists", permission.Slug)
+			case "permissions_resource_action_key":
+				return fmt.Errorf("permission resource %s and action %s already exists", permission.Resource, permission.Action)
+			case "permissions_resource_key":
+				return fmt.Errorf("permission resource %s already exists", permission.Resource)
+			case "permissions_action_key":
+				return fmt.Errorf("permission action %s already exists", permission.Action)
+			case "permissions_slug_check":
+				return fmt.Errorf("permission slug %s already exists", permission.Slug)
+			default:
+				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return fmt.Errorf("failed to create permission: %w", err)
 	}
@@ -79,18 +96,6 @@ func (r *permissionRepository) Update(ctx context.Context, permission *entity.Pe
 		UPDATE permissions
 		SET slug = $1, name = $2, resource = $3, action = $4, description = $5
 		WHERE id = $6 AND deleted_at IS NULL
-		ON CONFLICT (name) DO UPDATE SET
-			slug = EXCLUDED.slug,
-			resource = EXCLUDED.resource,
-			action = EXCLUDED.action,
-			description = EXCLUDED.description,
-			updated_at = EXCLUDED.updated_at
-		ON CONFLICT (slug) DO UPDATE SET
-			name = EXCLUDED.name,
-			resource = EXCLUDED.resource,
-			action = EXCLUDED.action,
-			description = EXCLUDED.description,
-			updated_at = EXCLUDED.updated_at
 		RETURNING id, created_at, updated_at
 	`
 	args := []interface{}{
@@ -110,8 +115,24 @@ func (r *permissionRepository) Update(ctx context.Context, permission *entity.Pe
 		&updatePermission.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("permission %s not found", permission.Name)
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "permissions_name_key":
+				return nil, fmt.Errorf("permission name %s already exists", permission.Name)
+			case "permissions_slug_key":
+				return nil, fmt.Errorf("permission slug %s already exists", permission.Slug)
+			case "permissions_resource_action_key":
+				return nil, fmt.Errorf("permission resource %s and action %s already exists", permission.Resource, permission.Action)
+			case "permissions_resource_key":
+				return nil, fmt.Errorf("permission resource %s already exists", permission.Resource)
+			case "permissions_action_key":
+				return nil, fmt.Errorf("permission action %s already exists", permission.Action)
+			case "permissions_slug_check":
+				return nil, fmt.Errorf("permission slug %s already exists", permission.Slug)
+			default:
+				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update permission: %w", err)
 	}

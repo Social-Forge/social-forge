@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS roles (
   CONSTRAINT roles_level_check 
     CHECK (level IN (0, 1, 2, 3, 4, 5)),
   CONSTRAINT roles_name_check 
-    CHECK (name IN ('superadmin', 'admin', 'tenant_owner', 'supervisor', 'agent', 'guest'))
+    CHECK (name IN ('superadmin', 'admin', 'tenant_owner', 'supervisor', 'agent', 'guest')),
+  CONSTRAINT roles_slug_check 
+    CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$')
 );
 
 CREATE INDEX IF NOT EXISTS idx_roles_name ON roles(name);

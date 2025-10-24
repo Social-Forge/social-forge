@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -59,8 +60,26 @@ func (r *roleRepository) Create(ctx context.Context, role *entity.Role) error {
 	var createdAt, updatedAt time.Time
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&roleID, &createdAt, &updatedAt)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("role not found or already deleted")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "roles_name_key":
+				return fmt.Errorf("role name '%s' is already taken", role.Name)
+			case "roles_slug_key":
+				return fmt.Errorf("role slug '%s' is already taken", role.Slug)
+			case "roles_name_length_check":
+				return fmt.Errorf("role name length must be between 3 and 20 characters")
+			case "roles_slug_length_check":
+				return fmt.Errorf("role slug length must be between 3 and 20 characters")
+			case "roles_level_check":
+				return fmt.Errorf("role level must be between 0 and 100")
+			case "roles_name_check":
+				return fmt.Errorf("role name must contain only letters, numbers, and underscores")
+			case "roles_slug_check":
+				return fmt.Errorf("role slug must contain only letters, numbers, and underscores")
+			default:
+				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return fmt.Errorf("failed to create role: %w", err)
 	}
@@ -188,18 +207,7 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) (*entity
 	slug = $2, 
 	description = $3, 
 	level = $4, 
-	updated_at = $5 
-	WHERE id = $6 AND deleted_at IS NULL
-	ON CONFLICT (name) DO UPDATE SET 
-	name = EXCLUDED.name, 
-	description = EXCLUDED.description, 
-	level = EXCLUDED.level, 
-	updated_at = EXCLUDED.updated_at 
-	ON CONFLICT (slug) DO UPDATE SET 
-	slug = EXCLUDED.slug, 
-	description = EXCLUDED.description, 
-	level = EXCLUDED.level, 
-	updated_at = EXCLUDED.updated_at 
+	WHERE id = $5 AND deleted_at IS NULL
 	RETURNING id, name, slug, description, level, created_at, updated_at`
 
 	args := []interface{}{
@@ -207,7 +215,6 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) (*entity
 		role.Slug,
 		role.Description,
 		role.Level,
-		role.UpdatedAt,
 		role.ID,
 	}
 
@@ -223,8 +230,26 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) (*entity
 	)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("role not found or already deleted")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "roles_name_key":
+				return nil, fmt.Errorf("role name '%s' is already taken", role.Name)
+			case "roles_slug_key":
+				return nil, fmt.Errorf("role slug '%s' is already taken", role.Slug)
+			case "roles_name_length_check":
+				return nil, fmt.Errorf("role name length must be between 3 and 20 characters")
+			case "roles_slug_length_check":
+				return nil, fmt.Errorf("role slug length must be between 3 and 20 characters")
+			case "roles_level_check":
+				return nil, fmt.Errorf("role level must be between 0 and 100")
+			case "roles_name_check":
+				return nil, fmt.Errorf("role name must contain only letters, numbers, and underscores")
+			case "roles_slug_check":
+				return nil, fmt.Errorf("role slug must contain only letters, numbers, and underscores")
+			default:
+				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update role: %w", err)
 	}

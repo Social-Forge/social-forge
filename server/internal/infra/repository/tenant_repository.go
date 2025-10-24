@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -90,8 +91,16 @@ func (r *tenantRepository) Create(ctx context.Context, tenant *entity.Tenant) er
 		&tenant.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("tenant already exists: %w", err)
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "tenants_slug_key":
+				return fmt.Errorf("slug %s is already taken", tenant.Slug)
+			case "idx_unique_tenants_subdomain":
+				return fmt.Errorf("subdomain %s is already taken", *tenant.Subdomain)
+			default:
+				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return fmt.Errorf("failed to create tenant: %w", err)
 	}
@@ -141,8 +150,16 @@ func (r *tenantRepository) CreateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 		&tenant.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("tenant already exists: %w", err)
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "tenants_slug_key":
+				return fmt.Errorf("slug %s is already taken", tenant.Slug)
+			case "idx_unique_tenants_subdomain":
+				return fmt.Errorf("subdomain %s is already taken", *tenant.Subdomain)
+			default:
+				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return fmt.Errorf("failed to create tenant: %w", err)
 	}
@@ -229,6 +246,8 @@ func (r *tenantRepository) Search(ctx context.Context, opts *ListOptions) ([]*en
 	// Add ordering & pagination
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	} else {
+		qb.OrderByField("created_at", "DESC")
 	}
 	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
 		qb.WithLimit(opts.Pagination.Limit)
@@ -273,20 +292,14 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *entity.Tenant) (*
 	query := `
 		UPDATE tenants SET
 			name = $1,
-			subdomain = $2,
-			logo_url = $3,
-			description = $4,
-			subscription_plan = $5,
-			subscription_status = $6,
-			is_active = $7
-		WHERE id = $8 AND deleted_at IS NULL
-		ON CONFLICT (subdomain) DO UPDATE SET
-			name = EXCLUDED.name,
-			logo_url = EXCLUDED.logo_url,
-			description = EXCLUDED.description,
-			subscription_plan = EXCLUDED.subscription_plan,
-			subscription_status = EXCLUDED.subscription_status,
-			is_active = EXCLUDED.is_active
+			slug = $2,
+			subdomain = $3,
+			logo_url = $4,
+			description = $5,
+			subscription_plan = $6,
+			subscription_status = $7,
+			is_active = $8
+		WHERE id = $9 AND deleted_at IS NULL
 		RETURNING id, slug, name, owner_id, subdomain, logo_url, description, 
 		max_divisions, max_agents, max_quick_replies, max_pages, max_whatsapp,
 		max_meta_whatsapp, max_meta_messenger, max_instagram, max_telegram,
@@ -295,6 +308,7 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *entity.Tenant) (*
 	`
 	args := []interface{}{
 		tenant.Name,
+		tenant.Slug,
 		tenant.Subdomain,
 		tenant.LogoURL,
 		tenant.Description,
@@ -332,8 +346,16 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *entity.Tenant) (*
 		&updateTenant.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("tenant not found or already updated")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "tenants_slug_key":
+				return nil, fmt.Errorf("tenant slug '%s' is already taken", tenant.Slug)
+			case "idx_unique_tenants_subdomain":
+				return nil, fmt.Errorf("tenant subdomain '%s' is already taken", *tenant.Subdomain)
+			default:
+				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update tenant: %w", err)
 	}
@@ -346,20 +368,14 @@ func (r *tenantRepository) UpdateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 	query := `
 		UPDATE tenants SET
 			name = $1,
-			subdomain = $2,
-			logo_url = $3,
-			description = $4,
-			subscription_plan = $5,
-			subscription_status = $6,
-			is_active = $7
-		WHERE id = $8 AND deleted_at IS NULL
-		ON CONFLICT (subdomain) DO UPDATE SET
-			name = EXCLUDED.name,
-			logo_url = EXCLUDED.logo_url,
-			description = EXCLUDED.description,
-			subscription_plan = EXCLUDED.subscription_plan,
-			subscription_status = EXCLUDED.subscription_status,
-			is_active = EXCLUDED.is_active
+			slug = $2,
+			subdomain = $3,
+			logo_url = $4,
+			description = $5,
+			subscription_plan = $6,
+			subscription_status = $7,
+			is_active = $8
+		WHERE id = $9 AND deleted_at IS NULL
 		RETURNING id, slug, name, owner_id, subdomain, logo_url, description, 
 		max_divisions, max_agents, max_quick_replies, max_pages, max_whatsapp,
 		max_meta_whatsapp, max_meta_messenger, max_instagram, max_telegram,
@@ -368,6 +384,7 @@ func (r *tenantRepository) UpdateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 	`
 	args := []interface{}{
 		tenant.Name,
+		tenant.Slug,
 		tenant.Subdomain,
 		tenant.LogoURL,
 		tenant.Description,
@@ -405,8 +422,16 @@ func (r *tenantRepository) UpdateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 		&updateTenant.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("tenant not found or already updated")
+		var pgxErr *pgconn.PgError
+		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
+			switch pgxErr.ConstraintName {
+			case "tenants_slug_key":
+				return nil, fmt.Errorf("tenant slug '%s' is already taken", tenant.Slug)
+			case "idx_unique_tenants_subdomain":
+				return nil, fmt.Errorf("tenant subdomain '%s' is already taken", *tenant.Subdomain)
+			default:
+				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update tenant: %w", err)
 	}

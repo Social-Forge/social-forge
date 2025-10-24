@@ -2,7 +2,9 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 	"runtime/debug"
+	"social-forge/config"
 	"social-forge/internal/helpers"
 	"time"
 
@@ -14,15 +16,18 @@ import (
 type RecoveryMiddleware struct {
 	ctxinject *ContextMiddleware
 	logger    *zap.Logger
+	notifier  config.Notifier
 }
 
 func NewRecoveryMiddleware(
 	ctxinject *ContextMiddleware,
 	logger *zap.Logger,
+	notifier config.Notifier,
 ) *RecoveryMiddleware {
 	return &RecoveryMiddleware{
 		ctxinject: ctxinject,
 		logger:    logger,
+		notifier:  notifier,
 	}
 }
 func (rm *RecoveryMiddleware) NewRecoveryMiddleware() fiber.Handler {
@@ -41,6 +46,20 @@ func (rm *RecoveryMiddleware) NewRecoveryMiddleware() fiber.Handler {
 					zap.Bool("is_canceled", isCanceled),
 					zap.String("stack", string(debug.Stack())),
 				)
+
+				if !isTimeout {
+					if rm.notifier != nil {
+						rm.notifier.SendAlert(config.AlertRequest{
+							Subject: "🚨 Panic Recovered in Recovery Middleware",
+							Message: fmt.Sprintf("Path: %s\nError: %v\n\nStack: %s", c.Path(), r, string(debug.Stack())),
+							Metadata: map[string]interface{}{ // Stack sudah di Message
+								"stack": string(debug.Stack()),
+							},
+						})
+					} else {
+						rm.logger.Warn("Notifier or recipient list not configured for panic alerts.")
+					}
+				}
 
 				status := fiber.StatusInternalServerError
 				message := "Internal Server Error"

@@ -15,6 +15,7 @@ type User struct {
 	FullName        string     `json:"full_name" db:"full_name" validate:"required,max=255"`
 	Phone           *string    `json:"phone,omitempty" db:"phone" validate:"omitempty,max=20"`
 	AvatarURL       *string    `json:"avatar_url,omitempty" db:"avatar_url"`
+	TwoFaSecret     *string    `json:"two_fa_secret,omitempty" db:"two_fa_secret"`
 	IsActive        bool       `json:"is_active" db:"is_active"`
 	IsVerified      bool       `json:"is_verified" db:"is_verified"`
 	EmailVerifiedAt *time.Time `json:"email_verified_at,omitempty" db:"email_verified_at"`
@@ -45,12 +46,10 @@ type UserResponse struct {
 	CreatedAt   time.Time  `json:"created_at"`
 }
 
-// TableName returns the table name for User
 func (User) TableName() string {
 	return "users"
 }
 
-// ToResponse converts User to UserResponse (safe for API)
 func (u *User) ToResponse() *UserResponse {
 	return &UserResponse{
 		ID:          u.ID,
@@ -66,25 +65,24 @@ func (u *User) ToResponse() *UserResponse {
 	}
 }
 
-// IsDeleted checks if user is soft deleted
 func (u *User) IsDeleted() bool {
 	return u.DeletedAt != nil
 }
 
-// CanLogin checks if user can login
 func (u *User) CanLogin() bool {
 	return u.IsActive && !u.IsDeleted()
 }
 
-// MarkAsVerified marks user as verified
 func (u *User) MarkAsVerified() {
 	now := time.Now()
 	u.IsVerified = true
 	u.EmailVerifiedAt = &now
 }
 
-// UpdateLastLogin updates last login timestamp
 func (u *User) UpdateLastLogin() {
 	now := time.Now()
 	u.LastLoginAt = &now
+}
+func (u *User) IsTwoFaActive() bool {
+	return u.TwoFaSecret != nil
 }

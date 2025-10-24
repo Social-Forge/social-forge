@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS tokens (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     token TEXT NOT NULL UNIQUE,
     type TEXT NOT NULL DEFAULT 'email_verification' CHECK (type IN ('reset_password', 'email_verification')),
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS tokens (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tokens_user_id ON tokens (user_id);
-CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens (token) WHERE is_used = FALSE AND expires_at > now();
+CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens (token) WHERE is_used = FALSE;
 CREATE INDEX IF NOT EXISTS idx_tokens_created_at ON tokens (created_at);
 CREATE INDEX IF NOT EXISTS idx_tokens_updated_at ON tokens (updated_at);
 CREATE INDEX IF NOT EXISTS idx_tokens_type ON tokens (type);

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   full_name VARCHAR(255) NOT NULL,
   phone VARCHAR(20),
   avatar_url VARCHAR(255),
+  two_fa_secret TEXT,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   email_verified_at TIMESTAMPTZ,

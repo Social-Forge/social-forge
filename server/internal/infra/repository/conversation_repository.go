@@ -147,6 +147,8 @@ func (r *conversationRepository) Search(ctx context.Context, opts *ListOptions) 
 
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	} else {
+		qb.OrderByField("created_at", "DESC")
 	}
 	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
 		qb.WithLimit(opts.Pagination.Limit)
@@ -343,7 +345,6 @@ func (r *conversationRepository) HardDelete(ctx context.Context, id uuid.UUID) e
 func (r *conversationRepository) buildBaseQuery(baseQuery string, filter *Filter) *QueryBuilder {
 	qb := NewQueryBuilder(baseQuery)
 
-	// Handle nil filter
 	if filter == nil {
 		qb.Where("deleted_at IS NULL")
 		return qb
@@ -354,23 +355,11 @@ func (r *conversationRepository) buildBaseQuery(baseQuery string, filter *Filter
 		qb.Where("deleted_at IS NULL")
 	}
 
-	// ✅ Tenant ID filter (jika ada)
 	if filter.TenantID != nil {
 		qb.Where("tenant_id = $?", *filter.TenantID)
 	}
-
-	// ✅ Assigned Agent ID filter (jika ada)
-	if filter.AssignedAgentID != nil {
-		qb.Where("assigned_agent_id = $?", *filter.AssignedAgentID)
-	}
-
-	// ✅ Division ID filter (jika ada)
 	if filter.DivisionID != nil {
 		qb.Where("division_id = $?", *filter.DivisionID)
-	}
-	// ✅ Channel Integration ID filter (jika ada)
-	if filter.ChannelIntegrationID != nil {
-		qb.Where("channel_integration_id = $?", *filter.ChannelIntegrationID)
 	}
 
 	if filter.Search != "" {
@@ -386,11 +375,17 @@ func (r *conversationRepository) buildBaseQuery(baseQuery string, filter *Filter
 	}
 
 	if filter.Extra != nil {
-		for key, value := range filter.Extra {
-			if !isValidColumnName(key) {
-				continue // Skip invalid keys
-			}
-			qb.Where(key+" = $?", value)
+		if assignedAgentID, ok := filter.Extra["assigned_agent_id"].(uuid.UUID); ok {
+			qb.Where("assigned_agent_id = $?", assignedAgentID)
+		}
+		if channelIntegrationID, ok := filter.Extra["channel_integration_id"].(uuid.UUID); ok {
+			qb.Where("channel_integration_id = $?", channelIntegrationID)
+		}
+		if contactID, ok := filter.Extra["contact_id"].(uuid.UUID); ok {
+			qb.Where("contact_id = $?", contactID)
+		}
+		if priority, ok := filter.Extra["priority"].(string); ok {
+			qb.Where("priority = $?", priority)
 		}
 	}
 

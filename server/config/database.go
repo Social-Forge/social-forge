@@ -18,6 +18,7 @@ import (
 
 type Database struct {
 	*pgxpool.Pool
+	notifier Notifier
 }
 type QueryContextKey struct {
 	sql   string
@@ -27,7 +28,7 @@ type PgxLogger struct {
 }
 type RecoveryMiddleware struct{}
 
-func NewDatabase(ctx context.Context, cfg *DatabaseConfig, app *AppConfig) (*Database, error) {
+func NewDatabase(ctx context.Context, cfg *DatabaseConfig, app *AppConfig, notifier Notifier) (*Database, error) {
 	dsn := cfg.GetDSN()
 	if dsn == "" {
 		return nil, errors.New("database DSN is empty")
@@ -74,7 +75,8 @@ func NewDatabase(ctx context.Context, cfg *DatabaseConfig, app *AppConfig) (*Dat
 	}
 
 	dbPool := &Database{
-		Pool: pool,
+		Pool:     pool,
+		notifier: notifier,
 	}
 
 	dbMutex.Lock()
@@ -204,7 +206,19 @@ func (ip *Database) Validate() error {
 }
 func (db *Database) HandleQueryCompletion(qc *QueryContextKey, data pgx.TraceQueryEndData) {
 	elapsed := time.Since(qc.start)
-	fmt.Sprintf("Query %s executed in %v", qc.sql, elapsed)
+	if data.Err != nil {
+		db.notifier.SendAlert(
+			AlertRequest{
+				Subject: "Query execution failed",
+				Message: data.Err.Error(),
+				Metadata: map[string]interface{}{
+					"query":       qc.sql,
+					"duration":    elapsed,
+					"command_tag": data.CommandTag.String(),
+				},
+			},
+		)
+	}
 }
 func (db *Database) ExtractQueryLabel(query string) string {
 	// Ambil keyword pertama buat label

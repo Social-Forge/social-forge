@@ -221,21 +221,15 @@ func (p *Pagination) CalculateTotalPages() {
 
 // Filter holds filter parameters
 type Filter struct {
-	Search               string                 `json:"search,omitempty"`
-	Status               string                 `json:"status,omitempty"`
-	IncludeDeleted       *bool                  `json:"include_deleted,omitempty"`
-	IsActive             *bool                  `json:"is_active,omitempty"`
-	IsVerified           *bool                  `json:"is_verified,omitempty"`
-	TenantID             *uuid.UUID             `json:"tenant_id,omitempty"`
-	UserID               *uuid.UUID             `json:"user_id,omitempty"`
-	AssignedAgentID      *uuid.UUID             `json:"assigned_agent_id,omitempty"`
-	DivisionID           *uuid.UUID             `json:"division_id,omitempty"`
-	ContactID            *uuid.UUID             `json:"contact_id,omitempty"`
-	ChannelID            *uuid.UUID             `json:"channel_id,omitempty"`
-	ChannelIntegrationID *uuid.UUID             `json:"channel_integration_id,omitempty"`
-	SubscriptionPlanID   *string                `json:"subscription_plan_id,omitempty"`
-	RoutingType          *string                `json:"routing_type,omitempty"`
-	Extra                map[string]interface{} `json:"extra,omitempty"`
+	Search         string                 `json:"search,omitempty"`
+	Status         string                 `json:"status,omitempty"`
+	IncludeDeleted *bool                  `json:"include_deleted,omitempty"`
+	IsActive       *bool                  `json:"is_active,omitempty"`
+	IsVerified     *bool                  `json:"is_verified,omitempty"`
+	TenantID       *uuid.UUID             `json:"tenant_id,omitempty"`
+	UserID         *uuid.UUID             `json:"user_id,omitempty"`
+	DivisionID     *uuid.UUID             `json:"division_id,omitempty"`
+	Extra          map[string]interface{} `json:"extra,omitempty"`
 }
 
 // ListOptions combines pagination and filtering

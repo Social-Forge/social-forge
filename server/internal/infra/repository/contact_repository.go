@@ -26,6 +26,7 @@ type ContactRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
+	CleanUpDeletedContacts(ctx context.Context) error
 	// ✅ OPTIMIZED: Queries yang leverage materialized views
 	SearchFromMaterialized(ctx context.Context, tenantID uuid.UUID, searchQuery string, opts *ListOptions) ([]*entity.ContactSearch, int64, error)
 	GetRecentContacts(ctx context.Context, tenantID uuid.UUID, opts *ListOptions) ([]*entity.RecentContact, int64, error)
@@ -197,6 +198,8 @@ func (r *contactRepository) Search(ctx context.Context, opts *ListOptions) ([]*e
 
 	if opts.OrderBy != "" {
 		qb.OrderByField(opts.OrderBy, opts.OrderDir)
+	} else {
+		qb.OrderByField("created_at", "DESC")
 	}
 	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
 		qb.WithLimit(opts.Pagination.Limit)
@@ -282,6 +285,20 @@ func (r *contactRepository) Restore(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+func (r *contactRepository) CleanUpDeletedContacts(ctx context.Context) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15)
+	defer cancel()
+
+	query := `DELETE FROM contacts WHERE deleted_at IS NOT NULL`
+	cmdTag, err := r.db.Exec(subCtx, query)
+	if err != nil {
+		return fmt.Errorf("failed to clean up deleted contacts: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("no deleted contacts found")
+	}
+	return nil
+}
 
 // ✅ Optimized Search from Materialized View
 func (r *contactRepository) SearchFromMaterialized(ctx context.Context, tenantID uuid.UUID, searchQuery string, opts *ListOptions) ([]*entity.ContactSearch, int64, error) {
@@ -306,8 +323,13 @@ func (r *contactRepository) SearchFromMaterialized(ctx context.Context, tenantID
 		if opts.Filter.IsActive != nil {
 			qb.Where("is_active = $?", *opts.Filter.IsActive)
 		}
-		if opts.Filter.ChannelID != nil {
-			qb.Where("channel_id = $?", *opts.Filter.ChannelID)
+	}
+	if opts.Filter.Extra != nil {
+		if channelID, ok := opts.Filter.Extra["channel_id"].(uuid.UUID); ok {
+			qb.Where("channel_id = $?", channelID)
+		}
+		if channelUserId, ok := opts.Filter.Extra["channel_user_id"].(uuid.UUID); ok {
+			qb.Where("channel_user_id = $?", channelUserId)
 		}
 	}
 
@@ -850,23 +872,25 @@ func (r *contactRepository) buildBaseQuery(baseQuery string, filter *Filter) *Qu
 		qb.Where("tenant_id = $?", *filter.TenantID)
 	}
 
-	if filter.ChannelID != nil {
-		qb.Where("channel_id = $?", *filter.ChannelID)
-	}
-
 	if filter.Search != "" {
 		searchPattern := "%" + filter.Search + "%"
-		qb.Where("(name ILIKE $? OR email ILIKE $?)", searchPattern, searchPattern)
+		qb.Where("(name ILIKE $? OR email ILIKE $? OR phone ILIKE $?)", searchPattern, searchPattern, searchPattern)
 	}
 	if filter.IsActive != nil {
 		qb.Where("is_active = $?", *filter.IsActive)
 	}
 	if filter.Extra != nil {
-		for key, value := range filter.Extra {
-			if !isValidColumnName(key) {
-				continue // Skip invalid keys
-			}
-			qb.Where(key+" = $?", value)
+		if channelID, ok := filter.Extra["channel_id"].(uuid.UUID); ok {
+			qb.Where("channel_id = $?", channelID)
+		}
+		if channelUserId, ok := filter.Extra["channel_user_id"].(uuid.UUID); ok {
+			qb.Where("channel_user_id = $?", channelUserId)
+		}
+		if isBlocked, ok := filter.Extra["is_blocked"].(bool); ok {
+			qb.Where("is_blocked = $?", isBlocked)
+		}
+		if lastInteractionAt, ok := filter.Extra["last_interaction_at"].(time.Time); ok {
+			qb.Where("last_interaction_at = $?", lastInteractionAt)
 		}
 	}
 
