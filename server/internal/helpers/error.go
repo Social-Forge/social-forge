@@ -5,6 +5,14 @@ import (
 	"strings"
 )
 
+var (
+	ErrInvalidKeyLength           = errors.New("key must be 32 bytes for AES-256")
+	ErrDecryptionFailed           = errors.New("decryption failed")
+	ErrInvalidEncryptionKeyLength = errors.New("encryption key must be 32 bytes (256-bit) after hex decoding")
+	ErrFailedToGenerateNonce      = errors.New("failed to generate nonce")
+	ErrCiphertextTooShort         = errors.New("ciphertext too short for decryption")
+)
+
 type NoRetryError struct {
 	error
 }

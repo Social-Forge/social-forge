@@ -21,16 +21,27 @@ export default defineConfig(
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node }
 		},
-		rules: { // typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
-		// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-		"no-undef": 'off' }
+		rules: {
+			'no-undef': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'off',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^\\$\\$(Props|Events|Slots|Generic)$'
+				}
+			],
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-empty-object-type': 'off',
+			'no-useless-catch': 'off',
+			'no-useless-escape': 'off',
+			'@typescript-eslint/no-unused-expressions': 'off',
+			'svelte/ignore-warnings': (warning) => {
+				return warning.code === 'a11y-click-events-have-key-events';
+			}
+		}
 	},
 	{
-		files: [
-			'**/*.svelte',
-			'**/*.svelte.ts',
-			'**/*.svelte.js'
-		],
+		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"social-forge/config"
 	"social-forge/internal/entity"
 	"social-forge/internal/infra/contextpool"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type TenantRepository interface {
@@ -23,6 +25,7 @@ type TenantRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Tenant, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Tenant, error)
 	FindByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]*entity.Tenant, error)
+	FindByUserTenantID(ctx context.Context, userTenantID uuid.UUID) (*entity.Tenant, error)
 	Search(ctx context.Context, opts *ListOptions) ([]*entity.Tenant, int64, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
 	Update(ctx context.Context, tenant *entity.Tenant) (*entity.Tenant, error)
@@ -32,6 +35,8 @@ type TenantRepository interface {
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
 	ExistsBySlug(ctx context.Context, slug string) (bool, error)
+	GetAllowedTenantIDs(ctx context.Context) ([]uuid.UUID, error)
+	IsAllowedTenant(ctx context.Context, tenantID uuid.UUID) (bool, error)
 }
 
 type tenantRepository struct {
@@ -228,6 +233,28 @@ func (r *tenantRepository) FindByOwnerID(ctx context.Context, ownerID uuid.UUID)
 	}
 	return tenants, nil
 }
+func (r *tenantRepository) FindByUserTenantID(ctx context.Context, userTenantID uuid.UUID) (*entity.Tenant, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	if userTenantID == uuid.Nil {
+		return nil, fmt.Errorf("user tenant id is required")
+	}
+
+	query := `
+		SELECT * FROM tenants WHERE user_tenant_id = $1 AND deleted_at IS NULL
+	`
+	var tenant entity.Tenant
+	err := pgxscan.Get(subCtx, r.db, &tenant, query, userTenantID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("tenant not found: %w", err)
+		}
+		return nil, fmt.Errorf("failed to find tenant by user tenant id: %w", err)
+	}
+	return &tenant, nil
+}
+
 func (r *tenantRepository) Search(ctx context.Context, opts *ListOptions) ([]*entity.Tenant, int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
@@ -570,4 +597,57 @@ func (r *tenantRepository) buildBaseQuery(baseQuery string, filter *Filter) *Que
 	}
 
 	return qb
+}
+func (r *tenantRepository) GetAllowedTenantIDs(ctx context.Context) ([]uuid.UUID, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT id FROM tenants WHERE subscription_status = 'active' AND trial_ends_at > NOW() AND deleted_at IS NULL
+	`
+
+	var tenantIDs []uuid.UUID
+	err := pgxscan.Select(subCtx, r.db, &tenantIDs, query)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return []uuid.UUID{}, nil
+	case err != nil:
+		if errors.Is(err, subCtx.Err()) {
+			if errors.Is(err, context.DeadlineExceeded) {
+				config.Logger.Error("context deadline exceeded", zap.Error(err))
+			} else if errors.Is(err, context.Canceled) {
+				config.Logger.Error("context canceled", zap.Error(err))
+			}
+		}
+		return nil, fmt.Errorf("failed to get allowed tenant IDs: %w", err)
+
+	default:
+		config.Logger.Error("unexpected error", zap.Error(err))
+		return tenantIDs, nil
+
+	}
+}
+func (r *tenantRepository) IsAllowedTenant(ctx context.Context, tenantID uuid.UUID) (bool, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM tenants WHERE id = $1 AND subscription_status = 'active' AND trial_ends_at > NOW() AND deleted_at IS NULL
+		)
+	`
+	args := []interface{}{
+		tenantID,
+	}
+
+	var exists bool
+	err := r.db.QueryRow(subCtx, query, args...).Scan(&exists)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check tenant allowance: %w", err)
+	}
+
+	return exists, nil
 }

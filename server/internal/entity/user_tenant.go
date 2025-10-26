@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserTenant represents the many-to-many relationship between users and tenants
 type UserTenant struct {
 	ID        uuid.UUID  `json:"id" db:"id"`
 	UserID    uuid.UUID  `json:"user_id" db:"user_id" validate:"required"`
@@ -18,15 +17,29 @@ type UserTenant struct {
 	DeletedAt *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
-// UserTenantWithDetails represents a user-tenant relationship with full details
 type UserTenantWithDetails struct {
-	UserTenant
-	User   *User   `json:"user,omitempty"`
-	Tenant *Tenant `json:"tenant,omitempty"`
-	Role   *Role   `json:"role,omitempty"`
+	UserTenant      UserTenant                  `json:"user_tenant"`
+	User            User                        `json:"user"`
+	Tenant          Tenant                      `json:"tenant"`
+	Role            Role                        `json:"role"`
+	RolePermissions []RolePermissionWithDetails `json:"role_permissions"`
+	Metadata        UserTenantMetadata          `json:"metadata"`
+}
+type UserTenantWithDetailsNested struct {
+	UserTenant      UserTenant                 `json:"user_tenant"`
+	User            User                       `json:"user"`
+	Tenant          Tenant                     `json:"tenant"`
+	Role            Role                       `json:"role"`
+	RolePermissions []RolePermissionWithNested `json:"role_permissions"`
+	Metadata        UserTenantMetadata         `json:"metadata"`
 }
 
-// TableName returns the table name for UserTenant
+type UserTenantMetadata struct {
+	PermissionCount int       `json:"permission_count"`
+	UserStatus      string    `json:"user_status"`
+	LastUpdated     time.Time `json:"last_updated"`
+}
+
 func (UserTenant) TableName() string {
 	return "user_tenants"
 }

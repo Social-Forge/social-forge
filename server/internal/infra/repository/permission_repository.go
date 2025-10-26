@@ -20,6 +20,7 @@ type PermissionRepository interface {
 	Create(ctx context.Context, permission *entity.Permission) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Permission, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Permission, error)
+	GetByName(ctx context.Context, name string) (*entity.Permission, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
 	Search(ctx context.Context, opts *ListOptions) ([]*entity.Permission, int64, error)
 	GetAll(ctx context.Context) ([]*entity.Permission, error)
@@ -241,6 +242,24 @@ func (r *permissionRepository) GetAll(ctx context.Context) ([]*entity.Permission
 	}
 	return permissions, nil
 }
+func (r *permissionRepository) GetByName(ctx context.Context, name string) (*entity.Permission, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `SELECT * FROM permissions WHERE name = $1 AND deleted_at IS NULL`
+	args := []interface{}{name}
+
+	var permission entity.Permission
+	err := pgxscan.Get(subCtx, r.db, &permission, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find permission by name: %w", err)
+	}
+	return &permission, nil
+}
+
 func (r *permissionRepository) Count(ctx context.Context, filter *Filter) (int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()

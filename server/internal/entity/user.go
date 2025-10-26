@@ -34,16 +34,24 @@ type UserWithRole struct {
 
 // UserResponse is the public response struct (excludes sensitive data)
 type UserResponse struct {
-	ID          uuid.UUID  `json:"id"`
-	Email       string     `json:"email"`
-	Username    string     `json:"username"`
-	FullName    string     `json:"full_name"`
-	Phone       *string    `json:"phone,omitempty"`
-	AvatarURL   *string    `json:"avatar_url,omitempty"`
-	IsActive    bool       `json:"is_active"`
-	IsVerified  bool       `json:"is_verified"`
-	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID              uuid.UUID                   `json:"id"`
+	Email           string                      `json:"email"`
+	Username        string                      `json:"username"`
+	FullName        string                      `json:"full_name"`
+	Phone           *string                     `json:"phone,omitempty"`
+	AvatarURL       *string                     `json:"avatar_url,omitempty"`
+	TwoFaSecret     *string                     `json:"two_fa_secret,omitempty"`
+	IsActive        bool                        `json:"is_active"`
+	IsVerified      bool                        `json:"is_verified"`
+	EmailVerifiedAt *time.Time                  `json:"email_verified_at,omitempty"`
+	LastLoginAt     *time.Time                  `json:"last_login_at,omitempty"`
+	CreatedAt       time.Time                   `json:"created_at"`
+	UpdatedAt       time.Time                   `json:"updated_at"`
+	UserTenant      UserTenant                  `json:"user_tenant"`
+	Tenant          Tenant                      `json:"tenant"`
+	Role            Role                        `json:"role"`
+	RolePermissions []RolePermissionWithDetails `json:"role_permissions"`
+	Metadata        UserTenantMetadata          `json:"metadata"`
 }
 
 func (User) TableName() string {

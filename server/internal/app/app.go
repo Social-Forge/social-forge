@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.uber.org/zap"
 )
 
@@ -36,9 +34,6 @@ func Start(cont *dependencies.Container) {
 		config.Logger.Fatal("Server failed to start", zap.Error(err))
 	}
 }
-func RegisterAllRoutes(router fiber.Router, cont *dependencies.Container, mw *factory.MiddlewareFactory) {
-
-}
 func setupMiddlewares(app *fiber.App, cont *dependencies.Container) {
 	middleware := factory.NewMiddlewareFactory(cont)
 
@@ -58,21 +53,11 @@ func setupMiddlewares(app *fiber.App, cont *dependencies.Container) {
 	app.Use(
 		middleware.ContextMiddleware.TimeoutContext(60*time.Second),
 		middleware.Recovery.NewRecoveryMiddleware(),
-		compress.New(compress.Config{
-			Level: compress.LevelDefault,
-		}),
-		cors.New(cors.Config{
-			AllowOriginsFunc: nil,
-			AllowOrigins:     "*",
-			AllowHeaders:     "Origin, Referer, Host, Content-Type, Accept, X-Forwarded-Origin, X-Forwarded-Host, Authorization, X-Client-Platform, X-Package-ID, X-XSRF-TOKEN, X-Xsrf-Token, X-Requested-With, X-Original-Url, X-Forwarded-Referer, X-Real-Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto, User-Agent, X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, X-2FA-Session, X-Require-Confirm",
-			AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
-			AllowCredentials: false,
-			ExposeHeaders:    "Content-Length, X-Request-ID, X-Require-Confirm, X-2FA-Session",
-			MaxAge:           86400, // 24 jam
-			// Next: func(c *fiber.Ctx) bool {
-			// 	return middleware.Client.ClientGuardFiber(c)
-			// },
-		}),
+		middleware.ApiMiddleware.SetupCompression(),
+		middleware.ApiMiddleware.SetupCORS(),
+		middleware.ApiMiddleware.SetupLogger(),
+		middleware.ApiMiddleware.SetupRequestID(),
+		middleware.ApiMiddleware.SetupMetrics(cont.Logger),
 		metrics.HTTPMetrics(metrics.GetAppMetrics()),
 	)
 
@@ -82,7 +67,7 @@ func setupMiddlewares(app *fiber.App, cont *dependencies.Container) {
 		middleware.Recovery.NewRecoveryMiddleware(),
 		middleware.RateLimiter.GlobalRequestLimiter(),
 	)
-	RegisterAllRoutes(apiRoutes, cont, middleware)
+	RegisterApiRoutes(apiRoutes, cont, middleware)
 }
 func Shutdown(ctx context.Context) error {
 	if App != nil {

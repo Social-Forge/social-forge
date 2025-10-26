@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"social-forge/config"
+	"social-forge/internal/helpers"
 	aiclient "social-forge/internal/infra/ai-client"
 	asynqclient "social-forge/internal/infra/asynq-client"
 	"social-forge/internal/infra/centrifugo"
@@ -32,28 +33,33 @@ type Container struct {
 	MinioClient            *minioclient.MinioClient
 	AIClient               *aiclient.AIClient
 	TaskHandlers           *taskhandlers.TaskHandlers
-	RoleRepo               *repository.RoleRepository
-	PermissionRepo         *repository.PermissionRepository
-	UserRepo               *repository.UserRepository
-	SessionRepo            *repository.SessionRepository
-	TokenRepo              *repository.TokenRepository
-	TenantRepo             *repository.TenantRepository
-	UserTenantRepo         *repository.UserTenantRepository
-	DivisionRepo           *repository.DivisionRepository
-	ChannelRepo            *repository.ChannelRepository
-	ChannelIntegrationRepo *repository.ChannelIntegrationRepository
-	ConversationRepo       *repository.ConversationRepository
-	MessageRepo            *repository.MessageRepository
-	MessageReadRepo        *repository.MessageReadRepository
-	AgentAssignmentRepo    *repository.AgentAssignmentRepository
-	ContactRepo            *repository.ContactRepository
-	QuickReplyRepo         *repository.QuickReplyRepository
-	AutoReplyRepo          *repository.AutoReplyRepository
-	LabelRepo              *repository.LabelRepository
-	PageRepo               *repository.PageRepository
-	PageSectionRepo        *repository.PageSectionRepository
-	WorkingHourRepo        *repository.WorkingHourRepository
-	WebhookLogRepo         *repository.WebhookLogRepository
+	RoleRepo               repository.RoleRepository
+	PermissionRepo         repository.PermissionRepository
+	UserRepo               repository.UserRepository
+	SessionRepo            repository.SessionRepository
+	TokenRepo              repository.TokenRepository
+	TenantRepo             repository.TenantRepository
+	UserTenantRepo         repository.UserTenantRepository
+	DivisionRepo           repository.DivisionRepository
+	ChannelRepo            repository.ChannelRepository
+	ChannelIntegrationRepo repository.ChannelIntegrationRepository
+	ConversationRepo       repository.ConversationRepository
+	MessageRepo            repository.MessageRepository
+	MessageReadRepo        repository.MessageReadRepository
+	AgentAssignmentRepo    repository.AgentAssignmentRepository
+	ContactRepo            repository.ContactRepository
+	QuickReplyRepo         repository.QuickReplyRepository
+	AutoReplyRepo          repository.AutoReplyRepository
+	LabelRepo              repository.LabelRepository
+	PageRepo               repository.PageRepository
+	PageSectionRepo        repository.PageSectionRepository
+	WorkingHourRepo        repository.WorkingHourRepository
+	WebhookLogRepo         repository.WebhookLogRepository
+	UserHelper             *helpers.UserHelper
+	TokenHelper            *helpers.TokenHelper
+	TenantHelper           *helpers.TenantHelper
+	AuthHelper             *helpers.AuthHelper
+	SecretHelper           *helpers.SecretHelper
 }
 
 func NewContainer(ctx context.Context) (*Container, error) {
@@ -143,6 +149,21 @@ func NewContainer(ctx context.Context) (*Container, error) {
 		logger.Info("✅ Task handlers registered successfully")
 	}
 
+	userHelper := helpers.NewUserHelper(redis, userRepo)
+	tokenHelper := helpers.NewTokenHelper(redis)
+	authHelper := helpers.NewAuthHelper(userHelper, tokenHelper, &init.Email)
+
+	tenantHelper := helpers.NewTenantHelper(redis, userRepo, tenantRepo, logger)
+	secretHelper, err := helpers.NewSecretHelper(init.App.EncryptionKey, logger)
+	if err != nil {
+		logger.Error("Failed to create secret helper", zap.Error(err))
+	}
+
+	if err := tenantHelper.InitAllowedTenantIDs(ctx); err != nil {
+		logger.Error("Failed to init allowed tenant ids", zap.Error(err))
+	}
+	go tenantHelper.StartTenantRefreshSubscribe(ctx)
+
 	return &Container{
 		Config:                 init,
 		Logger:                 logger,
@@ -156,28 +177,33 @@ func NewContainer(ctx context.Context) (*Container, error) {
 		MinioClient:            minio,
 		AIClient:               aiClient,
 		TaskHandlers:           taskHandlers,
-		RoleRepo:               &roleRepo,
-		PermissionRepo:         &permissionRepo,
-		UserRepo:               &userRepo,
-		SessionRepo:            &sessionRepo,
-		TokenRepo:              &tokenRepo,
-		TenantRepo:             &tenantRepo,
-		UserTenantRepo:         &userTenantRepo,
-		DivisionRepo:           &divisionRepo,
-		ChannelRepo:            &channelRepo,
-		ChannelIntegrationRepo: &channelIntegrationRepo,
-		ConversationRepo:       &conversationRepo,
-		MessageRepo:            &messageRepo,
-		MessageReadRepo:        &messageReadRepo,
-		ContactRepo:            &contactRepo,
-		AgentAssignmentRepo:    &agentAssignmentRepo,
-		QuickReplyRepo:         &quickReplyRepo,
-		AutoReplyRepo:          &autoReplyRepo,
-		LabelRepo:              &labelRepo,
-		PageRepo:               &pageRepo,
-		PageSectionRepo:        &pageSectionRepo,
-		WorkingHourRepo:        &workingHourRepo,
-		WebhookLogRepo:         &webhookLogRepo,
+		RoleRepo:               roleRepo,
+		PermissionRepo:         permissionRepo,
+		UserRepo:               userRepo,
+		SessionRepo:            sessionRepo,
+		TokenRepo:              tokenRepo,
+		TenantRepo:             tenantRepo,
+		UserTenantRepo:         userTenantRepo,
+		DivisionRepo:           divisionRepo,
+		ChannelRepo:            channelRepo,
+		ChannelIntegrationRepo: channelIntegrationRepo,
+		ConversationRepo:       conversationRepo,
+		MessageRepo:            messageRepo,
+		MessageReadRepo:        messageReadRepo,
+		ContactRepo:            contactRepo,
+		AgentAssignmentRepo:    agentAssignmentRepo,
+		QuickReplyRepo:         quickReplyRepo,
+		AutoReplyRepo:          autoReplyRepo,
+		LabelRepo:              labelRepo,
+		PageRepo:               pageRepo,
+		PageSectionRepo:        pageSectionRepo,
+		WorkingHourRepo:        workingHourRepo,
+		WebhookLogRepo:         webhookLogRepo,
+		UserHelper:             userHelper,
+		TokenHelper:            tokenHelper,
+		TenantHelper:           tenantHelper,
+		AuthHelper:             authHelper,
+		SecretHelper:           secretHelper,
 	}, nil
 }
 func initRedis(

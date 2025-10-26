@@ -35,14 +35,15 @@ type Config struct {
 	Email      EmailConfig
 }
 type AppConfig struct {
-	Name        string
-	Env         string
-	Debug       bool
-	Port        string
-	URL         string
-	LogLevel    string
-	LogFormat   string
-	LogFilePath string
+	Name          string
+	Env           string
+	Debug         bool
+	Port          string
+	URL           string
+	LogLevel      string
+	LogFormat     string
+	LogFilePath   string
+	EncryptionKey string
 }
 
 type DatabaseConfig struct {
@@ -126,14 +127,15 @@ func Load() (*Config, error) {
 
 	config := &Config{
 		App: AppConfig{
-			Name:        getEnv("APP_NAME", "SocialForge"),
-			Env:         getEnv("APP_ENV", "development"),
-			Debug:       getEnv("APP_DEBUG", "true") == "true",
-			Port:        getEnv("APP_PORT", "8080"),
-			URL:         getEnv("APP_URL", "http://localhost:8080"),
-			LogLevel:    getEnv("LOG_LEVEL", "debug"),
-			LogFormat:   getEnv("LOG_FORMAT", "json"),
-			LogFilePath: getEnv("LOG_FILE_PATH", "./logs/app.log"),
+			Name:          getEnv("APP_NAME", "SocialForge"),
+			Env:           getEnv("APP_ENV", "development"),
+			Debug:         getEnv("APP_DEBUG", "true") == "true",
+			Port:          getEnv("APP_PORT", "8080"),
+			URL:           getEnv("APP_URL", "http://localhost:8080"),
+			LogLevel:      getEnv("LOG_LEVEL", "debug"),
+			LogFormat:     getEnv("LOG_FORMAT", "json"),
+			LogFilePath:   getEnv("LOG_FILE_PATH", "./logs/app.log"),
+			EncryptionKey: getEnv("ENCRYPTION_KEY", "socialforge123"),
 		},
 		Database: DatabaseConfig{
 			Host:            getEnv("DB_HOST", "localhost"),

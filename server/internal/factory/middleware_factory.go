@@ -9,6 +9,7 @@ type MiddlewareFactory struct {
 	ContextMiddleware *middlewares.ContextMiddleware
 	Recovery          *middlewares.RecoveryMiddleware
 	RateLimiter       *middlewares.RateLimiterMiddleware
+	ApiMiddleware     *middlewares.ApiMiddleware
 }
 
 func NewMiddlewareFactory(cont *dependencies.Container) *MiddlewareFactory {
@@ -17,5 +18,6 @@ func NewMiddlewareFactory(cont *dependencies.Container) *MiddlewareFactory {
 		ContextMiddleware: ctxinject,
 		Recovery:          middlewares.NewRecoveryMiddleware(ctxinject, cont.Logger, cont.Notifier),
 		RateLimiter:       middlewares.NewRateLimiterMiddleware(ctxinject, cont.RedisClient),
+		ApiMiddleware:     middlewares.NewApiMiddleware(),
 	}
 }

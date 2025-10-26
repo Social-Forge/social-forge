@@ -20,6 +20,7 @@ type RoleRepository interface {
 	Create(ctx context.Context, role *entity.Role) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Role, error)
 	FindBySlug(ctx context.Context, slug string) (*entity.Role, error)
+	GetByName(ctx context.Context, name string) (*entity.Role, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
 	Search(ctx context.Context, opts *ListOptions) ([]*entity.Role, int64, error)
 	GetAll(ctx context.Context) ([]*entity.Role, error)
@@ -129,6 +130,27 @@ func (r *roleRepository) FindBySlug(ctx context.Context, slug string) (*entity.R
 	}
 	return &role, nil
 }
+func (r *roleRepository) GetByName(ctx context.Context, name string) (*entity.Role, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `SELECT * FROM roles WHERE name = $1 AND deleted_at IS NULL`
+
+	args := []interface{}{
+		name,
+	}
+
+	var role entity.Role
+	err := pgxscan.Get(subCtx, r.db, role, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find role by name: %w", err)
+	}
+	return &role, nil
+}
+
 func (r *roleRepository) Count(ctx context.Context, filter *Filter) (int64, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
