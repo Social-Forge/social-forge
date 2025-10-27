@@ -62,10 +62,10 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
-	user, err := s.userRepo.FindByEmail(subCtx, req.Email)
+	user, err := s.userRepo.FindByEmailOrUsername(subCtx, req.Identifier)
 	if err != nil {
 		s.logger.Warn("Login failed: user not found",
-			zap.String("email", req.Email),
+			zap.String("identifier", req.Identifier),
 			zap.Error(err),
 		)
 		return nil, dto.ErrInvalidCredentials
@@ -73,7 +73,7 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 
 	if !user.IsActive {
 		s.logger.Warn("Login failed: user inactive",
-			zap.String("email", req.Email),
+			zap.String("identifier", req.Identifier),
 			zap.Any("user_id", user.ID),
 		)
 		return nil, dto.ErrUserInactive
@@ -81,7 +81,7 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 
 	if !utils.VerifyPassword(user.PasswordHash, req.Password) {
 		s.logger.Warn("Login failed: invalid password",
-			zap.String("email", req.Email),
+			zap.String("identifier", req.Identifier),
 			zap.Any("user_id", user.ID),
 		)
 		return nil, dto.ErrInvalidCredentials

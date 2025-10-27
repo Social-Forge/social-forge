@@ -38,6 +38,21 @@ declare global {
 	interface CsrfTokenResponse extends ApiResponse<string> {
 		data?: any;
 	}
+	// Helpers
+	interface SessionHelper {
+		setAuthCookies: (
+			cookies: Cookies,
+			tokens: {
+				accessToken: string;
+				refreshToken: string;
+			} | null
+		) => void;
+		validateCSRF: (headers: Headers, cookies: Cookies) => boolean;
+		setSecurityHeaders: (headers: Headers) => void;
+		clearAuthCookies: (cookies: Cookies) => void;
+		handleUnauthorized: (cookies: Cookies, redirectTo?: string) => never;
+		getTwoSessionToken: (headers: Headers, cookies: Cookies) => string | undefined;
+	}
 	// Database
 	type User = {
 		id: string;

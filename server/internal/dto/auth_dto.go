@@ -31,8 +31,9 @@ type JWTClaims struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6"`
+	Identifier string `json:"identifier" validate:"required,min=3"`
+	Password   string `json:"password" validate:"required,min=6"`
+	RememberMe bool   `json:"remember_me" validate:"omitempty"`
 }
 type LoginResponse struct {
 	AccessToken  string               `json:"access_token"`
@@ -40,4 +41,13 @@ type LoginResponse struct {
 	TokenType    string               `json:"token_type"`
 	ExpiresIn    int64                `json:"expires_in"`
 	User         *entity.UserResponse `json:"user,omitempty"`
+}
+type RegisterUserRequest struct {
+	FirstName       string `json:"first_name" validate:"required,min=2"`
+	LastName        string `json:"last_name" validate:"required,min=2"`
+	Username        string `json:"username" validate:"required,min=2"`
+	Email           string `json:"email" validate:"required,email"`
+	Phone           string `json:"phone,omitempty" validate:"omitempty,e164"`
+	Password        string `json:"password" validate:"required,min=8"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=password"`
 }

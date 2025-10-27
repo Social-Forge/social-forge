@@ -25,6 +25,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByUsername(ctx context.Context, username string) (*entity.User, error)
+	FindByEmailOrUsername(ctx context.Context, identifier string) (*entity.User, error)
 	GetUserTenantWithDetails(ctx context.Context, id uuid.UUID) (*entity.UserTenantWithDetails, error)
 	GetUserTenantWithDetailsWithNested(ctx context.Context, userID uuid.UUID) (*entity.UserTenantWithDetailsNested, error)
 	Search(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error)
@@ -209,6 +210,24 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 	}
 	return &user, nil
 }
+func (r *userRepository) FindByEmailOrUsername(ctx context.Context, identifier string) (*entity.User, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT * FROM users WHERE (email = $1 OR username = $1) AND deleted_at IS NULL
+	`
+	var user entity.User
+	err := pgxscan.Get(subCtx, r.db, &user, query, identifier)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to find user by email or username: %w", err)
+	}
+	return &user, nil
+}
+
 func (r *userRepository) GetUserTenantWithDetails(ctx context.Context, userID uuid.UUID) (*entity.UserTenantWithDetails, error) {
 	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()

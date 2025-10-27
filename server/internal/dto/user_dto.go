@@ -9,15 +9,6 @@ var (
 	ErrWeakPassword          = errors.New("password too weak")
 )
 
-type RegisterUserRequest struct {
-	FirstName       string `json:"first_name" validate:"required,min=2"`
-	LastName        string `json:"last_name" validate:"required,min=2"`
-	Username        string `json:"username" validate:"required,min=2"`
-	Email           string `json:"email" validate:"required,email"`
-	Phone           string `json:"phone,omitempty" validate:"omitempty,e164"`
-	Password        string `json:"password" validate:"required,min=8"`
-	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=password"`
-}
 type UpdateUserRequest struct {
 	FirstName string `json:"first_name,omitempty"`
 	LastName  string `json:"last_name,omitempty"`
