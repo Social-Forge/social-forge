@@ -27,7 +27,7 @@ type Tenant struct {
 	MaxWebChat         int        `json:"max_webchat" db:"max_webchat"`
 	MaxLinkChat        int        `json:"max_linkchat" db:"max_linkchat"`
 	SubscriptionPlan   string     `json:"subscription_plan" db:"subscription_plan" validate:"required,oneof=free starter pro enterprise"`
-	SubscriptionStatus string     `json:"subscription_status" db:"subscription_status" validate:"required,oneof=active suspended cancelled"`
+	SubscriptionStatus string     `json:"subscription_status" db:"subscription_status" validate:"required,oneof=active suspended cancelled expired"`
 	TrialEndsAt        *time.Time `json:"trial_ends_at,omitempty" db:"trial_ends_at"`
 	IsActive           bool       `json:"is_active" db:"is_active"`
 	CreatedAt          time.Time  `json:"created_at" db:"created_at"`

@@ -21,7 +21,7 @@ type RolePermissionWithDetails struct {
 	// RolePermission
 	ID           uuid.UUID `json:"id"`
 	RoleID       uuid.UUID `json:"role_id"`
-	PermissionID uuid.UUID `json:"permission_id"`
+	PermissionID uuid.UUID `json:"{permission_id}"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	// Denormalized

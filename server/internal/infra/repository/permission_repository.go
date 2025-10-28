@@ -47,7 +47,6 @@ func (r *permissionRepository) Create(ctx context.Context, permission *entity.Pe
 		INSERT INTO permissions (id, slug, name, resource, action, description, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (name) DO NOTHING
-		ON CONFLICT (slug) DO NOTHING
 		RETURNING id, created_at, updated_at
 	`
 	args := []interface{}{
@@ -69,17 +68,7 @@ func (r *permissionRepository) Create(ctx context.Context, permission *entity.Pe
 		var pgxErr *pgconn.PgError
 		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
 			switch pgxErr.ConstraintName {
-			case "permissions_name_key":
-				return fmt.Errorf("permission name %s already exists", permission.Name)
 			case "permissions_slug_key":
-				return fmt.Errorf("permission slug %s already exists", permission.Slug)
-			case "permissions_resource_action_key":
-				return fmt.Errorf("permission resource %s and action %s already exists", permission.Resource, permission.Action)
-			case "permissions_resource_key":
-				return fmt.Errorf("permission resource %s already exists", permission.Resource)
-			case "permissions_action_key":
-				return fmt.Errorf("permission action %s already exists", permission.Action)
-			case "permissions_slug_check":
 				return fmt.Errorf("permission slug %s already exists", permission.Slug)
 			default:
 				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
@@ -122,14 +111,6 @@ func (r *permissionRepository) Update(ctx context.Context, permission *entity.Pe
 			case "permissions_name_key":
 				return nil, fmt.Errorf("permission name %s already exists", permission.Name)
 			case "permissions_slug_key":
-				return nil, fmt.Errorf("permission slug %s already exists", permission.Slug)
-			case "permissions_resource_action_key":
-				return nil, fmt.Errorf("permission resource %s and action %s already exists", permission.Resource, permission.Action)
-			case "permissions_resource_key":
-				return nil, fmt.Errorf("permission resource %s already exists", permission.Resource)
-			case "permissions_action_key":
-				return nil, fmt.Errorf("permission action %s already exists", permission.Action)
-			case "permissions_slug_check":
 				return nil, fmt.Errorf("permission slug %s already exists", permission.Slug)
 			default:
 				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)

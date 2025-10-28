@@ -64,14 +64,8 @@ func (r *userTenantRepository) Create(ctx context.Context, userTenant *entity.Us
 		&createdUserTenant.CreatedAt,
 		&createdUserTenant.UpdatedAt,
 	); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			switch pgErr.ConstraintName {
-			case "chk_user_tenant":
-				return nil, fmt.Errorf("user tenant already exists: %w", err)
-			default:
-				return nil, fmt.Errorf("unknown constraint: %w", err)
-			}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("user already exists in tenant")
 		}
 		return nil, fmt.Errorf("query row failed: %w", err)
 	}

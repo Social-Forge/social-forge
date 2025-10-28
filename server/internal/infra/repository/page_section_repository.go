@@ -262,9 +262,9 @@ func (r *pageSectionRepository) ListByPage(ctx context.Context, pageID uuid.UUID
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
-	if opts == nil {
-		opts = NewListOptions()
-	}
+	// if opts == nil {
+	// 	opts = NewListOptions()
+	// }
 
 	query := `
 		SELECT * FROM page_sections

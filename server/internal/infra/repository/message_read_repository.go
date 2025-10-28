@@ -61,14 +61,8 @@ func (r *messageReadRepository) Create(ctx context.Context, messageRead *entity.
 		&messageRead.UpdatedAt,
 	)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			switch pgErr.ConstraintName {
-			case "chk_message_reads_user_id_message_id":
-				return nil
-			default:
-				return fmt.Errorf("unknown constraint: %w", err)
-			}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
 		}
 		return fmt.Errorf("query row failed: %w", err)
 	}

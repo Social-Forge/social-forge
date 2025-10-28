@@ -87,7 +87,7 @@ func (h *TenantHelper) InitAllowedTenantIDs(ctx context.Context) error {
 
 	tenantIDs, err := h.tenantRepo.GetAllowedTenantIDs(subCtx)
 	if err != nil {
-		config.Logger.Debug("❌ Failed to load tenant IDs", zap.Error(err))
+		config.Logger.Error("❌ Failed to load tenant IDs", zap.Error(err))
 		return err
 	}
 

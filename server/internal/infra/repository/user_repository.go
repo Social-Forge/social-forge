@@ -38,6 +38,8 @@ type UserRepository interface {
 	UpdateLastLoginTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) error
 	UpdateTwoFaSecret(ctx context.Context, id uuid.UUID, twoFaSecret *string) error
 	RemoveTwoFaSecret(ctx context.Context, id uuid.UUID) error
+	SetEmailVerified(ctx context.Context, id uuid.UUID, isVerified bool) error
+	UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error
 	// Delete operations
 	Delete(ctx context.Context, id uuid.UUID) error // Soft delete
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -743,6 +745,42 @@ func (r *userRepository) RemoveTwoFaSecret(ctx context.Context, id uuid.UUID) er
 	result, err := r.db.Exec(subCtx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to remove two fa secret: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found or already updated")
+	}
+	return nil
+}
+func (r *userRepository) SetEmailVerified(ctx context.Context, id uuid.UUID, isVerified bool) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE users SET is_verified = $1, email_verified_at = NOW() WHERE id = $2 AND deleted_at IS NULL`
+	args := []interface{}{
+		isVerified,
+		id,
+	}
+	result, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to set email verified: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found or already updated")
+	}
+	return nil
+}
+func (r *userRepository) UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE users SET password_hash = $1 WHERE id = $2 AND deleted_at IS NULL`
+	args := []interface{}{
+		passwordHash,
+		id,
+	}
+	result, err := r.db.Exec(subCtx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
 	}
 	if result.RowsAffected() == 0 {
 		return fmt.Errorf("user not found or already updated")

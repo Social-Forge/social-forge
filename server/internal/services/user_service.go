@@ -17,7 +17,6 @@ type UserService struct {
 	tenantRepo     repository.TenantRepository
 	divisiRepo     repository.DivisionRepository
 	userTenantRepo repository.UserTenantRepository
-	authService    *AuthService
 	logger         *zap.Logger
 }
 
@@ -27,7 +26,6 @@ func NewUserService(
 	tenantRepo repository.TenantRepository,
 	divisiRepo repository.DivisionRepository,
 	userTenantRepo repository.UserTenantRepository,
-	authService *AuthService,
 	logger *zap.Logger,
 ) *UserService {
 	return &UserService{
@@ -36,12 +34,10 @@ func NewUserService(
 		tenantRepo:     tenantRepo,
 		divisiRepo:     divisiRepo,
 		userTenantRepo: userTenantRepo,
-		authService:    authService,
 		logger:         logger,
 	}
 }
-func (s *UserService) GetUserByID(ctx context.Context, userID string) (*entity.UserTenantWithDetails, error) {
-	// Parse userID string to UUID
+func (s *UserService) GetUserByID(ctx context.Context, userID string) (*entity.UserResponse, error) {
 	userIDUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID format: %w", err)
@@ -55,9 +51,9 @@ func (s *UserService) GetUserByID(ctx context.Context, userID string) (*entity.U
 		zap.String("user_id", userID),
 	)
 
-	return userTenant, nil
+	return userTenant.ToResponse(), nil
 }
-func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*entity.UserTenantWithDetails, error) {
+func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*entity.UserResponse, error) {
 	userEmail, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, dto.ErrUserNotFound
@@ -70,5 +66,20 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*entity
 		zap.String("email", email),
 	)
 
-	return userTenant, nil
+	return userTenant.ToResponse(), nil
+}
+func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*entity.UserResponse, error) {
+	userUsername, err := s.userRepo.FindByUsername(ctx, username)
+	if err != nil {
+		return nil, dto.ErrUserNotFound
+	}
+	userTenant, err := s.userRepo.GetUserTenantWithDetails(ctx, userUsername.ID)
+	if err != nil {
+		return nil, dto.ErrUserNotFound
+	}
+	s.logger.Info("User found",
+		zap.String("username", username),
+	)
+
+	return userTenant.ToResponse(), nil
 }

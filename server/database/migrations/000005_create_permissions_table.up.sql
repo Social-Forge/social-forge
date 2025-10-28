@@ -7,12 +7,7 @@ CREATE TABLE IF NOT EXISTS permissions (
   description TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  deleted_at TIMESTAMPTZ,
-  CONSTRAINT chk_permission_resource_action UNIQUE (resource, action),
-  CONSTRAINT chk_permission_resource CHECK (resource IN ('tenants', 'users', 'roles', 'analytics', 'conversations', 'contacts', 'channels', 'quick_replies', 'pages', 'agents', 'webhooks', 'supervisors', 'admin', 'messages', 'labels', 'channels', 'channel_integrations')),
-  CONSTRAINT chk_permission_action CHECK (action IN ('create', 'read', 'write', 'update', 'execute', 'delete', 'manage')),
-  CONSTRAINT permissions_slug_check 
-    CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$')
+  deleted_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_permissions_slug ON permissions(slug);

@@ -8,12 +8,14 @@ import (
 	"social-forge/internal/infra/contextpool"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type RolePermissionRepository interface {
 	Create(ctx context.Context, rolePermission *entity.RolePermission) error
+	CreateBatch(ctx context.Context, rolePermissions []entity.RolePermission) error
 	Update(ctx context.Context, rolePermission *entity.RolePermission) (*entity.RolePermission, error)
 	List(ctx context.Context, roleID string) ([]*entity.RolePermission, error)
 	Delete(ctx context.Context, rolePermission *entity.RolePermission) error
@@ -40,19 +42,51 @@ func (r *rolePermissionRepository) Create(ctx context.Context, rolePermission *e
 
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&rolePermission.ID, &rolePermission.CreatedAt, &rolePermission.UpdatedAt)
 	if err != nil {
-		var pgxErr *pgconn.PgError
-		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
-			switch pgxErr.ConstraintName {
-			case "chk_role_permission_unique":
-				return fmt.Errorf("role permission already exists: %w", err)
-			default:
-				return fmt.Errorf("failed to create role permission: %w", err)
-			}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
 		}
 		return fmt.Errorf("failed to create role permission: %w", err)
 	}
 	return nil
 }
+func (r *rolePermissionRepository) CreateBatch(ctx context.Context, rolePermissions []entity.RolePermission) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `INSERT INTO role_permissions (role_id, permission_id, created_at) 
+	VALUES ($1, $2, $3) 
+	ON CONFLICT ON CONSTRAINT chk_role_permission_unique DO NOTHING
+	RETURNING id, created_at, updated_at`
+
+	tx, err := r.db.Begin(subCtx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(subCtx)
+
+	err = r.WithTransaction(subCtx, func(tx pgx.Tx) error {
+		for _, rolePermission := range rolePermissions {
+			args := []interface{}{rolePermission.RoleID, rolePermission.PermissionID, rolePermission.CreatedAt}
+			err = tx.QueryRow(subCtx, query, args...).Scan(&rolePermission.ID, &rolePermission.CreatedAt, &rolePermission.UpdatedAt)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					continue
+				}
+				return fmt.Errorf("failed to create role permission: %w", err)
+			}
+		}
+		return nil
+	})
+
+	if err = tx.Commit(subCtx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to create role permissions: %w", err)
+	}
+	return nil
+}
+
 func (r *rolePermissionRepository) Update(ctx context.Context, rolePermission *entity.RolePermission) (*entity.RolePermission, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()

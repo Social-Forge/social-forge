@@ -60,8 +60,6 @@ func (r *divisionRepository) Create(ctx context.Context, division *entity.Divisi
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
-			case "chk_division_slug_tenant_id":
-				return fmt.Errorf("division with slug %s already exists for tenant %s: %w", division.Slug, division.TenantID, err)
 			case "chk_division_routing_type":
 				return fmt.Errorf("division with routing type %s already exists for tenant %s: %w", division.RoutingType, division.TenantID, err)
 			default:

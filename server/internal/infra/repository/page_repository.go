@@ -107,12 +107,8 @@ func (r *pageRepository) Create(ctx context.Context, page *entity.Page) error {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
-			case "chk_pages_tenant_id_slug":
-				return fmt.Errorf("page with slug '%s' already exists for tenant '%s'", page.Slug, page.TenantID)
 			case "chk_pages_status":
 				return fmt.Errorf("page with status '%s' is not valid", page.Status)
-			case "chk_pages_slug_format":
-				return fmt.Errorf("page with slug '%s' does not match the required format", page.Slug)
 			default:
 				return fmt.Errorf("failed to create page: %w", err)
 			}
@@ -191,10 +187,8 @@ func (r *pageRepository) Update(ctx context.Context, page *entity.Page) error {
 				return fmt.Errorf("page with slug '%s' already exists for tenant '%s'", page.Slug, page.TenantID)
 			case "chk_pages_status":
 				return fmt.Errorf("page with status '%s' is not valid", page.Status)
-			case "chk_pages_slug_format":
-				return fmt.Errorf("page with slug '%s' does not match the required format", page.Slug)
 			default:
-				return fmt.Errorf("failed to create page: %w", err)
+				return fmt.Errorf("failed to update page: %w", err)
 			}
 		}
 		return fmt.Errorf("failed to update page: %w", err)

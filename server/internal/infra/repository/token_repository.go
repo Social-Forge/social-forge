@@ -73,6 +73,9 @@ func (r *tokenRepository) Create(ctx context.Context, token *entity.Token) error
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("duplicate token: %w", err)
+		}
 		return fmt.Errorf("failed to create token: %w", err)
 	}
 

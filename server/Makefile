@@ -9,7 +9,7 @@ VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_TIME=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 GO_VERSION=$(shell go version | awk '{print $$3}')
 MIGRATION_DIR=database/migrations
-SEEDER_DIR=database/seeders
+SEEDER_DIR=database/seeders/main/main.go
 TOML_FILE=.air.toml
 
 # Docker variables
@@ -175,7 +175,7 @@ migrate-force-reset: migrate-hard-reset
 ## seed: Run database seeders
 seed:
 	@echo "$(GREEN)Running seeders...$(NC)"
-	@go run $(SEEDER_DIR)/seeder.go
+	@go run $(SEEDER_DIR)
 	@echo "$(GREEN)Seeding complete!$(NC)"
 
 ## db-reset: Drop, create, migrate and seed database

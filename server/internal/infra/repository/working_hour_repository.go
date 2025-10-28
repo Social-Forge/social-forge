@@ -66,8 +66,6 @@ func (r *WorkingHourRepositoryImpl) Create(ctx context.Context, workingHour *ent
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 				switch pgErr.ConstraintName {
-				case "chk_working_hours_tenant_id_division_id_day_of_week":
-					return fmt.Errorf("working hour for day %d already exists: %w", workingHour.DayOfWeek, err)
 				case "chk_working_hours_start_time_end_time":
 					return fmt.Errorf("start time must be before end time: %w", err)
 				default:

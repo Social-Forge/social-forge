@@ -35,6 +35,7 @@ type Container struct {
 	TaskHandlers           *taskhandlers.TaskHandlers
 	RoleRepo               repository.RoleRepository
 	PermissionRepo         repository.PermissionRepository
+	RolePermissionRepo     repository.RolePermissionRepository
 	UserRepo               repository.UserRepository
 	SessionRepo            repository.SessionRepository
 	TokenRepo              repository.TokenRepository
@@ -115,6 +116,7 @@ func NewContainer(ctx context.Context) (*Container, error) {
 
 	roleRepo := repository.NewRoleRepository(dbPool.Pool)
 	permissionRepo := repository.NewPermissionRepository(dbPool.Pool)
+	rolePermissionRepo := repository.NewRolePermissionRepository(dbPool.Pool)
 	userRepo := repository.NewUserRepository(dbPool.Pool)
 	sessionRepo := repository.NewSessionRepository(dbPool.Pool)
 	tokenRepo := repository.NewTokenRepository(dbPool.Pool)
@@ -179,6 +181,7 @@ func NewContainer(ctx context.Context) (*Container, error) {
 		TaskHandlers:           taskHandlers,
 		RoleRepo:               roleRepo,
 		PermissionRepo:         permissionRepo,
+		RolePermissionRepo:     rolePermissionRepo,
 		UserRepo:               userRepo,
 		SessionRepo:            sessionRepo,
 		TokenRepo:              tokenRepo,

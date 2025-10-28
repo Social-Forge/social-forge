@@ -39,6 +39,12 @@ declare global {
 		observedElements: number;
 		observer: IntersectionObserver | null;
 	}
+	type ToastMessage = {
+		id: string;
+		message: string;
+		type: 'success' | 'error' | 'warning' | 'info';
+		duration?: number;
+	};
 }
 
 export {};

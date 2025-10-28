@@ -43,3 +43,24 @@ type UserTenantMetadata struct {
 func (UserTenant) TableName() string {
 	return "user_tenants"
 }
+func (u *UserTenantWithDetails) ToResponse() *UserResponse {
+	return &UserResponse{
+		ID:              u.User.ID,
+		Email:           u.User.Email,
+		Username:        u.User.Username,
+		FullName:        u.User.FullName,
+		Phone:           u.User.Phone,
+		AvatarURL:       u.User.AvatarURL,
+		IsActive:        u.User.IsActive,
+		IsVerified:      u.User.IsVerified,
+		EmailVerifiedAt: u.User.EmailVerifiedAt,
+		LastLoginAt:     u.User.LastLoginAt,
+		CreatedAt:       u.User.CreatedAt,
+		UpdatedAt:       u.User.UpdatedAt,
+		UserTenant:      u.UserTenant,
+		Tenant:          u.Tenant,
+		Role:            u.Role,
+		RolePermissions: u.RolePermissions,
+		Metadata:        u.Metadata,
+	}
+}

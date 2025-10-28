@@ -29,7 +29,7 @@
 			}
 			successMessage = event.result.data.message;
 			await invalidateAll();
-			await goto('/auth/sign-in');
+			await goto(`/auth/verify-email?email=${$form.email}`);
 		}
 	});
 	const formatPhoneInput = (event: Event) => {

@@ -121,24 +121,19 @@
 				distance={60}
 				class="relative"
 			>
-				<div
-					class="animate-image-glow bg-linear-to-b absolute inset-0 h-full w-full from-transparent via-green-800/20 to-green-900/30 blur-[10rem] md:top-[10%]"
-				></div>
 				<div class="container mx-auto w-full max-w-6xl px-4 py-14 md:px-8">
-					<div
-						class="bg-linear-to-b relative flex flex-col space-y-8 rounded-2xl from-transparent via-neutral-600/20 to-neutral-900/40 px-6 py-10 md:px-10 md:py-14 dark:from-neutral-900/50 dark:via-neutral-900/60 dark:to-neutral-900/80"
-					>
+					<div class=" relative flex flex-col space-y-8 rounded-2xl px-6 py-10 md:px-10 md:py-14">
 						<h2
-							class="font-heading text-center text-sm font-medium uppercase tracking-wider text-neutral-700 dark:text-neutral-400"
+							class="font-heading text-center text-base font-semibold uppercase tracking-wider text-neutral-800 dark:text-neutral-200"
 						>
 							Trusted by the best in the industry
 						</h2>
 						<div class="relative w-full overflow-hidden">
 							<div
-								class="bg-linear-to-r pointer-events-none absolute left-0 top-0 z-10 h-full w-20 from-white/20 to-transparent dark:from-neutral-900"
+								class="bg-linear-to-r pointer-events-none absolute left-0 top-0 z-10 h-full w-20 from-white to-transparent dark:from-neutral-950 dark:to-transparent"
 							></div>
 							<div
-								class="bg-linear-to-l pointer-events-none absolute right-0 top-0 z-10 h-full w-20 from-white/20 to-transparent dark:from-neutral-900"
+								class="bg-linear-to-l pointer-events-none absolute right-0 top-0 z-10 h-full w-20 from-white to-transparent dark:from-neutral-950 dark:to-transparent"
 							></div>
 							<ul class="animate-marquee flex items-center justify-center gap-x-8 md:gap-x-16">
 								{#each COMPANIES as company}

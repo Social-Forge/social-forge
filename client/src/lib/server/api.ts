@@ -2,30 +2,26 @@ import { PUBLIC_API_URL } from '$env/static/public';
 import type { Cookies, RequestEvent } from '@sveltejs/kit';
 
 export class ApiHandler {
-	private request: Request;
-	private cookies: Cookies;
-	private fetch: typeof fetch;
+	private event: RequestEvent;
 	private baseUrl: string;
 
 	constructor(event: RequestEvent) {
-		this.request = event.request;
-		this.cookies = event.cookies;
-		this.fetch = fetch;
+		this.event = event;
 		this.baseUrl = PUBLIC_API_URL;
 	}
 	private getSecureHeaders(): Headers {
-		const headers = new Headers(this.request.headers);
-		const url = new URL(this.request.url);
+		const headers = new Headers();
+		const url = new URL(this.event.request.url);
 
 		const clientHost =
-			this.request.headers.get('host') ||
-			this.request.headers.get('x-forwarded-host') ||
-			this.request.headers.get('x-real-host') ||
+			this.event.request.headers.get('host') ||
+			this.event.request.headers.get('x-forwarded-host') ||
+			this.event.request.headers.get('x-real-host') ||
 			url.host;
 
 		const clientProto =
-			this.request.headers.get('x-forwarded-proto') ||
-			this.request.headers.get('x-forwarded-protocol') ||
+			this.event.request.headers.get('x-forwarded-proto') ||
+			this.event.request.headers.get('x-forwarded-protocol') ||
 			(url.protocol ? url.protocol.replace(':', '') : 'https');
 
 		const clientOrigin = `${clientProto.startsWith('http') ? '' : clientProto + '://'}${clientHost}`;
@@ -35,14 +31,16 @@ export class ApiHandler {
 		headers.set('X-Forwarded-Proto', clientProto || '');
 		headers.set(
 			'X-Forwarded-For',
-			this.request.headers.get('x-forwarded-for') || this.request.headers.get('x-real-ip') || ''
+			this.event.request.headers.get('x-forwarded-for') ||
+				this.event.request.headers.get('x-real-ip') ||
+				''
 		);
 
-		headers.set('X-Real-IP', this.request.headers.get('x-real-ip') || '');
+		headers.set('X-Real-IP', this.event.request.headers.get('x-real-ip') || '');
 		headers.set('Origin', clientOrigin);
-		headers.set('Referer', this.request.headers.get('referer') || url.href);
+		headers.set('Referer', this.event.request.headers.get('referer') || url.href);
 		headers.set('X-Requested-With', 'XMLHttpRequest');
-		headers.set('User-Agent', this.request.headers.get('user-agent') || '');
+		headers.set('User-Agent', this.event.request.headers.get('user-agent') || '');
 
 		headers.set('X-Content-Type-Options', 'nosniff');
 		headers.set('X-Frame-Options', 'DENY');
@@ -54,18 +52,15 @@ export class ApiHandler {
 		}
 		return headers;
 	}
-	private async getCsrfToken(): Promise<string | null> {
+	private async getCsrfToken(headers: Headers): Promise<string | null> {
 		try {
-			const secureHeaders = this.getSecureHeaders();
-			const response = await this.fetch(`${this.baseUrl}/token/csrf`, {
+			const cookieString = this.getCookieString();
+			if (cookieString) {
+				headers.set('Cookie', cookieString);
+			}
+			const response = await this.event.fetch(`${this.baseUrl}/token/csrf`, {
 				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					...secureHeaders,
-					Cookie: Object.entries(this.cookies)
-						.map(([key, value]) => `${key}=${value}`)
-						.join('; ')
-				},
+				headers,
 				credentials: 'include'
 			});
 
@@ -80,36 +75,62 @@ export class ApiHandler {
 			return null;
 		}
 	}
+	private getCookieString(): string {
+		const cookies: string[] = [];
+
+		for (const [key, value] of Object.entries(this.event.cookies.getAll())) {
+			cookies.push(`${key}=${value}`);
+		}
+
+		return cookies.join('; ');
+	}
 	private async createApiRequest<T>(
-		baseUrl: string,
 		method: HttpMethod,
 		path: string,
 		options: {
 			data?: any;
 			auth?: boolean;
 			csrfProtected?: boolean;
-			headers?: HeadersInit;
+			headers?: Record<string, string>;
 		}
 	): Promise<ApiResponse<T>> {
+		// Create base headers
 		const headers = this.getSecureHeaders();
-		headers.set('Content-Type', 'application/json');
-		Object.assign(headers, options.headers);
 
-		// Handle FormData
-		if (options.data instanceof FormData && headers.get('Content-Type')) {
+		// Set content type for JSON
+		if (!(options.data instanceof FormData)) {
+			headers.set('Content-Type', 'application/json');
+		} else {
 			headers.delete('Content-Type');
 		}
 
+		// Add custom headers
+		if (options.headers) {
+			for (const [key, value] of Object.entries(options.headers)) {
+				headers.set(key, value);
+			}
+		}
+
 		// Add authentication
-		const accessToken = this.cookies.get('access_token');
-		if (options.auth && accessToken) {
-			headers.set('Authorization', `Bearer ${accessToken}`);
+		if (options.auth) {
+			const accessToken = this.event.cookies.get('access_token');
+			if (accessToken) {
+				headers.set('Authorization', `Bearer ${accessToken}`);
+			}
 		}
 
 		// Add CSRF protection for non-GET requests
 		if (options.csrfProtected && method !== 'GET') {
-			const csrf = await this.getCsrfToken();
-			if (csrf) headers.set('X-XSRF-TOKEN', csrf);
+			const csrf = await this.getCsrfToken(new Headers(headers));
+			if (csrf) {
+				headers.set('X-XSRF-TOKEN', csrf);
+			}
+		}
+
+		// Add cookies to request
+		const cookieString = this.getCookieString();
+		if (cookieString) {
+			headers.set('Cookie', cookieString);
 		}
 
 		// Prepare request body
@@ -118,17 +139,8 @@ export class ApiHandler {
 			requestBody = options.data instanceof FormData ? options.data : JSON.stringify(options.data);
 		}
 
-		// Prepare cookies for the request
-		const cookieString = Object.entries(this.cookies)
-			.map(([key, value]) => `${key}=${value}`)
-			.join('; ');
-
-		if (cookieString) {
-			headers.set('Cookie', cookieString);
-		}
-
 		try {
-			const response = await fetch(`${baseUrl}${path}`, {
+			const response = await fetch(`${this.baseUrl}${path}`, {
 				method,
 				headers,
 				body: requestBody,
@@ -141,7 +153,6 @@ export class ApiHandler {
 				message: 'Invalid JSON response'
 			}));
 
-			// Ensure consistent response structure
 			return {
 				status: responseData.status || response.status,
 				success: responseData.success ?? response.ok,
@@ -163,94 +174,13 @@ export class ApiHandler {
 			};
 		}
 	}
-	private async createMultipartRequest<T>(
-		baseUrl: string,
-		method: HttpMethod,
-		path: string,
-		options: {
-			data?: any;
-			auth?: boolean;
-			csrfProtected?: boolean;
-			headers?: HeadersInit;
-		}
-	): Promise<ApiResponse<T>> {
-		const headers = this.getSecureHeaders();
-		Object.assign(headers, options.headers);
-
-		// Remove Content-Type for FormData to let browser set it
-		if (options.data instanceof FormData) {
-			headers.delete('Content-Type');
-		}
-
-		// Add authentication
-		const accessToken = this.cookies.get('access_token');
-		if (options.auth && accessToken) {
-			headers.set('Authorization', `Bearer ${accessToken}`);
-		}
-
-		// Add CSRF protection
-		if (options.csrfProtected && method !== 'GET') {
-			const csrf = await this.getCsrfToken();
-			if (csrf) headers.set('X-XSRF-TOKEN', csrf);
-		}
-
-		// Prepare cookies
-		const cookieString = Object.entries(this.cookies)
-			.map(([key, value]) => `${key}=${value}`)
-			.join('; ');
-
-		if (cookieString) {
-			headers.set('Cookie', cookieString);
-		}
-
-		try {
-			const response = await fetch(`${baseUrl}${path}`, {
-				method,
-				headers,
-				body: method !== 'GET' ? options.data : undefined,
-				credentials: 'include'
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({}));
-				throw {
-					status: response.status,
-					message: errorData.message || 'Request failed',
-					data: errorData
-				};
-			}
-
-			const data: ApiResponse<T> = await response.json();
-			return {
-				status: data.status || response.status,
-				success: data.success ?? true,
-				message: data.message || 'Request successful',
-				data: data.data,
-				meta: data.meta
-			};
-		} catch (error: any) {
-			const status = error.status || 500;
-			const errorData = error.data || {};
-			return {
-				status,
-				success: false,
-				message: errorData.message || error.message || 'API request failed',
-				error: {
-					code: errorData.code || `HTTP_${status}`,
-					details:
-						errorData.error || (process.env.NODE_ENV === 'development' ? error.stack : undefined)
-				},
-				meta: error.meta
-			};
-		}
-	}
 	public async authRequest<T>(
 		method: HttpMethod,
 		path: string,
 		data?: any,
-		headers?: HeadersInit
+		headers?: Record<string, string>
 	): Promise<ApiResponse<T>> {
-		return this.createApiRequest<T>(this.baseUrl, method, path, {
+		return this.createApiRequest<T>(method, path, {
 			data,
 			auth: true,
 			csrfProtected: true,
@@ -261,9 +191,9 @@ export class ApiHandler {
 		method: HttpMethod,
 		path: string,
 		data?: any,
-		headers?: HeadersInit
+		headers?: Record<string, string>
 	): Promise<ApiResponse<T>> {
-		return this.createApiRequest<T>(this.baseUrl, method, path, {
+		return this.createApiRequest<T>(method, path, {
 			data,
 			auth: false,
 			csrfProtected: false,
@@ -274,9 +204,9 @@ export class ApiHandler {
 		method: HttpMethod,
 		path: string,
 		data?: FormData,
-		headers?: HeadersInit
+		headers?: Record<string, string>
 	): Promise<ApiResponse<T>> {
-		return this.createMultipartRequest<T>(this.baseUrl, method, path, {
+		return this.createApiRequest<T>(method, path, {
 			data,
 			auth: true,
 			csrfProtected: true,

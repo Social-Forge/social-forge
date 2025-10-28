@@ -9,6 +9,7 @@ import (
 	"social-forge/internal/helpers"
 	"social-forge/internal/infra/contextpool"
 	"social-forge/internal/infra/repository"
+	"social-forge/internal/middlewares"
 	"social-forge/internal/utils"
 	"time"
 
@@ -24,7 +25,11 @@ type AuthService struct {
 	sessionRepo    repository.SessionRepository
 	tenantRepo     repository.TenantRepository
 	userTenantRepo repository.UserTenantRepository
+	tokenRepo      repository.TokenRepository
+	rateLimiter    *middlewares.RateLimiterMiddleware
 	tokenHelper    *helpers.TokenHelper
+	authHelper     *helpers.AuthHelper
+	userHelper     *helpers.UserHelper
 	logger         *zap.Logger
 	jwtSecret      string
 	jwtExpiry      time.Duration
@@ -38,7 +43,11 @@ func NewAuthService(
 	sessionRepo repository.SessionRepository,
 	tenantRepo repository.TenantRepository,
 	userTenantRepo repository.UserTenantRepository,
+	tokenRepo repository.TokenRepository,
+	rateLimiter *middlewares.RateLimiterMiddleware,
 	tokenHelper *helpers.TokenHelper,
+	authHelper *helpers.AuthHelper,
+	userHelper *helpers.UserHelper,
 	logger *zap.Logger,
 	jwtSecret string,
 	jwtExpiryHours int,
@@ -51,24 +60,53 @@ func NewAuthService(
 		sessionRepo:    sessionRepo,
 		tenantRepo:     tenantRepo,
 		userTenantRepo: userTenantRepo,
+		tokenRepo:      tokenRepo,
+		rateLimiter:    rateLimiter,
 		tokenHelper:    tokenHelper,
+		authHelper:     authHelper,
+		userHelper:     userHelper,
 		logger:         logger,
 		jwtSecret:      jwtSecret,
 		jwtExpiry:      time.Duration(jwtExpiryHours) * time.Hour,
 		refreshExpiry:  time.Duration(refreshExpiryHours) * time.Hour,
 	}
 }
-func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.LoginResponse, error) {
+func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest, ip, origin string) (*dto.LoginResponse, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
+	blockKey := fmt.Sprintf("block:login:%s", ip)
+	if blocked := s.IsBlockedAttempt(subCtx, blockKey); blocked {
+		return nil, errors.New("too many attempts. please try again later")
+	}
+
 	user, err := s.userRepo.FindByEmailOrUsername(subCtx, req.Identifier)
+
 	if err != nil {
-		s.logger.Warn("Login failed: user not found",
-			zap.String("identifier", req.Identifier),
-			zap.Error(err),
-		)
-		return nil, dto.ErrInvalidCredentials
+		attemptsKey := fmt.Sprintf("delay:%s:%s", "login", ip)
+		attempts := s.ShouldBlockCredential(subCtx, attemptsKey)
+		_ = s.SetExpireAttemptCredential(subCtx, attemptsKey, time.Hour)
+
+		if attempts >= 3 {
+			_ = s.SetBlockedAttemptCredential(subCtx, blockKey, "1", 30*time.Minute)
+		}
+		remaining := 3 - attempts
+
+		return nil, fmt.Errorf("invalid credentials. %d attempts remaining", remaining)
+	}
+
+	validatePassword := utils.VerifyPassword(user.PasswordHash, req.Password)
+	if !validatePassword {
+		attemptsKey := fmt.Sprintf("delay:%s:%s", "login", ip)
+		attempts := s.ShouldBlockCredential(subCtx, attemptsKey)
+		_ = s.SetExpireAttemptCredential(subCtx, attemptsKey, time.Hour)
+
+		if attempts >= 3 {
+			_ = s.SetBlockedAttemptCredential(subCtx, blockKey, "1", 30*time.Minute)
+		}
+		remaining := 3 - attempts
+
+		return nil, fmt.Errorf("invalid credentials. %d attempts remaining", remaining)
 	}
 
 	if !user.IsActive {
@@ -78,13 +116,73 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		)
 		return nil, dto.ErrUserInactive
 	}
+	if user.EmailVerifiedAt == nil {
+		tokenVerify, expiredAt := utils.GenerateEmailToken()
 
-	if !utils.VerifyPassword(user.PasswordHash, req.Password) {
-		s.logger.Warn("Login failed: invalid password",
-			zap.String("identifier", req.Identifier),
-			zap.Any("user_id", user.ID),
-		)
-		return nil, dto.ErrInvalidCredentials
+		tokenPayload := &entity.Token{
+			ID:        uuid.New(),
+			UserID:    user.ID,
+			Token:     tokenVerify,
+			Type:      string(dto.EmailVerification),
+			IsUsed:    false,
+			ExpiresAt: expiredAt,
+			CreatedAt: time.Now(),
+		}
+
+		if err = s.tokenRepo.Create(ctx, tokenPayload); err != nil {
+			s.logger.Error("Failed to create token",
+				zap.Any("token_id", tokenPayload.ID),
+				zap.Error(err),
+			)
+			return nil, fmt.Errorf("failed to create token: %w", err)
+		}
+		metadata := &dto.SendMailMetaData{
+			Token:     tokenVerify,
+			Type:      dto.EmailVerification,
+			To:        user.Email,
+			User:      &entity.UserResponse{ID: user.ID, Email: user.Email, Username: user.Username, FullName: user.FullName},
+			Origin:    origin,
+			Password:  req.Password,
+			ExpiredAt: expiredAt,
+		}
+
+		if err = s.authHelper.SendEmail(metadata); err != nil {
+			s.logger.Error("Failed to send verification email",
+				zap.String("email", user.Email),
+				zap.Error(err),
+			)
+		}
+
+		return &dto.LoginResponse{
+			AccessToken:  "",
+			RefreshToken: "",
+			TwoFaToken:   "",
+			TokenType:    "",
+			ExpiresIn:    0,
+			Status:       "require_email_verification",
+			User:         nil,
+		}, nil
+	}
+
+	if user.TwoFaSecret != nil {
+		twoFaToken := uuid.New().String()
+		if err = s.userHelper.Set2FaStatus(subCtx, twoFaToken, "pending_2fa", user.ID.String()); err != nil {
+			s.logger.Error("Failed to save 2FA token",
+				zap.Any("user_id", user.ID),
+				zap.Error(err),
+			)
+			return nil, fmt.Errorf("failed to save 2FA token: %w", err)
+		}
+
+		return &dto.LoginResponse{
+			AccessToken:  "",
+			RefreshToken: "",
+			TwoFaToken:   twoFaToken,
+			TokenType:    "",
+			ExpiresIn:    0,
+			Status:       "two_fa_required",
+			User:         nil,
+		}, nil
 	}
 
 	userTenant, err := s.userRepo.GetUserTenantWithDetails(subCtx, user.ID)
@@ -96,7 +194,7 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		return nil, fmt.Errorf("failed to get user tenant: %w", err)
 	}
 
-	roleNames, permsName, permissionResources, actionName := s.getUserRolePermissions(subCtx, userTenant)
+	roleNames, permsName, permissionResources, actionName := s.GetUserRolePermissions(subCtx, userTenant)
 
 	tokenPayload := &entity.TokenMetadata{
 		UserID:             user.ID,
@@ -152,8 +250,10 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 	return &dto.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		TwoFaToken:   "",
 		TokenType:    "Bearer",
 		ExpiresIn:    int64(s.jwtExpiry.Seconds()),
+		Status:       "accepted",
 		User: &entity.UserResponse{
 			ID:              user.ID,
 			Email:           user.Email,
@@ -176,8 +276,7 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 		},
 	}, nil
 }
-func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest) (*entity.User, error) {
-	// Check if email already exists
+func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest, origin string) (*entity.User, error) {
 	existingUser, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
 		s.logger.Warn("Registration failed: email already registered",
@@ -185,7 +284,6 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		)
 		return nil, dto.ErrEmailAlreadyExists
 	}
-	// Check if username already exists
 	exists, err := s.userRepo.ExistsByUsername(ctx, req.Username)
 	if err == nil && exists {
 		s.logger.Warn("Registration failed: username already registered",
@@ -193,7 +291,6 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		)
 		return nil, dto.ErrUsernameAlreadyExists
 	}
-	// Check if phone already exists
 	exists, err = s.userRepo.ExistsByPhone(ctx, req.Phone)
 	if err == nil && exists {
 		s.logger.Warn("Registration failed: phone already registered",
@@ -201,7 +298,6 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		)
 		return nil, dto.ErrPhoneAlreadyExists
 	}
-	// Check if password is weak
 	if !utils.IsStrongPassword(req.Password) {
 		s.logger.Warn("Registration failed: weak password",
 			zap.String("email", req.Email),
@@ -294,7 +390,195 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		)
 		return nil, fmt.Errorf("failed to create user tenant: %w", err)
 	}
+
+	tokenVerify, expiredAt := utils.GenerateEmailToken()
+
+	tokenPayload := &entity.Token{
+		ID:        uuid.New(),
+		UserID:    userUUID,
+		Token:     tokenVerify,
+		Type:      string(dto.EmailVerification),
+		IsUsed:    false,
+		ExpiresAt: expiredAt,
+		CreatedAt: time.Now(),
+	}
+
+	if err := s.tokenRepo.Create(ctx, tokenPayload); err != nil {
+		s.logger.Error("Failed to create token",
+			zap.Any("token_id", tokenPayload.ID),
+			zap.Error(err),
+		)
+		return nil, fmt.Errorf("failed to create token: %w", err)
+	}
+	metadata := &dto.SendMailMetaData{
+		Token:     tokenVerify,
+		Type:      dto.EmailVerification,
+		To:        req.Email,
+		User:      &entity.UserResponse{ID: userUUID, Email: req.Email, Username: req.Username, FullName: fullName},
+		Origin:    origin,
+		Password:  req.Password,
+		ExpiredAt: expiredAt,
+	}
+
+	if err := s.authHelper.SendEmail(metadata); err != nil {
+		s.logger.Error("Failed to send verification email",
+			zap.String("email", req.Email),
+			zap.Error(err),
+		)
+		// return nil, fmt.Errorf("failed to send verification email: %w", err)
+	}
 	return user, nil
+}
+func (s *AuthService) VerifyEmail(ctx context.Context, tokenString string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	token, err := s.tokenRepo.FindByToken(subCtx, tokenString)
+	if err != nil {
+		return fmt.Errorf("failed to find token: %w", err)
+	}
+	if token.IsUsed {
+		return errors.New("token already used")
+	}
+	if token.IsExpired() {
+		return errors.New("token expired")
+	}
+	if token.Type != string(dto.EmailVerification) {
+		return errors.New("invalid token type")
+	}
+
+	user, err := s.userRepo.FindByID(subCtx, token.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+	if user.IsVerified {
+		return errors.New("email already verified")
+	}
+
+	if err := s.userRepo.SetEmailVerified(subCtx, user.ID, true); err != nil {
+		return fmt.Errorf("failed to set email verified: %w", err)
+	}
+
+	if err := s.tokenRepo.RevokeAllUserTokens(subCtx, token.UserID, token.Type); err != nil {
+		return fmt.Errorf("failed to revoke all user tokens: %w", err)
+	}
+
+	return nil
+}
+func (s *AuthService) ForgotPassword(ctx context.Context, req *dto.ForgotPasswordRequest, origin, ip string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	blockKey := fmt.Sprintf("block:forgot:%s", ip)
+	if blocked := s.IsBlockedAttempt(subCtx, blockKey); blocked {
+		return errors.New("too many attempts. Please try again later")
+	}
+
+	user, err := s.userRepo.FindByEmail(subCtx, req.Email)
+	if err != nil {
+		attemptsKey := fmt.Sprintf("delay:%s:%s", "forgot", ip)
+		attempts, err := s.userHelper.IncrementAndGet(subCtx, attemptsKey, time.Hour)
+		if err != nil {
+			return fmt.Errorf("failed to increment attempts: %w", err)
+		}
+		if attempts > 3 {
+			err = s.userHelper.SetBlockedAttemptCredential(subCtx, blockKey, 1, 30*time.Minute)
+			if err != nil {
+				return fmt.Errorf("failed to set blocked attempt: %w", err)
+			}
+			s.userHelper.ResetCounter(subCtx, attemptsKey)
+			return errors.New("too many attempts. Please try again later")
+		}
+
+		remaining := 3 - attempts
+		return fmt.Errorf("failed to get user: %w. %d attempts remaining", err, remaining)
+	}
+	if !user.IsVerified {
+		return errors.New("email not verified")
+	}
+
+	tokenVerify, expiredAt := utils.GenerateEmailToken()
+
+	tokenPayload := &entity.Token{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		Token:     tokenVerify,
+		Type:      string(dto.ResetPassword),
+		IsUsed:    false,
+		ExpiresAt: expiredAt,
+		CreatedAt: time.Now(),
+	}
+	if err := s.tokenRepo.Create(subCtx, tokenPayload); err != nil {
+		s.logger.Error("Failed to create token",
+			zap.Any("token_id", tokenPayload.ID),
+			zap.Error(err),
+		)
+		return fmt.Errorf("failed to create token: %w", err)
+	}
+	metadata := &dto.SendMailMetaData{
+		Token:     tokenVerify,
+		Type:      dto.ResetPassword,
+		To:        req.Email,
+		User:      &entity.UserResponse{ID: user.ID, Email: req.Email, Username: user.Username, FullName: user.FullName},
+		Origin:    origin,
+		ExpiredAt: expiredAt,
+	}
+
+	if err := s.authHelper.SendEmail(metadata); err != nil {
+		s.logger.Error("Failed to send verification email",
+			zap.String("email", req.Email),
+			zap.Error(err),
+		)
+	}
+	return nil
+}
+func (s *AuthService) ResetPassword(ctx context.Context, req *dto.ResetPasswordRequest) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	token, err := s.tokenRepo.FindByToken(subCtx, req.Token)
+	if err != nil {
+		return fmt.Errorf("failed to find token: %w", err)
+	}
+	if token.IsUsed {
+		return errors.New("token already used")
+	}
+	if token.IsExpired() {
+		return errors.New("token expired")
+	}
+	if token.Type != string(dto.ResetPassword) {
+		return errors.New("invalid token type")
+	}
+
+	user, err := s.userRepo.FindByID(subCtx, token.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	isMatchPass := utils.VerifyPassword(user.PasswordHash, req.NewPassword)
+	if isMatchPass {
+		return errors.New("new password cannot be the same as old password")
+	}
+
+	isWeakPass := utils.IsStrongPassword(req.NewPassword)
+	if !isWeakPass {
+		return errors.New("password is weak")
+	}
+
+	hashPass, err := utils.GeneratePasswordHash(req.NewPassword)
+	if err != nil {
+		return fmt.Errorf("failed to generate password hash: %w", err)
+	}
+
+	if err := s.userRepo.UpdatePassword(subCtx, token.UserID, hashPass); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	if err := s.tokenRepo.RevokeAllUserTokens(subCtx, token.UserID, token.Type); err != nil {
+		return fmt.Errorf("failed to revoke all user tokens: %w", err)
+	}
+
+	return nil
 }
 
 func (s *AuthService) ValidateToken(tokenString string) (*dto.JWTClaims, error) {
@@ -338,7 +622,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*d
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user tenant: %w", err)
 	}
-	roleNames, permsName, permissionResources, actionName := s.getUserRolePermissions(subCtx, userTenant)
+	roleNames, permsName, permissionResources, actionName := s.GetUserRolePermissions(subCtx, userTenant)
 
 	tokenPayload := &entity.TokenMetadata{
 		UserID:             userTenant.User.ID,
@@ -463,7 +747,7 @@ func (s *AuthService) SaveSession(ctx context.Context, accToken, refToken string
 	}
 	return nil
 }
-func (s *AuthService) getUserRolePermissions(ctx context.Context, metaData *entity.UserTenantWithDetails) ([]string, []string, []string, []string) {
+func (s *AuthService) GetUserRolePermissions(ctx context.Context, metaData *entity.UserTenantWithDetails) ([]string, []string, []string, []string) {
 	var roleNames []string
 	var permissionNames []string
 	var permissionResources []string
@@ -477,4 +761,32 @@ func (s *AuthService) getUserRolePermissions(ctx context.Context, metaData *enti
 	}
 	return roleNames, permissionNames, permissionResources, permissionActions
 
+}
+func (s *AuthService) IsBlockedAttempt(ctx context.Context, key string) bool {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
+	defer cancel()
+
+	blocked, err := s.userHelper.IsBlockedAttempt(subCtx, key)
+	if err != nil {
+		return false
+	}
+	return blocked
+}
+func (s *AuthService) ShouldBlockCredential(ctx context.Context, key string) int {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
+	defer cancel()
+
+	return s.userHelper.ShouldBlockCredential(subCtx, key)
+}
+func (s *AuthService) SetExpireAttemptCredential(ctx context.Context, key string, expiration time.Duration) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
+	defer cancel()
+
+	return s.userHelper.SetExpireAttemptCredential(subCtx, key, expiration)
+}
+func (s *AuthService) SetBlockedAttemptCredential(ctx context.Context, key string, val interface{}, expiration time.Duration) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
+	defer cancel()
+
+	return s.userHelper.SetBlockedAttemptCredential(subCtx, key, val, expiration)
 }

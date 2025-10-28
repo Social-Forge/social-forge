@@ -99,8 +99,6 @@ func (r *tenantRepository) Create(ctx context.Context, tenant *entity.Tenant) er
 		var pgxErr *pgconn.PgError
 		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
 			switch pgxErr.ConstraintName {
-			case "tenants_slug_key":
-				return fmt.Errorf("slug %s is already taken", tenant.Slug)
 			case "idx_unique_tenants_subdomain":
 				return fmt.Errorf("subdomain %s is already taken", *tenant.Subdomain)
 			default:
@@ -158,8 +156,6 @@ func (r *tenantRepository) CreateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 		var pgxErr *pgconn.PgError
 		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
 			switch pgxErr.ConstraintName {
-			case "tenants_slug_key":
-				return fmt.Errorf("slug %s is already taken", tenant.Slug)
 			case "idx_unique_tenants_subdomain":
 				return fmt.Errorf("subdomain %s is already taken", *tenant.Subdomain)
 			default:
@@ -603,7 +599,7 @@ func (r *tenantRepository) GetAllowedTenantIDs(ctx context.Context) ([]uuid.UUID
 	defer cancel()
 
 	query := `
-		SELECT id FROM tenants WHERE subscription_status = 'active' AND trial_ends_at > NOW() AND deleted_at IS NULL
+		SELECT id FROM tenants WHERE subscription_status = 'active' AND deleted_at IS NULL
 	`
 
 	var tenantIDs []uuid.UUID

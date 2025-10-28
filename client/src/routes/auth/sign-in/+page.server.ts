@@ -20,3 +20,51 @@ export const load = async ({ url, locals }) => {
 		form
 	};
 };
+export const actions = {
+	default: async ({ request, locals }) => {
+		const form = await superValidate(request, zod4(loginSchema));
+
+		if (!form.valid) {
+			return fail(400, {
+				form,
+				success: false,
+				error: {
+					message: 'Invalid input',
+					fields: form.errors
+				}
+			});
+		}
+		try {
+			const response = await locals.authServer.login(form.data);
+			console.log(response);
+			if (!response.success) {
+				return fail(400, {
+					form,
+					success: false,
+					error: {
+						message: response.message || 'Invalid input',
+						fields: response.error?.details || form.errors
+					}
+				});
+			}
+			locals.sessionHelper.setAuthCookies({
+				accessToken: response.data?.access_token || '',
+				refreshToken: response.data?.refresh_token || ''
+			});
+			return {
+				form,
+				success: true,
+				message: response.message || 'Login successful',
+				data: response.data
+			};
+		} catch (error) {
+			return fail(500, {
+				form,
+				success: false,
+				error: {
+					message: error instanceof Error ? error.message : 'Internal server error'
+				}
+			});
+		}
+	}
+};

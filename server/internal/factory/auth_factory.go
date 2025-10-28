@@ -23,13 +23,22 @@ func NewAuthFactory(container *dependencies.Container, mw *MiddlewareFactory) *A
 		container.SessionRepo,
 		container.TenantRepo,
 		container.UserTenantRepo,
+		container.TokenRepo,
+		mw.RateLimiter,
 		container.TokenHelper,
+		container.AuthHelper,
+		container.UserHelper,
 		container.Logger,
 		container.Config.JWT.Secret,
 		container.Config.JWT.ExpireHours,
 		container.Config.JWT.RefreshExpireHours)
 
-	handler := handlers.NewAuthHandler(mw.ContextMiddleware, service, container.Logger)
+	handler := handlers.NewAuthHandler(
+		mw.ContextMiddleware,
+		service,
+		mw.RateLimiter,
+		container.Logger,
+	)
 	routes := routes.NewAuthRoutes(handler, mw.ContextMiddleware, mw.RateLimiter)
 	return &AuthFactory{
 		service: service,

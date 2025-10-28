@@ -40,9 +40,9 @@ func (r *channelRepository) Create(ctx context.Context, channel *entity.Channel)
 	defer cancel()
 
 	query := `
-		INSERT INTO channels (id, name, slug, icon_url, description, is_active, created_id)
+		INSERT INTO channels (id, name, slug, icon_url, description, is_active, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT (name, slug) DO NOTHING
+		ON CONFLICT (name) DO NOTHING
 		RETURNING id, created_at, updated_at
 	`
 	args := []interface{}{
@@ -54,8 +54,6 @@ func (r *channelRepository) Create(ctx context.Context, channel *entity.Channel)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.SQLState() == "23505" {
 			switch pgErr.ConstraintName {
-			case "channels_name_key":
-				return fmt.Errorf("channel name '%s' already exists: %w", channel.Name, err)
 			case "channels_slug_key":
 				return fmt.Errorf("channel slug '%s' already exists: %w", channel.Slug, err)
 			default:

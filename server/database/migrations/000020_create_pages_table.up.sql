@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS pages (
   deleted_at TIMESTAMPTZ,
   CONSTRAINT chk_pages_tenant_id_slug UNIQUE (tenant_id, slug),
   CONSTRAINT chk_pages_status CHECK (status IN ('draft', 'published', 'archived')),
-  CONSTRAINT chk_pages_slug_format CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
   CONSTRAINT chk_pages_view_count CHECK (view_count >= 0),
   CONSTRAINT chk_pages_reading_time_minutes CHECK (reading_time_minutes >= 0)
 );

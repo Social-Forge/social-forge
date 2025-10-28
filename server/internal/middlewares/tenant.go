@@ -12,13 +12,13 @@ import (
 )
 
 type TenantMiddleware struct {
-	notifier     *config.Notifier
+	notifier     config.Notifier
 	ctxinject    *ContextMiddleware
 	logger       *zap.Logger
 	tenantHelper *helpers.TenantHelper
 }
 
-func NewTenantMiddleware(notifier *config.Notifier, ctxinject *ContextMiddleware, logger *zap.Logger, tenantHelper *helpers.TenantHelper) *TenantMiddleware {
+func NewTenantMiddleware(notifier config.Notifier, ctxinject *ContextMiddleware, logger *zap.Logger, tenantHelper *helpers.TenantHelper) *TenantMiddleware {
 	return &TenantMiddleware{
 		notifier:     notifier,
 		ctxinject:    ctxinject,

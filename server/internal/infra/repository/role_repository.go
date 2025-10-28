@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"social-forge/config"
 	"social-forge/internal/entity"
 	"social-forge/internal/infra/contextpool"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type RoleRepository interface {
@@ -44,7 +46,7 @@ func (r *roleRepository) Create(ctx context.Context, role *entity.Role) error {
 
 	query := `INSERT INTO roles (id, name, slug, description, level, created_at)
 	VALUES ($1, $2, $3, $4, $5, $6)
-	ON CONFLICT (name) DO NOTHING ON CONFLICT (slug) DO NOTHING 
+	ON CONFLICT (name) DO NOTHING
 	RETURNING id, created_at, updated_at`
 
 	args := []interface{}{
@@ -54,20 +56,18 @@ func (r *roleRepository) Create(ctx context.Context, role *entity.Role) error {
 		role.Description,
 		role.Level,
 		role.CreatedAt,
-		role.UpdatedAt,
 	}
 
 	var roleID uuid.UUID
 	var createdAt, updatedAt time.Time
 	err := r.db.QueryRow(subCtx, query, args...).Scan(&roleID, &createdAt, &updatedAt)
 	if err != nil {
+		config.Logger.Error("Failed to create role", zap.Error(err))
 		var pgxErr *pgconn.PgError
 		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
 			switch pgxErr.ConstraintName {
-			case "roles_name_key":
-				return fmt.Errorf("role name '%s' is already taken", role.Name)
 			case "roles_slug_key":
-				return fmt.Errorf("role slug '%s' is already taken", role.Slug)
+				return fmt.Errorf("role slug already exists")
 			case "roles_name_length_check":
 				return fmt.Errorf("role name length must be between 3 and 20 characters")
 			case "roles_slug_length_check":
@@ -76,8 +76,6 @@ func (r *roleRepository) Create(ctx context.Context, role *entity.Role) error {
 				return fmt.Errorf("role level must be between 0 and 100")
 			case "roles_name_check":
 				return fmt.Errorf("role name must contain only letters, numbers, and underscores")
-			case "roles_slug_check":
-				return fmt.Errorf("role slug must contain only letters, numbers, and underscores")
 			default:
 				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
 			}
@@ -267,8 +265,6 @@ func (r *roleRepository) Update(ctx context.Context, role *entity.Role) (*entity
 				return nil, fmt.Errorf("role level must be between 0 and 100")
 			case "roles_name_check":
 				return nil, fmt.Errorf("role name must contain only letters, numbers, and underscores")
-			case "roles_slug_check":
-				return nil, fmt.Errorf("role slug must contain only letters, numbers, and underscores")
 			default:
 				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
 			}

@@ -76,16 +76,8 @@ func (r *sessionRepository) Create(ctx context.Context, session *entity.Session)
 	)
 
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			switch pgErr.ConstraintName {
-			case "sessions_access_token_unique":
-				return fmt.Errorf("duplicate access token: %w", err)
-			case "sessions_refresh_token_unique":
-				return fmt.Errorf("duplicate refresh token: %w", err)
-			default:
-				return fmt.Errorf("duplicate session token: %w", err)
-			}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
 		}
 		return fmt.Errorf("failed to create session: %w", err)
 	}
@@ -172,8 +164,16 @@ func (r *sessionRepository) Update(ctx context.Context, session *entity.Session)
 	)
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("session not found")
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "sessions_access_token_unique":
+				return nil, fmt.Errorf("duplicate access token: %w", err)
+			case "sessions_refresh_token_unique":
+				return nil, fmt.Errorf("duplicate refresh token: %w", err)
+			default:
+				return nil, fmt.Errorf("duplicate session token: %w", err)
+			}
 		}
 		return nil, fmt.Errorf("failed to update session: %w", err)
 	}

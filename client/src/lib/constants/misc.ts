@@ -8,27 +8,27 @@ export const PAGINATION_LIMIT = 10;
 export const COMPANIES = [
 	{
 		name: 'Asana',
-		logo: '/assets/company-01.svg'
+		logo: 'https://socialchat.id/brand/yamaha.png'
 	},
 	{
 		name: 'Tidal',
-		logo: '/assets/company-02.svg'
+		logo: 'https://www.omnichat.ai/wp-content/uploads/DFI-footer-main-logo.svg'
 	},
 	{
 		name: 'Innovaccer',
-		logo: '/assets/company-03.svg'
+		logo: 'https://www.omnichat.ai/wp-content/uploads/3HK-logo-black-01-1-768x410.jpg'
 	},
 	{
 		name: 'Linear',
-		logo: '/assets/company-04.svg'
+		logo: 'https://www.omnichat.ai/wp-content/uploads/14-Benefit-1-768x269.png'
 	},
 	{
 		name: 'Raycast',
-		logo: '/assets/company-05.svg'
+		logo: 'https://socialchat.id/brand/cloud-now.png'
 	},
 	{
 		name: 'Labelbox',
-		logo: '/assets/company-06.svg'
+		logo: 'https://www.omnichat.ai/wp-content/uploads/Honda-1.png'
 	}
 ] as const;
 

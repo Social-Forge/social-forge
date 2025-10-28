@@ -1,0 +1,17 @@
+<!--
+	Installed from @ieedan/shadcn-svelte-extras
+-->
+
+<script lang="ts">
+	import type { EmojiPickerFooterProps } from './types';
+	import { useEmojiPickerFooter } from './emoji-picker.svelte.js';
+	import { cn } from '$lib/utils/utils';
+
+	let { class: className, children, ...rest }: EmojiPickerFooterProps = $props();
+
+	const footerState = useEmojiPickerFooter();
+</script>
+
+<div {...rest} class={cn('relative max-w-full border-t border-border p-2', className)}>
+	{@render children?.({ active: footerState.root.emojiPickerState.active })}
+</div>

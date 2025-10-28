@@ -42,10 +42,7 @@ func (r *labelRepository) Create(ctx context.Context, label *entity.Label) error
 	query := `
 		INSERT INTO labels (id, tenant_id, agent_owner_id, name, slug, description, color, is_active, created_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		ON CONFLICT ON CONSTRAINT chk_label_agent_id_name
-		DO NOTHING
-	    ON CONFLICT ON CONSTRAINT chk_label_agent_id_slug
-		DO NOTHING
+		ON CONFLICT ON CONSTRAINT chk_label_agent_id_name DO NOTHING
 		RETURNING id, created_at, updated_at
 	`
 	args := []interface{}{
@@ -56,8 +53,6 @@ func (r *labelRepository) Create(ctx context.Context, label *entity.Label) error
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.SQLState() == "23505" {
 			switch pgErr.ConstraintName {
-			case "chk_label_agent_id_name":
-				return fmt.Errorf("label with agent_owner_id %s and name %s already exists", label.AgentOwnerID, label.Name)
 			case "chk_label_agent_id_slug":
 				return fmt.Errorf("label with agent_owner_id %s and slug %s already exists", label.AgentOwnerID, label.Slug)
 			default:
@@ -82,12 +77,6 @@ func (r *labelRepository) Update(ctx context.Context, label *entity.Label) (*ent
 			description = EXCLUDED.description,
 			color = EXCLUDED.color,
 			is_active = EXCLUDED.is_active
-	    ON CONFLICT ON CONSTRAINT chk_label_agent_id_slug
-		DO UPDATE SET
-			name = EXCLUDED.name,
-			description = EXCLUDED.description,
-			color = EXCLUDED.color,
-			is_active = EXCLUDED.is_active
 		RETURNING id, tenant_id, agent_owner_id, name, slug, description, color, is_active, created_at, updated_at
 	`
 	args := []interface{}{
@@ -100,8 +89,6 @@ func (r *labelRepository) Update(ctx context.Context, label *entity.Label) (*ent
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.SQLState() == "23505" {
 			switch pgErr.ConstraintName {
-			case "chk_label_agent_id_name":
-				return nil, fmt.Errorf("label with agent_owner_id %s and name %s already exists", label.AgentOwnerID, label.Name)
 			case "chk_label_agent_id_slug":
 				return nil, fmt.Errorf("label with agent_owner_id %s and slug %s already exists", label.AgentOwnerID, label.Slug)
 			default:

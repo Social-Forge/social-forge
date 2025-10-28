@@ -5,6 +5,10 @@ import { fail, redirect } from '@sveltejs/kit';
 import { zod4 } from 'sveltekit-superforms/adapters';
 
 export const load = async ({ url, locals }) => {
+	const token = url.searchParams.get('token');
+	if (!token) {
+		throw redirect(302, '/auth/sign-in');
+	}
 	const defaultOrigin = new URL(url.pathname, url.origin).href;
 	const pageMetaTags = defaultMetaTags({
 		path_url: defaultOrigin,
@@ -13,11 +17,6 @@ export const load = async ({ url, locals }) => {
 		title: 'Forgot Password',
 		is_homepage: false
 	});
-
-	const token = url.searchParams.get('token');
-	// if (!token) {
-	// 	throw redirect(302, '/auth/sign-in');
-	// }
 
 	const initialValue = {
 		current_password: '',

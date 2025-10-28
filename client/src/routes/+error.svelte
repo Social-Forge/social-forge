@@ -17,17 +17,17 @@
 				{page.status}
 			</span>
 			<h1 class="mt-5 text-3xl font-bold text-neutral-50 md:text-5xl">
-				{page.status === 404 ? 'Not Found' : 'Error'}
+				{page.status === 404 ? 'Not Found' : page.status === 403 ? 'Forbidden' : 'Error'}
 			</h1>
 			<p class="mx-auto mt-5 max-w-xl text-center text-base font-medium text-neutral-400">
-				The page you are looking for does not exist. <br /> But don&apos;t worry, we&apos;ve got you
-				covered. You can{' '}
+				{page.error?.message ||
+					"The page you are looking for does not exist. <br /> But don&apos;t worry, we&apos;ve got you covered. You can{' '}"}
 				<a href="/help" class="text-foreground">contact us</a>
 				.
 			</p>
 			<a href="/" class="mt-8">
 				<button
-					class="bg-linear-to-br cursor-pointer rounded-md from-violet-400 to-purple-600 px-3.5 py-1 text-sm font-medium text-neutral-50 active:scale-95"
+					class="bg-linear-to-br cursor-pointer rounded-md from-violet-400 to-purple-600 px-4 py-2 text-sm font-medium text-neutral-50 active:scale-95"
 				>
 					Back to homepage
 				</button>

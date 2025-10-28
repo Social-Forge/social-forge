@@ -1,3 +1,5 @@
+import type { RegisterSchema, LoginSchema, ForgotSchema, ResetPasswordSchema } from '@/utils';
+
 declare global {
 	interface Window {
 		gtag: (...args: any[]) => void;
@@ -39,21 +41,70 @@ declare global {
 		data?: any;
 	}
 	// Helpers
+	interface ServerAuth {
+		register: (value: RegisterSchema) => Promise<ApiResponse>;
+		login: (value: LoginSchema) => Promise<ApiResponse<LoginResponse>>;
+		forgot: (value: ForgotSchema) => Promise<ApiResponse>;
+		verifyEmail: (token: string) => Promise<ApiResponse>;
+		resetPassword: (value: ResetPasswordSchema) => Promise<ApiResponse>;
+	}
+	interface ServerUser {
+		currentUser: () => Promise<User | null | undefined>;
+	}
 	interface SessionHelper {
 		setAuthCookies: (
-			cookies: Cookies,
 			tokens: {
 				accessToken: string;
 				refreshToken: string;
 			} | null
 		) => void;
-		validateCSRF: (headers: Headers, cookies: Cookies) => boolean;
-		setSecurityHeaders: (headers: Headers) => void;
-		clearAuthCookies: (cookies: Cookies) => void;
-		handleUnauthorized: (cookies: Cookies, redirectTo?: string) => never;
-		getTwoSessionToken: (headers: Headers, cookies: Cookies) => string | undefined;
+		validateCSRF: () => boolean;
+		setSecurityHeaders: () => void;
+		clearAuthCookies: () => void;
+		handleUnauthorized: (redirectTo?: string) => never;
+		getTwoSessionToken: () => string | undefined;
 	}
 	// Database
+
+	type Role = {
+		id: string;
+		name: string;
+		slug: string;
+		description?: string;
+		level: number;
+		created_at: string;
+		updated_at: string;
+	};
+	type Permission = {
+		id: string;
+		name: string;
+		slug: string;
+		resource: string;
+		action: string;
+		description?: string;
+		created_at: string;
+		updated_at: string;
+	};
+	type RolePermission = {
+		id: string;
+		role_id: string;
+		permission_id: string;
+		created_at: string;
+		updated_at: string;
+	};
+	type RolePermissionWithDetails = RolePermission & {
+		role_name: Role['name'];
+		role_slug: Role['slug'];
+		permission_name: Permission['name'];
+		permission_slug: Permission['slug'];
+		permission_resource: Permission['resource'];
+		permission_action: Permission['action'];
+	};
+	type RolePermissionWithNested = {
+		role_permission: RolePermission;
+		role: Role;
+		permission: Permission;
+	};
 	type User = {
 		id: string;
 		email: string;
@@ -68,13 +119,88 @@ declare global {
 		last_login_at?: string;
 		updated_at: string;
 		created_at: string;
+		user_tenants: UserTenant | null;
+		tenant: Tenant | null;
+		role: Role | null;
+		role_permissions: RolePermissionWithDetails[] | null;
+		metadata: UserTenantMetadata | null;
 	};
-	type Role = {
+	type Tenant = {
 		id: string;
 		name: string;
+		slug: string;
+		owner_id: string;
+		subdomain?: string;
+		logo_url?: string;
 		description?: string;
+		max_divisions: number;
+		max_agents: number;
+		max_quick_replies: number;
+		max_pages: number;
+		max_whatsapp: number;
+		max_meta_whatsapp: number;
+		max_meta_messenger: number;
+		max_instagram: number;
+		max_telegram: number;
+		max_webchat: number;
+		max_linkchat: number;
+		subscription_plan: 'free' | 'starter' | 'pro' | 'enterprise';
+		subscription_status: 'active' | 'canceled' | 'suspended' | 'expired';
+		trial_ends_at?: string;
+		is_active: boolean;
 		created_at: string;
 		updated_at: string;
+	};
+	type UserTenant = {
+		id: string;
+		user_id: string;
+		tenant_id: string;
+		role_id: string;
+		is_active: boolean;
+		created_at: string;
+		updated_at: string;
+	};
+	type UserTenantWithDetails = {
+		user_tenant: UserTenant | null;
+		user: User | null;
+		tenant: Tenant | null;
+		role: Role | null;
+		role_permissions: RolePermissionWithDetails[] | null;
+		metadata: UserTenantMetadata | null;
+	};
+	type UserTenantWithDetailsNested = {
+		user_tenant: UserTenant | null;
+		user: User | null;
+		tenant: Tenant | null;
+		role: Role | null;
+		role_permissions: RolePermissionWithNested[] | null;
+		metadata: UserTenantMetadata | null;
+		tenant: Tenant;
+		role: Role;
+		role_permissions: RolePermissionWithDetails[];
+		metadata: UserTenantMetadata;
+	};
+	type UserTenantWithDetailsNested = {
+		user_tenant: UserTenant;
+		user: User;
+		tenant: Tenant;
+		role: Role;
+		role_permissions: RolePermissionWithNested[];
+		metadata: UserTenantMetadata;
+	};
+	type UserTenantMetadata = {
+		permission_count: number;
+		user_status: string;
+		last_updated: string;
+	};
+	type LoginResponse = {
+		access_token?: string;
+		refresh_token?: string;
+		two_fa_token?: string;
+		token_type?: string;
+		expires_in?: number;
+		status: 'require_email_verification' | 'two_fa_required' | 'accepted';
+		user: UserResponse | null;
 	};
 }
 

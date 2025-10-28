@@ -49,8 +49,6 @@ func (r *agentAssignmentRepository) Create(ctx context.Context, assignment *enti
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
-			case "chk_agent_assignment_division_id_user_id":
-				return fmt.Errorf("agent assignment already exists for user %s in division %s: %w", assignment.UserID, assignment.DivisionID, err)
 			case "chk_agent_assignment_status":
 				return fmt.Errorf("agent assignment status is invalid: %w", err)
 			default:
