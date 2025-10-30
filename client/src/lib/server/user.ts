@@ -14,8 +14,23 @@ export const createUserHelper = (event: RequestEvent): ServerUser => {
 			return null;
 		}
 	};
+	const logout = async () => {
+		return await apiHandler.authRequest('POST', '/user/logout');
+	};
+	const uploadAvatar = async (file: File) => {
+		const formData = new FormData();
+		formData.append('avatar', file);
+
+		return await apiHandler.multipartAuthRequest<{ avatar_url: string }>(
+			'POST',
+			'/user/avatar',
+			formData
+		);
+	};
 
 	return {
-		currentUser
+		currentUser,
+		logout,
+		uploadAvatar
 	};
 };

@@ -99,7 +99,7 @@ func (r *roleRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Ro
 	}
 
 	var role entity.Role
-	err := pgxscan.Get(subCtx, r.db, role, query, args...)
+	err := pgxscan.Get(subCtx, r.db, &role, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -119,7 +119,7 @@ func (r *roleRepository) FindBySlug(ctx context.Context, slug string) (*entity.R
 	}
 
 	var role entity.Role
-	err := pgxscan.Get(subCtx, r.db, role, query, args...)
+	err := pgxscan.Get(subCtx, r.db, &role, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -139,7 +139,7 @@ func (r *roleRepository) GetByName(ctx context.Context, name string) (*entity.Ro
 	}
 
 	var role entity.Role
-	err := pgxscan.Get(subCtx, r.db, role, query, args...)
+	err := pgxscan.Get(subCtx, r.db, &role, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

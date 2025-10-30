@@ -13,10 +13,10 @@ type Permission struct {
 	Slug        string     `json:"slug" db:"slug" validate:"required,max=100"`
 	Resource    string     `json:"resource" db:"resource" validate:"required,max=50"`
 	Action      string     `json:"action" db:"action" validate:"required,max=50"`
-	Description *string    `json:"description,omitempty" db:"description"`
+	Description NullString `json:"description,omitempty" db:"description"`
 	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedAt   NullTime   `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 // Permission resources

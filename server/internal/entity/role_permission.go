@@ -12,7 +12,7 @@ type RolePermission struct {
 	PermissionID uuid.UUID   `json:"permission_id" db:"permission_id" validate:"required"`
 	CreatedAt    time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time   `json:"updated_at" db:"updated_at"`
-	DeletedAt    *time.Time  `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedAt    NullTime    `json:"deleted_at,omitempty" db:"deleted_at"`
 	Role         *Role       `json:"role,omitempty"`
 	Permission   *Permission `json:"permission,omitempty"`
 }

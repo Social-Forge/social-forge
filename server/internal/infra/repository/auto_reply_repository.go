@@ -131,7 +131,7 @@ func (r *autoReplyRepository) FindByID(ctx context.Context, id uuid.UUID, tenant
 		id, tenantID,
 	}
 	autoReply := &entity.AutoReply{}
-	err := pgxscan.Get(subCtx, r.db, autoReply, query, args...)
+	err := pgxscan.Get(subCtx, r.db, &autoReply, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("auto reply not found")

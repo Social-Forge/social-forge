@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { MetaTags } from 'svelte-meta-tags';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Progress } from '$lib/components/ui/progress/index.js';
@@ -13,6 +15,31 @@
 	let errorMessage = $state<string | undefined>(undefined);
 	let successMessage = $state<string | undefined>(undefined);
 	let progressValue = $state<number>(0);
+
+	const validateToken = async () => {
+		progressValue = 20;
+		try {
+			const response = await fetch('/api/auth/email-validate', {
+				method: 'POST',
+				body: JSON.stringify({ token: data.token })
+			});
+			const json = await response.json();
+			if (!response.ok) {
+				errorMessage = json.message;
+			} else {
+				successMessage = json.message;
+				// await goto('/auth/sign-in');
+			}
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Internal server error';
+		} finally {
+			progressValue = 100;
+		}
+	};
+
+	onMount(async () => {
+		await validateToken();
+	});
 </script>
 
 <MetaTags {...metaTags} />
@@ -20,7 +47,7 @@
 	<Card.Root class="w-full">
 		<Card.Header>
 			<Card.Title>
-				{data.type == 'email' ? 'Validate Email' : 'Validate Reset Password'}
+				{metaTags.title}
 			</Card.Title>
 			<Card.Description>Please wait while we verify your account.</Card.Description>
 		</Card.Header>

@@ -47,6 +47,6 @@ func NewAuthFactory(container *dependencies.Container, mw *MiddlewareFactory) *A
 	}
 }
 
-func (f *AuthFactory) GetRoutes(parent fiber.Router) {
-	f.routes.RegisterRoutes(parent)
+func (f *AuthFactory) GetRoutes(router fiber.Router) {
+	f.routes.RegisterRoutes(router)
 }

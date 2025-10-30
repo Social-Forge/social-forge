@@ -22,19 +22,20 @@ type Token struct {
 	UpdatedAt time.Time  `json:"updated_at" db:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
 }
-type TokenMetadata struct {
+type RedisSessionData struct {
 	UserID             uuid.UUID          `json:"user_id"`
 	Email              string             `json:"email"`
-	Role               *Role              `json:"role,omitempty"`
-	TenantID           *uuid.UUID         `json:"tenant_id,omitempty"`
-	UserTenantID       *uuid.UUID         `json:"user_tenant_id,omitempty"`
+	TenantID           uuid.UUID          `json:"tenant_id"`
+	UserTenantID       uuid.UUID          `json:"user_tenant_id"`
+	RoleID             uuid.UUID          `json:"role_id"`
 	RoleName           []string           `json:"role_name,omitempty"`
 	PermissionName     []string           `json:"permission_name"`
 	PermissionResource []string           `json:"permission_resource"`
 	PermissionAction   []string           `json:"permission_action"`
+	SessionID          string             `json:"session_id"`
 	Metadata           UserTenantMetadata `json:"metadata"`
 	IssuedAt           int64              `json:"issued_at"`
-	UserAgent          *string            `json:"user_agent,omitempty"`
+	LastAccessed       int64              `json:"last_accessed"`
 }
 
 func (Token) TableName() string {

@@ -25,11 +25,11 @@ type Role struct {
 	ID          uuid.UUID  `json:"id" db:"id"`
 	Name        string     `json:"name" db:"name" validate:"required,max=50"`
 	Slug        string     `json:"slug" db:"slug" validate:"required,max=50"`
-	Description *string    `json:"description,omitempty" db:"description"`
+	Description NullString `json:"description,omitempty" db:"description"`
 	Level       int        `json:"level" db:"level" validate:"required,min=1,max=5"`
 	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedAt   NullTime   `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 // TableName returns the table name for Role

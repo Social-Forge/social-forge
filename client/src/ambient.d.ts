@@ -1,4 +1,10 @@
-import type { RegisterSchema, LoginSchema, ForgotSchema, ResetPasswordSchema } from '@/utils';
+import type {
+	RegisterSchema,
+	LoginSchema,
+	ForgotSchema,
+	ResetPasswordSchema,
+	VerifyTwoFactorSchema
+} from '@/utils';
 
 declare global {
 	interface Window {
@@ -47,21 +53,31 @@ declare global {
 		forgot: (value: ForgotSchema) => Promise<ApiResponse>;
 		verifyEmail: (token: string) => Promise<ApiResponse>;
 		resetPassword: (value: ResetPasswordSchema) => Promise<ApiResponse>;
+		verifyTwoFactor: (value: VerifyTwoFactorSchema) => Promise<ApiResponse<LoginResponse>>;
+		refreshToken: (refreshToken: string) => Promise<ApiResponse<LoginResponse>>;
 	}
 	interface ServerUser {
 		currentUser: () => Promise<User | null | undefined>;
+		logout: () => Promise<ApiResponse>;
+		uploadAvatar: (file: File) => Promise<ApiResponse>;
 	}
 	interface SessionHelper {
 		setAuthCookies: (
 			tokens: {
 				accessToken: string;
 				refreshToken: string;
-			} | null
+			} | null,
+			expiresAccIn: number,
+			expiresRefreshIn: number
 		) => void;
 		validateCSRF: () => boolean;
 		setSecurityHeaders: () => void;
 		clearAuthCookies: () => void;
+		isAuthenticated: () => Promise<boolean>;
 		handleUnauthorized: (redirectTo?: string) => never;
+		getAccessToken: () => string | undefined;
+		getRefreshToken: () => string | undefined;
+		isTokenExpired: (token: string) => boolean;
 		getTwoSessionToken: () => string | undefined;
 	}
 	// Database
@@ -119,7 +135,7 @@ declare global {
 		last_login_at?: string;
 		updated_at: string;
 		created_at: string;
-		user_tenants: UserTenant | null;
+		user_tenant: UserTenant | null;
 		tenant: Tenant | null;
 		role: Role | null;
 		role_permissions: RolePermissionWithDetails[] | null;
@@ -199,6 +215,7 @@ declare global {
 		two_fa_token?: string;
 		token_type?: string;
 		expires_in?: number;
+		expires_refresh_in?: number;
 		status: 'require_email_verification' | 'two_fa_required' | 'accepted';
 		user: UserResponse | null;
 	};

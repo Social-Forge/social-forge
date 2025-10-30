@@ -7,10 +7,12 @@ export const load = async ({ url, locals }) => {
 		canonical: defaultOrigin,
 		graph_type: 'website',
 		title: `Chats`,
+		robots: 'noindex, follow',
 		is_homepage: false
 	});
 
 	return {
-		pageMetaTags
+		pageMetaTags,
+		userTenant: locals.userTenant
 	};
 };

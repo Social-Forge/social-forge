@@ -44,6 +44,7 @@ type AppConfig struct {
 	LogFormat     string
 	LogFilePath   string
 	EncryptionKey string
+	ClientOrigin  string
 }
 
 type DatabaseConfig struct {
@@ -136,6 +137,7 @@ func Load() (*Config, error) {
 			LogFormat:     getEnv("LOG_FORMAT", "json"),
 			LogFilePath:   getEnv("LOG_FILE_PATH", "./logs/app.log"),
 			EncryptionKey: getEnv("ENCRYPTION_KEY", "socialforge123"),
+			ClientOrigin:  getEnv("CLIENT_ORIGIN", "https://socialforge.io"),
 		},
 		Database: DatabaseConfig{
 			Host:            getEnv("DB_HOST", "localhost"),

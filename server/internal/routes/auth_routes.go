@@ -41,4 +41,12 @@ func (r *AuthRoutes) RegisterRoutes(app fiber.Router) {
 	)
 	router.Post("/verify-email", r.handler.VerifyEmail)
 	router.Post("/reset-password", r.handler.ResetPassword)
+	router.Post("/verify-two-factor",
+		r.ctxinject.SetTimeout(10*time.Second),
+		r.rateLimit.BaseLimiter("verify2fa", 5, 5*time.Minute),
+		r.rateLimit.ProgressDelay("verify2fa"),
+		r.rateLimit.BlockLimiter("verify2fa", 3, 30*time.Minute),
+		r.handler.VerifyTwoFactor,
+	)
+	router.Post("/refresh-token", r.handler.RefreshToken)
 }

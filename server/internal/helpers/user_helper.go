@@ -10,6 +10,7 @@ import (
 	redisclient "social-forge/internal/infra/redis-client"
 	"social-forge/internal/infra/repository"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -101,14 +102,14 @@ func (us *UserHelper) Clear2FaStatus(ctx context.Context, sessionID, key string)
 	keys := fmt.Sprintf("%s%s:%s", TwoFaStatusPrefix, sessionID, key)
 	return us.client.DeleteCache(subCtx, keys)
 }
-func (us *UserHelper) Set2FaCode(ctx context.Context, userID string, secret, qrCode string) error {
+func (us *UserHelper) Set2FaCode(ctx context.Context, userID, secret, qrCode string) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
 	keys := fmt.Sprintf("%s%s:%s", TwoFaCodePrefix, userID, secret)
 	return us.client.SetAny(subCtx, keys, qrCode, 10*time.Minute)
 }
-func (us *UserHelper) Get2FaCode(ctx context.Context, userID string, secret string) (string, error) {
+func (us *UserHelper) Get2FaCode(ctx context.Context, userID, secret string) (string, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
@@ -130,20 +131,20 @@ func (us *UserHelper) GetTemp2FASecret(ctx context.Context, userID string) (map[
 	} else if err != redis.Nil {
 		return nil, fmt.Errorf("redis error: %v", err)
 	}
-
-	uuidID, err := uuid.Parse(userID)
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid user id format: %v", err)
+		return nil, fmt.Errorf("invalid user ID format: %w", err)
 	}
-	user, err := us.userRepo.FindByID(subCtx, uuidID)
+
+	user, err := us.userRepo.FindByID(subCtx, userUUID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %v", err)
 	}
 
-	if user.TwoFaSecret == nil || *user.TwoFaSecret == "" {
-		urlQr, secret, err := us.Generate2FAQRCode(subCtx, user.ID.String(), user.Email)
+	if !user.TwoFaSecret.Valid || user.TwoFaSecret.String == "" {
+		urlQr, secret, err := us.Generate2FAQRCode(subCtx, userID, user.Email)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate 2FA QR: %v", err)
+			return nil, fmt.Errorf("failed to get user: %v", err)
 		}
 
 		err = us.userRepo.UpdateTwoFaSecret(subCtx, user.ID, &secret)
@@ -170,7 +171,7 @@ func (us *UserHelper) GetTemp2FASecret(ctx context.Context, userID string) (map[
 	}
 	return payload, nil
 }
-func (us *UserHelper) Generate2FAQRCode(ctx context.Context, userID string, email string) (string, string, error) {
+func (us *UserHelper) Generate2FAQRCode(ctx context.Context, userID, email string) (string, string, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
@@ -207,11 +208,13 @@ func (us *UserHelper) SetTemp2FASecret(ctx context.Context, userID string, paylo
 	keys := fmt.Sprintf("%s%s", TwoFaCodePrefix, userID)
 	return us.client.Setbyte(subCtx, keys, jsonData, 30*time.Minute)
 }
+
 func (us *UserHelper) ClearTemp2FASecret(ctx context.Context, userID string) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
-	return us.client.DeleteCache(subCtx, userID)
+	keys := fmt.Sprintf("%s%s", TwoFaCodePrefix, userID)
+	return us.client.DeleteCache(subCtx, keys)
 }
 func (us *UserHelper) Validate2FA(ctx context.Context, userID, otp, secret string) (bool, error) {
 	valid, err := totp.ValidateCustom(
@@ -312,14 +315,166 @@ func (us *UserHelper) ClearSession(ctx context.Context, userID string, key strin
 
 	return nil
 }
-
-// Cara pakai : r.ClearKeys(ConfirmPassPerfix+userID, TwoFaStatusPrefix+sessionID+":"+key)
-func (us *UserHelper) ClearKeys(ctx context.Context, keys ...string) error {
-	subCtx, cancel := contextpool.WithTimeoutFallback(ctx, 3*time.Second)
+func (us *UserHelper) ClearAllSessionCache(ctx context.Context, userID string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
-	return us.client.Client().Del(subCtx, keys...).Err()
+	patterns := []string{
+		ConfirmPassPerfix + userID,
+		TwoFaCodePrefix + userID + "*",
+		TwoFaStatusPrefix + "*:" + userID,
+		TwoFaStatusPrefix + "*",
+		"session:*",
+		"revoked_token:*",
+	}
+	var allErrors []error
+	var deletedCount int
+
+	for _, pattern := range patterns {
+		count, err := us.deleteKeysByPattern(subCtx, pattern)
+		if err != nil {
+			allErrors = append(allErrors, fmt.Errorf("failed to delete cache pattern %s: %w", pattern, err))
+			continue
+		}
+		deletedCount += count
+	}
+
+	userSessionCount, err := us.deleteUserSessions(subCtx, userID)
+	if err != nil {
+		allErrors = append(allErrors, fmt.Errorf("failed to delete user sessions: %w", err))
+	} else {
+		deletedCount += userSessionCount
+	}
+
+	if len(allErrors) > 0 {
+		return fmt.Errorf("failed to delete %d cache patterns: %v", deletedCount, allErrors)
+	}
+
+	fmt.Printf("✅ Successfully cleared %d cache entries for user %s\n", deletedCount, userID)
+	return nil
 }
+func (us *UserHelper) ClearUserAuthCache(ctx context.Context, userID string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 5*time.Second)
+	defer cancel()
+
+	keys := []string{
+		ConfirmPassPerfix + userID,
+		TwoFaCodePrefix + userID,
+	}
+
+	// Tambahkan semua 2FA status keys untuk user ini
+	pattern := TwoFaStatusPrefix + "*:" + userID
+	statusKeys, err := us.getKeysByPattern(subCtx, pattern)
+	if err != nil {
+		return fmt.Errorf("failed to get 2FA status keys: %w", err)
+	}
+	keys = append(keys, statusKeys...)
+
+	if len(keys) > 0 {
+		if err := us.client.Client().Del(subCtx, keys...).Err(); err != nil {
+			return fmt.Errorf("failed to delete auth cache: %w", err)
+		}
+	}
+
+	fmt.Printf("✅ Cleared auth cache for user %s (%d keys)\n", userID, len(keys))
+	return nil
+}
+
+func (us *UserHelper) deleteKeysByPattern(ctx context.Context, pattern string) (int, error) {
+	var deletedCount int
+	var cursor uint64
+	var lastErr error
+
+	for {
+		keys, nextCursor, err := us.client.Client().Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return deletedCount, fmt.Errorf("scan failed for pattern %s: %w", pattern, err)
+		}
+
+		if len(keys) > 0 {
+			count, err := us.client.Client().Del(ctx, keys...).Result()
+			if err != nil {
+				lastErr = fmt.Errorf("failed to delete keys: %w", err)
+			} else {
+				deletedCount += int(count)
+			}
+		}
+
+		if nextCursor == 0 {
+			break
+		}
+		cursor = nextCursor
+	}
+
+	return deletedCount, lastErr
+}
+func (us *UserHelper) deleteUserSessions(ctx context.Context, userID string) (int, error) {
+	var deletedCount int
+	var cursor uint64
+	pattern := "session:*"
+
+	for {
+		keys, nextCursor, err := us.client.Client().Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return deletedCount, fmt.Errorf("scan sessions failed: %w", err)
+		}
+
+		for _, key := range keys {
+			data, err := us.client.GetByte(ctx, key)
+			if err != nil {
+				if errors.Is(err, redis.Nil) {
+					continue
+				}
+				continue
+			}
+
+			var sessionData struct {
+				UserID string `json:"user_id"`
+			}
+			if err := json.Unmarshal([]byte(data), &sessionData); err != nil {
+				continue // Skip invalid session data
+			}
+
+			if sessionData.UserID == userID {
+				if err := us.client.DeleteCache(ctx, key); err == nil {
+					deletedCount++
+
+					sessionID := strings.TrimPrefix(key, "session:")
+					revokedKey := "revoked_token:" + sessionID
+					us.client.DeleteCache(ctx, revokedKey)
+				}
+			}
+		}
+
+		if nextCursor == 0 {
+			break
+		}
+		cursor = nextCursor
+	}
+
+	return deletedCount, nil
+}
+func (us *UserHelper) getKeysByPattern(ctx context.Context, pattern string) ([]string, error) {
+	var allKeys []string
+	var cursor uint64
+
+	for {
+		keys, nextCursor, err := us.client.Client().Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		allKeys = append(allKeys, keys...)
+
+		if nextCursor == 0 {
+			break
+		}
+		cursor = nextCursor
+	}
+
+	return allKeys, nil
+}
+
 func isPlainNumber(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil

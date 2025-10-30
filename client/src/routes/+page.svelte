@@ -70,11 +70,9 @@
 						>
 					</p>
 					<div class="z-50 flex items-center justify-center gap-4 whitespace-nowrap">
-						<Button>
-							<a href="/auth/sign-in" class="flex items-center">
-								Book a Demo
-								<ArrowRight class="ml-2 h-4 w-4" />
-							</a>
+						<Button href="/auth/sign-in" class="flex items-center">
+							Book a Demo
+							<ArrowRight class="ml-2 h-4 w-4" />
 						</Button>
 					</div>
 				</HomeAnimationContainer>
@@ -135,9 +133,9 @@
 							<div
 								class="bg-linear-to-l pointer-events-none absolute right-0 top-0 z-10 h-full w-20 from-white to-transparent dark:from-neutral-950 dark:to-transparent"
 							></div>
-							<ul class="animate-marquee flex items-center justify-center gap-x-8 md:gap-x-16">
+							<ul class="animate-marquee grid grid-cols-4 gap-2">
 								{#each COMPANIES as company}
-									<li class="shrink-0">
+									<li class="col-span-1">
 										<img
 											src={company.logo}
 											alt={company.name}
@@ -145,7 +143,7 @@
 											height={80}
 											loading="eager"
 											decoding="async"
-											class="h-auto w-20 transition-opacity hover:opacity-75 md:w-28"
+											class="h-10 w-auto transition-opacity hover:opacity-75 md:w-28"
 										/>
 									</li>
 								{/each}

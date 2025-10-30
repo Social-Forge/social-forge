@@ -153,7 +153,7 @@ func NewContainer(ctx context.Context) (*Container, error) {
 
 	userHelper := helpers.NewUserHelper(redis, userRepo)
 	tokenHelper := helpers.NewTokenHelper(redis)
-	authHelper := helpers.NewAuthHelper(userHelper, tokenHelper, &init.Email)
+	authHelper := helpers.NewAuthHelper(userHelper, tokenHelper, &init.App, &init.Email)
 
 	tenantHelper := helpers.NewTenantHelper(redis, userRepo, tenantRepo, logger)
 	secretHelper, err := helpers.NewSecretHelper(init.App.EncryptionKey, logger)

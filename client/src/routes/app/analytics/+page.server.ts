@@ -7,6 +7,7 @@ export const load = async ({ url, locals }) => {
 		canonical: defaultOrigin,
 		graph_type: 'website',
 		title: `App Home`,
+		robots: 'noindex, follow',
 		is_homepage: false
 	});
 

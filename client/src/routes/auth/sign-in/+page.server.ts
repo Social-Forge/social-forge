@@ -36,7 +36,7 @@ export const actions = {
 		}
 		try {
 			const response = await locals.authServer.login(form.data);
-			console.log(response);
+
 			if (!response.success) {
 				return fail(400, {
 					form,
@@ -47,10 +47,24 @@ export const actions = {
 					}
 				});
 			}
-			locals.sessionHelper.setAuthCookies({
-				accessToken: response.data?.access_token || '',
-				refreshToken: response.data?.refresh_token || ''
-			});
+			if (response.data?.two_fa_token && response.status === 202) {
+				return fail(202, {
+					form,
+					success: false,
+					error: {
+						message: response.message || 'Two factor authentication required',
+						two_fa_token: response.data?.two_fa_token || ''
+					}
+				});
+			}
+			locals.sessionHelper.setAuthCookies(
+				{
+					accessToken: response.data?.access_token || '',
+					refreshToken: response.data?.refresh_token || ''
+				},
+				response.data?.expires_in || 60 * 60 * 24,
+				response.data?.expires_refresh_in || 60 * 60 * 24 * 7
+			);
 			return {
 				form,
 				success: true,

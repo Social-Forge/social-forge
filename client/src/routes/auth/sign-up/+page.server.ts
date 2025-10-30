@@ -1,7 +1,7 @@
 import { defaultMetaTags } from '@/utils/meta-tags.js';
 import { superValidate } from 'sveltekit-superforms';
 import { registerSchema } from '@/utils/form-schema.js';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { zod4 } from 'sveltekit-superforms/adapters';
 
 export const load = async ({ url, locals }) => {
@@ -37,7 +37,6 @@ export const actions = {
 		}
 		try {
 			const response = await locals.authServer.register(form.data);
-			console.log(response);
 			if (!response.success) {
 				return fail(400, {
 					form,
@@ -48,10 +47,7 @@ export const actions = {
 					}
 				});
 			}
-			locals.sessionHelper.setAuthCookies({
-				accessToken: response.data?.access_token || '',
-				refreshToken: response.data?.refresh_token || ''
-			});
+
 			return {
 				form,
 				success: true,

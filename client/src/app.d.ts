@@ -65,5 +65,4 @@ declare global {
 		[key: string]: RouteConfig;
 	}
 }
-
 export {};

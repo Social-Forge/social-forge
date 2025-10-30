@@ -14,21 +14,57 @@ export const load = async ({ url, locals }) => {
 		path_url: defaultOrigin,
 		canonical: defaultOrigin,
 		graph_type: 'website',
-		title: 'Forgot Password',
+		title: 'Reset Password',
 		is_homepage: false
 	});
 
-	const initialValue = {
-		current_password: '',
-		new_password: '',
-		confirm_password: '',
-		token
-	} as ResetPasswordSchema;
-
-	const form = await superValidate(initialValue, zod4(resetPasswordSchema));
+	const form = await superValidate(zod4(resetPasswordSchema));
 
 	return {
 		pageMetaTags,
-		form
+		form,
+		token
 	};
+};
+export const actions = {
+	default: async ({ request, locals }) => {
+		const form = await superValidate(request, zod4(resetPasswordSchema));
+		if (!form.valid) {
+			return fail(400, {
+				form,
+				succcess: false,
+				error: {
+					message: 'Invalid token'
+				}
+			});
+		}
+
+		try {
+			const response = await locals.authServer.resetPassword(form.data);
+			if (!response.success) {
+				return fail(400, {
+					form,
+					succcess: false,
+					error: {
+						message: response.message
+					}
+				});
+			}
+
+			return {
+				form,
+				succcess: true,
+				message: response.message || 'Password reset successfully',
+				data: response.data
+			};
+		} catch (error) {
+			return fail(500, {
+				form,
+				succcess: false,
+				error: {
+					message: error instanceof Error ? error.message : 'Reset password failed'
+				}
+			});
+		}
+	}
 };

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 	import { MetaTags } from 'svelte-meta-tags';
 	import { superForm } from 'sveltekit-superforms';
 	import * as Field from '$lib/components/ui/field/index.js';
@@ -27,7 +27,6 @@
 			}
 			successMessage = event.result.data.message;
 			await invalidateAll();
-			await goto('/auth/sign-in');
 		}
 	});
 </script>
@@ -42,38 +41,46 @@
 			<Alert.Description>{errorMessage}</Alert.Description>
 		</Alert.Root>
 	{/if}
-	<form method="POST" class="w-full" use:enhance>
-		<Field.Group class="Root">
-			<Field.Field>
-				<Field.Label for="email">
-					Email <span class="text-red-500 dark:text-red-400">*</span>
-				</Field.Label>
-				<div class="relative">
-					<Icon icon="mdi:email" class="absolute left-3 top-1/2 -translate-y-1/2" />
-					<Input
-						bind:value={$form.email}
-						name="email"
-						type="email"
-						class="ps-10"
-						placeholder="Enter your email"
-						aria-invalid={!!$errors.email}
-						autocomplete="email"
-					/>
-				</div>
-				{#if $errors.email}
-					<Field.Error>{$errors.email}</Field.Error>
-				{/if}
-			</Field.Field>
-			<Field.Field>
-				<Button type="submit" disabled={$submitting}>
-					{#if $submitting}
-						<Spinner />
+	{#if successMessage}
+		<Alert.Root variant="default">
+			<Icon icon="mingcute:check-line" class="size-4" />
+			<Alert.Title>Success</Alert.Title>
+			<Alert.Description>{successMessage}</Alert.Description>
+		</Alert.Root>
+	{:else}
+		<form method="POST" class="w-full" use:enhance>
+			<Field.Group class="Root">
+				<Field.Field>
+					<Field.Label for="email">
+						Email <span class="text-red-500 dark:text-red-400">*</span>
+					</Field.Label>
+					<div class="relative">
+						<Icon icon="mdi:email" class="absolute left-3 top-1/2 -translate-y-1/2" />
+						<Input
+							bind:value={$form.email}
+							name="email"
+							type="email"
+							class="ps-10"
+							placeholder="Enter your email"
+							aria-invalid={!!$errors.email}
+							autocomplete="email"
+						/>
+					</div>
+					{#if $errors.email}
+						<Field.Error>{$errors.email}</Field.Error>
 					{/if}
-					{$submitting ? 'Please wait...' : 'Reset Password'}
-				</Button>
-			</Field.Field>
-		</Field.Group>
-	</form>
+				</Field.Field>
+				<Field.Field>
+					<Button type="submit" disabled={$submitting}>
+						{#if $submitting}
+							<Spinner />
+						{/if}
+						{$submitting ? 'Please wait...' : 'Reset Password'}
+					</Button>
+				</Field.Field>
+			</Field.Group>
+		</form>
+	{/if}
 </div>
 <div class="flex w-full flex-col items-start">
 	<p class="text-muted-foreground text-sm">

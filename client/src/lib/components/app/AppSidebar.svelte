@@ -1,19 +1,36 @@
 <script lang="ts" module>
-	const sidebarItems = [
-		{
-			label: 'Home',
-			icon: 'material-symbols:home',
-			href: '/app/home'
-		},
+	interface NavItem {
+		label: string;
+		icon: string;
+		href: string;
+	}
+	const mainNav = [
 		{
 			label: 'Chats',
 			icon: 'material-symbols:chat',
 			href: '/app/chats'
 		},
 		{
+			label: 'Analytics',
+			icon: 'streamline-ultimate:google-analytics-logo-bold',
+			href: '/app/analytics'
+		},
+		{
+			label: 'Contacts',
+			icon: 'ri:contacts-book-3-fill',
+			href: '/app/contacts'
+		}
+	];
+	const settingNav = [
+		{
 			label: 'Integrations',
 			icon: 'majesticons:applications-add',
-			href: '/app/integration'
+			href: '/app/integrations'
+		},
+		{
+			label: 'Page Builder',
+			icon: 'streamline-ultimate:coding-apps-website-apps-browser-bold',
+			href: '/app/page-builders'
 		},
 		{
 			label: 'Settings',
@@ -24,20 +41,22 @@
 </script>
 
 <script lang="ts">
-	import { page } from '$app/state';
-	import { Label } from '$lib/components/ui/label/index.js';
-	import { useSidebar } from '$lib/components/ui/sidebar/context.svelte.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import { Switch } from '$lib/components/ui/switch/index.js';
-	import CommandIcon from '@lucide/svelte/icons/command';
-	import { AppNavUser } from '@/components/app';
+	import { Separator } from '$lib/components/ui/separator';
+	import { AppNavUser, AppNavMain, AppNavSetting } from '@/components/app';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { mode } from 'mode-watcher';
+	import { ToggleTheme } from '@/components';
 	import type { ComponentProps } from 'svelte';
-	import Icon from '@iconify/svelte';
-	import { cn } from '@/utils';
 
-	let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> = $props();
+	let {
+		ref = $bindable(null),
+		user,
+		...restProps
+	}: ComponentProps<typeof Sidebar.Root> & { user?: UserTenantWithDetails | null } = $props();
 
-	const sidebar = useSidebar();
+	let tenant = $derived(user?.tenant);
+	let isDark = $derived(mode.current === 'dark');
 </script>
 
 <Sidebar.Root
@@ -52,15 +71,15 @@
 				<Sidebar.MenuItem>
 					<Sidebar.MenuButton size="lg" class="md:h-8 md:p-0">
 						{#snippet child({ props })}
-							<a href="##" {...props}>
+							<a href="##" {...props} class="flex items-center gap-2 py-0.5">
 								<div
 									class="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
 								>
 									<img src="/icons/logo.svg" alt="logo" class="size-6" />
 								</div>
 								<div class="grid flex-1 text-left text-sm leading-tight">
-									<span class="truncate font-medium">Social Forge</span>
-									<span class="truncate text-xs">Tenant Name</span>
+									<span class="block truncate font-medium md:hidden">Social Forge</span>
+									<span class="block truncate text-xs capitalize md:hidden">{tenant?.name}</span>
 								</div>
 							</a>
 						{/snippet}
@@ -68,42 +87,25 @@
 				</Sidebar.MenuItem>
 			</Sidebar.Menu>
 		</Sidebar.Header>
-		<Sidebar.Content>
-			<Sidebar.Group>
-				<Sidebar.GroupContent class="px-1.5 md:px-0">
-					<Sidebar.Menu>
-						{#each sidebarItems as item}
-							<Sidebar.MenuItem>
-								<Sidebar.MenuButton
-									tooltipContentProps={{
-										hidden: false
-									}}
-									class={cn(
-										'cursor-pointer px-2.5 md:px-2',
-										page.url.pathname === item.href ? 'bg-cyan-500 text-white dark:bg-cyan-600' : ''
-									)}
-								>
-									{#snippet tooltipContent()}
-										{item.label}
-									{/snippet}
-									{#snippet children()}
-										<a href={item.href} class="flex items-center gap-2">
-											<Icon icon={item.icon} class="size-4" />
-											{#if sidebar.isMobile}
-												<span>{item.label}</span>
-											{/if}
-										</a>
-									{/snippet}
-								</Sidebar.MenuButton>
-							</Sidebar.MenuItem>
-						{/each}
-						<Sidebar.Separator />
-					</Sidebar.Menu>
-				</Sidebar.GroupContent>
-			</Sidebar.Group>
+		<Separator />
+		<Sidebar.Content class="py-2.5">
+			<AppNavMain items={mainNav} {user} />
+			<AppNavSetting items={settingNav} {user} />
 		</Sidebar.Content>
-		<Sidebar.Footer>
-			<AppNavUser />
+		<Separator />
+		<Sidebar.Footer class="py-2.5">
+			<Sidebar.Menu class="py-2.5">
+				<Sidebar.MenuItem>
+					{#snippet children()}
+						<div class="ml-3 flex items-center justify-between md:ml-0">
+							<span class="flex md:hidden">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+							<ToggleTheme />
+						</div>
+					{/snippet}
+				</Sidebar.MenuItem>
+			</Sidebar.Menu>
+			<Separator />
+			<AppNavUser {user} />
 		</Sidebar.Footer>
 	</Sidebar.Root>
 </Sidebar.Root>

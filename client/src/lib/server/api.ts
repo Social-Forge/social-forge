@@ -58,6 +58,7 @@ export class ApiHandler {
 			if (cookieString) {
 				headers.set('Cookie', cookieString);
 			}
+			headers.set('X-Platform', 'browser');
 			const response = await this.event.fetch(`${this.baseUrl}/token/csrf`, {
 				method: 'GET',
 				headers,
@@ -94,24 +95,19 @@ export class ApiHandler {
 			headers?: Record<string, string>;
 		}
 	): Promise<ApiResponse<T>> {
-		// Create base headers
 		const headers = this.getSecureHeaders();
+		headers.set('X-Platform', 'browser');
 
-		// Set content type for JSON
 		if (!(options.data instanceof FormData)) {
 			headers.set('Content-Type', 'application/json');
-		} else {
-			headers.delete('Content-Type');
 		}
 
-		// Add custom headers
 		if (options.headers) {
 			for (const [key, value] of Object.entries(options.headers)) {
 				headers.set(key, value);
 			}
 		}
 
-		// Add authentication
 		if (options.auth) {
 			const accessToken = this.event.cookies.get('access_token');
 			if (accessToken) {
@@ -119,7 +115,6 @@ export class ApiHandler {
 			}
 		}
 
-		// Add CSRF protection for non-GET requests
 		if (options.csrfProtected && method !== 'GET') {
 			const csrf = await this.getCsrfToken(new Headers(headers));
 			if (csrf) {
@@ -127,13 +122,11 @@ export class ApiHandler {
 			}
 		}
 
-		// Add cookies to request
 		const cookieString = this.getCookieString();
 		if (cookieString) {
 			headers.set('Cookie', cookieString);
 		}
 
-		// Prepare request body
 		let requestBody: any;
 		if (method !== 'GET' && options.data) {
 			requestBody = options.data instanceof FormData ? options.data : JSON.stringify(options.data);
@@ -163,6 +156,84 @@ export class ApiHandler {
 			};
 		} catch (error: any) {
 			console.error('❌ API Request failed:', error);
+			return {
+				status: 500,
+				success: false,
+				message: error.message || 'API request failed',
+				error: {
+					code: 'NETWORK_ERROR',
+					details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+				}
+			};
+		}
+	}
+	private async createMultipartApiRequest<T>(
+		method: HttpMethod,
+		path: string,
+		options: {
+			data?: FormData;
+			auth?: boolean;
+			csrfProtected?: boolean;
+			headers?: Record<string, string>;
+		}
+	): Promise<ApiResponse<T>> {
+		const headers = this.getSecureHeaders();
+		headers.set('X-Platform', 'browser');
+
+		if (options.headers) {
+			for (const [key, value] of Object.entries(options.headers)) {
+				headers.set(key, value);
+			}
+		}
+
+		if (options.auth) {
+			const accessToken = this.event.cookies.get('access_token');
+			if (accessToken) {
+				headers.set('Authorization', `Bearer ${accessToken}`);
+			}
+		}
+
+		if (options.csrfProtected && method !== 'GET') {
+			const csrf = await this.getCsrfToken(new Headers(headers));
+			if (csrf) {
+				headers.set('X-XSRF-TOKEN', csrf);
+			}
+		}
+
+		const cookieString = this.getCookieString();
+		if (cookieString) {
+			headers.set('Cookie', cookieString);
+		}
+
+		let requestBody: FormData = new FormData();
+		if (method !== 'GET' && options.data) {
+			requestBody = options.data;
+		}
+
+		try {
+			const response = await fetch(`${this.baseUrl}${path}`, {
+				method,
+				headers,
+				body: requestBody,
+				credentials: 'include'
+			});
+
+			const responseData: ApiResponse<T> = await response.json().catch(() => ({
+				status: response.status,
+				success: false,
+				message: 'Invalid JSON response'
+			}));
+
+			return {
+				status: responseData.status || response.status,
+				success: responseData.success ?? response.ok,
+				message: responseData.message || (response.ok ? 'Request successful' : 'Request failed'),
+				data: responseData.data,
+				meta: responseData.meta,
+				error: responseData.error
+			};
+		} catch (error: any) {
+			console.error('❌ Multipart API Request failed:', error);
 			return {
 				status: 500,
 				success: false,
@@ -206,7 +277,7 @@ export class ApiHandler {
 		data?: FormData,
 		headers?: Record<string, string>
 	): Promise<ApiResponse<T>> {
-		return this.createApiRequest<T>(method, path, {
+		return this.createMultipartApiRequest<T>(method, path, {
 			data,
 			auth: true,
 			csrfProtected: true,

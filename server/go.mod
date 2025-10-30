@@ -21,6 +21,7 @@ require (
 	github.com/redis/go-redis/v9 v9.16.0
 	github.com/sethvargo/go-password v0.3.1
 	github.com/spf13/viper v1.21.0
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	go.mau.fi/whatsmeow v0.0.0-20251023183934-2ced35dd7e8c
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.43.0
@@ -30,7 +31,6 @@ require (
 
 require (
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
-	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 )
 

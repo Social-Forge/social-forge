@@ -15,7 +15,8 @@ import (
 )
 
 type TokenRepository interface {
-	Create(ctx context.Context, token *entity.Token) error
+	Create(ctx context.Context, token *entity.Token) (*entity.Token, error)
+	CreateOrGetExist(ctx context.Context, token *entity.Token) (*entity.Token, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Token, error)
 	FindByToken(ctx context.Context, token string) (*entity.Token, error)
 	Update(ctx context.Context, token *entity.Token) (*entity.Token, error)
@@ -25,6 +26,7 @@ type TokenRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID, opts *ListOptions) ([]*entity.Token, int64, error)
 	FindActiveByUser(ctx context.Context, userID uuid.UUID) ([]*entity.Token, error)
 	FindByTokenAndType(ctx context.Context, token, tokenType string) (*entity.Token, error)
+	FindByType(ctx context.Context, userID uuid.UUID, tokenType string) (*entity.Token, error)
 	RevokeToken(ctx context.Context, id uuid.UUID) error
 	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID, tokenType string) error
 	ValidateToken(ctx context.Context, token, tokenType string) (*entity.Token, error)
@@ -41,7 +43,7 @@ func NewTokenRepository(db *pgxpool.Pool) TokenRepository {
 		baseRepository: NewBaseRepository(db).(*baseRepository),
 	}
 }
-func (r *tokenRepository) Create(ctx context.Context, token *entity.Token) error {
+func (r *tokenRepository) Create(ctx context.Context, token *entity.Token) (*entity.Token, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
@@ -53,7 +55,7 @@ func (r *tokenRepository) Create(ctx context.Context, token *entity.Token) error
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (token) DO UPDATE SET
 			is_used = EXCLUDED.is_used
-		RETURNING id, created_at, updated_at
+		RETURNING id, user_id, token, type, expires_at, is_used, created_at, updated_at
 	`
 
 	args := []interface{}{
@@ -66,21 +68,42 @@ func (r *tokenRepository) Create(ctx context.Context, token *entity.Token) error
 		token.CreatedAt,
 	}
 
+	var newToken entity.Token
 	err := r.db.QueryRow(subCtx, query, args...).Scan(
-		&token.ID,
-		&token.CreatedAt,
-		&token.UpdatedAt,
+		&newToken.ID,
+		&newToken.UserID,
+		&newToken.Token,
+		&newToken.Type,
+		&newToken.ExpiresAt,
+		&newToken.IsUsed,
+		&newToken.CreatedAt,
+		&newToken.UpdatedAt,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("duplicate token: %w", err)
+			return nil, fmt.Errorf("duplicate token: %w", err)
 		}
-		return fmt.Errorf("failed to create token: %w", err)
+		return nil, fmt.Errorf("failed to create token: %w", err)
 	}
 
-	return nil
+	return &newToken, nil
 }
+func (r *tokenRepository) CreateOrGetExist(ctx context.Context, token *entity.Token) (*entity.Token, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	existToken, err := r.FindByType(subCtx, token.UserID, token.Type)
+	if err == nil && existToken != nil {
+		return existToken, nil
+	}
+	newToken, errCreate := r.Create(subCtx, token)
+	if errCreate != nil {
+		return nil, fmt.Errorf("failed to create token: %w", errCreate)
+	}
+	return newToken, nil
+}
+
 func (r *tokenRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Token, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
@@ -130,9 +153,7 @@ func (r *tokenRepository) Update(ctx context.Context, token *entity.Token) (*ent
 		UPDATE tokens
 		SET expires_at = $1, is_used = $2
 		WHERE id = $3 AND deleted_at IS NULL
-		RETURNING id, user_id, token, type, expires_at,
-				  last_used_at, is_used,
-				  created_at, updated_at
+		RETURNING id, user_id, token, type, expires_at, is_used, created_at, updated_at
 	`
 
 	args := []interface{}{
@@ -307,6 +328,31 @@ func (r *tokenRepository) FindByTokenAndType(ctx context.Context, token, tokenTy
 
 	return &tokenEntity, nil
 }
+func (r *tokenRepository) FindByType(ctx context.Context, userID uuid.UUID, tokenType string) (*entity.Token, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT * FROM tokens
+		WHERE user_id = $1
+		  AND type = $2
+		  AND is_used = false
+		  AND expires_at > NOW()
+		  AND deleted_at IS NULL
+		LIMIT 1
+	`
+
+	var tokenEntity entity.Token
+	err := pgxscan.Get(subCtx, r.db, &tokenEntity, query, userID, tokenType)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("token not found")
+		}
+		return nil, fmt.Errorf("failed to find token: %w", err)
+	}
+
+	return &tokenEntity, nil
+}
 func (r *tokenRepository) RevokeToken(ctx context.Context, id uuid.UUID) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
@@ -338,7 +384,7 @@ func (r *tokenRepository) RevokeAllUserTokens(ctx context.Context, userID uuid.U
 	if tokenType != "" {
 		query = `
 			UPDATE tokens
-			SET is_used = true
+			SET is_used = true, deleted_at = NOW()
 			WHERE user_id = $1 
 			  AND type = $2
 			  AND is_used = false 
@@ -348,7 +394,7 @@ func (r *tokenRepository) RevokeAllUserTokens(ctx context.Context, userID uuid.U
 	} else {
 		query = `
 			UPDATE tokens
-			SET is_used = true
+			SET is_used = true, deleted_at = NOW()
 			WHERE user_id = $1 
 			  AND is_used = false 
 			  AND deleted_at IS NULL

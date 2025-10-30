@@ -57,9 +57,9 @@ func (r *tenantRepository) Create(ctx context.Context, tenant *entity.Tenant) er
 			id, name, slug, owner_id, subdomain, logo_url, description,
 			max_divisions, max_agents, max_quick_replies, max_pages,
 			max_whatsapp, max_meta_whatsapp, max_meta_messenger, max_instagram, max_telegram, max_webchat, max_linkchat,
-			subscription_plan, subscription_status, is_active, created_at
+			subscription_plan, subscription_status, trial_ends_at, is_active, created_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
 		) ON CONFLICT (slug) DO NOTHING RETURNING id, created_at, updated_at`
 
 	args := []interface{}{
@@ -83,6 +83,7 @@ func (r *tenantRepository) Create(ctx context.Context, tenant *entity.Tenant) er
 		tenant.MaxLinkChat,
 		tenant.SubscriptionPlan,
 		tenant.SubscriptionStatus,
+		tenant.TrialEndsAt,
 		tenant.IsActive,
 		tenant.CreatedAt,
 	}
@@ -100,7 +101,7 @@ func (r *tenantRepository) Create(ctx context.Context, tenant *entity.Tenant) er
 		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
 			switch pgxErr.ConstraintName {
 			case "idx_unique_tenants_subdomain":
-				return fmt.Errorf("subdomain %s is already taken", *tenant.Subdomain)
+				return fmt.Errorf("subdomain %s is already taken", tenant.Subdomain.String)
 			default:
 				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
 			}
@@ -118,9 +119,9 @@ func (r *tenantRepository) CreateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 			id, name, slug, owner_id, subdomain, logo_url, description,
 			max_divisions, max_agents, max_quick_replies, max_pages,
 			max_whatsapp, max_meta_whatsapp, max_meta_messenger, max_instagram, max_telegram, max_webchat, max_linkchat,
-			subscription_plan, subscription_status, is_active, created_at
+			subscription_plan, subscription_status, trial_ends_at, is_active, created_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
 		) ON CONFLICT (slug) DO NOTHING RETURNING id, created_at, updated_at`
 
 	args := []interface{}{
@@ -144,6 +145,7 @@ func (r *tenantRepository) CreateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 		tenant.MaxLinkChat,
 		tenant.SubscriptionPlan,
 		tenant.SubscriptionStatus,
+		tenant.TrialEndsAt,
 		tenant.IsActive,
 		tenant.CreatedAt,
 	}
@@ -157,7 +159,7 @@ func (r *tenantRepository) CreateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 		if errors.As(err, &pgxErr) && pgxErr.Code == "23505" {
 			switch pgxErr.ConstraintName {
 			case "idx_unique_tenants_subdomain":
-				return fmt.Errorf("subdomain %s is already taken", *tenant.Subdomain)
+				return fmt.Errorf("subdomain %s is already taken", tenant.Subdomain.String)
 			default:
 				return fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
 			}
@@ -321,8 +323,9 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *entity.Tenant) (*
 			description = $5,
 			subscription_plan = $6,
 			subscription_status = $7,
-			is_active = $8
-		WHERE id = $9 AND deleted_at IS NULL
+			trial_ends_at = $8,
+			is_active = $9
+		WHERE id = $10 AND deleted_at IS NULL
 		RETURNING id, slug, name, owner_id, subdomain, logo_url, description, 
 		max_divisions, max_agents, max_quick_replies, max_pages, max_whatsapp,
 		max_meta_whatsapp, max_meta_messenger, max_instagram, max_telegram,
@@ -337,6 +340,7 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *entity.Tenant) (*
 		tenant.Description,
 		tenant.SubscriptionPlan,
 		tenant.SubscriptionStatus,
+		tenant.TrialEndsAt,
 		tenant.IsActive,
 		tenant.ID,
 	}
@@ -375,7 +379,7 @@ func (r *tenantRepository) Update(ctx context.Context, tenant *entity.Tenant) (*
 			case "tenants_slug_key":
 				return nil, fmt.Errorf("tenant slug '%s' is already taken", tenant.Slug)
 			case "idx_unique_tenants_subdomain":
-				return nil, fmt.Errorf("tenant subdomain '%s' is already taken", *tenant.Subdomain)
+				return nil, fmt.Errorf("tenant subdomain '%s' is already taken", tenant.Subdomain.String)
 			default:
 				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
 			}
@@ -397,8 +401,9 @@ func (r *tenantRepository) UpdateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 			description = $5,
 			subscription_plan = $6,
 			subscription_status = $7,
-			is_active = $8
-		WHERE id = $9 AND deleted_at IS NULL
+			trial_ends_at = $8,
+			is_active = $9
+		WHERE id = $10 AND deleted_at IS NULL
 		RETURNING id, slug, name, owner_id, subdomain, logo_url, description, 
 		max_divisions, max_agents, max_quick_replies, max_pages, max_whatsapp,
 		max_meta_whatsapp, max_meta_messenger, max_instagram, max_telegram,
@@ -413,6 +418,7 @@ func (r *tenantRepository) UpdateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 		tenant.Description,
 		tenant.SubscriptionPlan,
 		tenant.SubscriptionStatus,
+		tenant.TrialEndsAt,
 		tenant.IsActive,
 		tenant.ID,
 	}
@@ -451,7 +457,7 @@ func (r *tenantRepository) UpdateTx(ctx context.Context, tx pgx.Tx, tenant *enti
 			case "tenants_slug_key":
 				return nil, fmt.Errorf("tenant slug '%s' is already taken", tenant.Slug)
 			case "idx_unique_tenants_subdomain":
-				return nil, fmt.Errorf("tenant subdomain '%s' is already taken", *tenant.Subdomain)
+				return nil, fmt.Errorf("tenant subdomain '%s' is already taken", tenant.Subdomain.String)
 			default:
 				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgxErr.ConstraintName, err)
 			}
@@ -604,10 +610,10 @@ func (r *tenantRepository) GetAllowedTenantIDs(ctx context.Context) ([]uuid.UUID
 
 	var tenantIDs []uuid.UUID
 	err := pgxscan.Select(subCtx, r.db, &tenantIDs, query)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		return []uuid.UUID{}, nil
-	case err != nil:
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []uuid.UUID{}, nil
+		}
 		if errors.Is(err, subCtx.Err()) {
 			if errors.Is(err, context.DeadlineExceeded) {
 				config.Logger.Error("context deadline exceeded", zap.Error(err))
@@ -616,12 +622,8 @@ func (r *tenantRepository) GetAllowedTenantIDs(ctx context.Context) ([]uuid.UUID
 			}
 		}
 		return nil, fmt.Errorf("failed to get allowed tenant IDs: %w", err)
-
-	default:
-		config.Logger.Error("unexpected error", zap.Error(err))
-		return tenantIDs, nil
-
 	}
+	return tenantIDs, nil
 }
 func (r *tenantRepository) IsAllowedTenant(ctx context.Context, tenantID uuid.UUID) (bool, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)

@@ -46,7 +46,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - socialforge-network
     healthcheck:
@@ -64,7 +64,7 @@ services:
     volumes:
       - ./docker/centrifugo/config.json:/centrifugo/config.json
     ports:
-      - "127.0.0.1:${CENTRIFUGO_PORT:-8000}:8000"
+      - "${CENTRIFUGO_PORT:-8000}:8000"
     networks:
       - socialforge-network
     environment:
@@ -90,8 +90,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "127.0.0.1:${MINIO_PORT:-9000}:9000" # Localhost only!
-      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001" # Localhost only!
+      - "${MINIO_PORT:-9000}:9000" # Localhost only!
+      - "${MINIO_CONSOLE_PORT:-9001}:9001" # Localhost only!
     networks:
       - socialforge-network
     healthcheck:
@@ -99,191 +99,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  pgadmin:
-    image: dpage/pgadmin4:snapshot
-    container_name: socialforge-pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@socialforge.id}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-adminsecure123}
-      PGADMIN_LISTEN_PORT: 80
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-      PGADMIN_SERVER_GROUPS: "SocialForge Group"
-      PGADMIN_SERVER_NAMES: "SocialForge DB"
-      PGADMIN_SERVER_HOSTS: socialforge-postgres
-      PGADMIN_SERVER_PORTS: 5432
-      PGADMIN_SERVER_DBS: ${DB_NAME:-socialforge_db}
-      PGADMIN_SERVER_USERS: ${DB_USER:-socialforge}
-      PGADMIN_SERVER_PASSWORDS: ${DB_PASSWORD:-socialforge123}
-      PGADMIN_SERVER_SSLMODES: disable
-      PGADMIN_SERVER_MAINTENANCE_DB: postgres
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    ports:
-      - "127.0.0.1:${DB_PORT:-5050}:80"
-    networks:
-      - socialforge-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # Prometheus Monitoring
-  # prometheus:
-  #   image: prom/prometheus:latest
-  #   container_name: socialforge-prometheus
-  #   restart: unless-stopped
-  #   command:
-  #     - "--config.file=/etc/prometheus/prometheus.yml"
-  #     - "--storage.tsdb.path=/prometheus"
-  #     - "--web.console.libraries=/usr/share/prometheus/console_libraries"
-  #     - "--web.console.templates=/usr/share/prometheus/consoles"
-  #   volumes:
-  #     - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-  #     - prometheus_data:/prometheus
-  #   ports:
-  #     - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
-  #   networks:
-  #     - socialforge-network
-  #   depends_on:
-  #     - backend
-
-  # Grafana Dashboard
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   container_name: socialforge-grafana
-  #   restart: unless-stopped
-  #   environment:
-  #     GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-  #     GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}
-  #     GF_INSTALL_PLUGINS: ${GRAFANA_PLUGINS:-}
-  #   volumes:
-  #     - grafana_data:/var/lib/grafana
-  #     - ./docker/grafana/provisioning:/etc/grafana/provisioning
-  #     - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
-  #   ports:
-  #     - "127.0.0.1:${GRAFANA_PORT:-3001}:3000" # Localhost only!
-  #   networks:
-  #     - socialforge-network
-  #   depends_on:
-  #     - prometheus
-
-  # Golang Backend API (Development)
-  # backend:
-  #   build:
-  #     context: ./server
-  #     dockerfile: Dockerfile
-  #     target: development
-  #   container_name: socialforge-backend
-  #   restart: unless-stopped
-  #   environment:
-  #     APP_ENV: development
-  #     APP_PORT: ${BACKEND_PORT:-8080}
-  #     DB_HOST: postgres
-  #     DB_PORT: 5432
-  #     DB_USER: ${DB_USER:-socialforge}
-  #     DB_PASSWORD: ${DB_PASSWORD:-socialforge123}
-  #     DB_NAME: ${DB_NAME:-socialforge_db}
-  #     REDIS_HOST: redis
-  #     REDIS_PORT: 6379
-  #     REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
-  #     CENTRIFUGO_URL: http://centrifugo:8000
-  #     CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY:-your-api-key}
-  #     CENTRIFUGO_TOKEN_SECRET: ${CENTRIFUGO_TOKEN_SECRET:-your-secret-token-key}
-  #     MINIO_ENDPOINT: minio:9000
-  #     MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-  #     MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-  #     JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-key-change-in-production}
-  #   volumes:
-  #     - ./server:/app
-  #     - go_modules:/go/pkg/mod
-  #   ports:
-  #     - "127.0.0.1:${BACKEND_PORT:-8080}:8080" # Localhost only!
-  #   networks:
-  #     - socialforge-network
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     centrifugo:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
-  #   command: air -c .air.toml
-
-  # Asynq Worker (Background Jobs)
-  # worker:
-  #   build:
-  #     context: ./server
-  #     dockerfile: Dockerfile
-  #     target: development
-  #   container_name: socialforge-worker
-  #   restart: unless-stopped
-  #   environment:
-  #     APP_ENV: development
-  #     DB_HOST: postgres
-  #     DB_PORT: 5432
-  #     DB_USER: ${DB_USER:-socialforge}
-  #     DB_PASSWORD: ${DB_PASSWORD:-socialforge123}
-  #     DB_NAME: ${DB_NAME:-socialforge_db}
-  #     REDIS_HOST: redis
-  #     REDIS_PORT: 6379
-  #     REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
-  #     CENTRIFUGO_URL: http://centrifugo:8000
-  #     CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY:-your-api-key}
-  #   volumes:
-  #     - ./server:/app
-  #     - go_modules:/go/pkg/mod
-  #   networks:
-  #     - socialforge-network
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   command: go run cmd/worker/main.go
-
-  # SvelteKit Client (Development)
-  # client:
-  #   build:
-  #     context: ./client
-  #     dockerfile: Dockerfile
-  #     target: development
-  #   container_name: socialforge-client
-  #   restart: unless-stopped
-  #   environment:
-  #     PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
-  #     PUBLIC_CENTRIFUGO_URL: ${PUBLIC_CENTRIFUGO_URL:-ws://localhost:8000/connection/websocket}
-  #   volumes:
-  #     - ./client:/app
-  #     - node_modules:/app/node_modules
-  #   ports:
-  #     - "127.0.0.1:${FRONTEND_PORT:-5173}:5173" # Localhost only!
-  #   networks:
-  #     - socialforge-network
-  #   depends_on:
-  #     - backend
-  #   command: pnpm run dev -- --host
-
-  # Nginx Reverse Proxy (Optional for production-like setup)
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: socialforge-nginx
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./docker/nginx/conf.d:/etc/nginx/conf.d
-  #   ports:
-  #     - "${NGINX_HTTP_PORT:-80}:80"
-  #     - "${NGINX_HTTPS_PORT:-443}:443"
-  #   networks:
-  #     - socialforge-network
-  #   depends_on:
-  #     - backend
-  #     - client
-  #   profiles:
-  #     - production
 
 networks:
   socialforge-network:
@@ -295,6 +110,3 @@ volumes:
   minio_data:
   prometheus_data:
   grafana_data:
-  pgadmin_data:
-  # go_modules:
-  # node_modules:

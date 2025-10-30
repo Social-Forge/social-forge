@@ -1,6 +1,7 @@
 aink.txt
 my-env-secret.txt
 docs.txt
+docker-compose.dev.yml
 .rsync-exclude
 .vscode/
 # Environment files

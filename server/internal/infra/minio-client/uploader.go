@@ -1,10 +1,13 @@
 package minioclient
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"social-forge/internal/infra/contextpool"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -18,20 +21,28 @@ func (m *MinioClient) IsUp() bool {
 }
 
 func (m *MinioClient) UploadFile(ctx context.Context, objectName string, reader io.Reader, objectSize int64, contentType string) (string, error) {
-	ctx, cancel := contextpool.WithTimeoutIfNone(ctx, 5*time.Minute)
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 5*time.Minute)
 	defer cancel()
 
 	_, err := m.client.PutObject(
-		ctx,
+		subCtx,
 		m.bucketName,
 		objectName,
 		reader,
 		objectSize,
-		minio.PutObjectOptions{ContentType: contentType},
+		minio.PutObjectOptions{
+			ContentType: contentType,
+			UserMetadata: map[string]string{
+				"uploaded-by": "social-forge",
+				"uploaded-at": time.Now().Format(time.RFC3339),
+			},
+		},
 	)
 	if err != nil {
 		m.logger.Error("Failed to upload file to MinIO",
 			zap.String("object", objectName),
+			zap.String("content_type", contentType),
+			zap.Int64("size", objectSize),
 			zap.Error(err),
 		)
 		return "", fmt.Errorf("failed to upload file: %w", err)
@@ -40,15 +51,36 @@ func (m *MinioClient) UploadFile(ctx context.Context, objectName string, reader 
 	// Generate public URL
 	fileURL := fmt.Sprintf("%s/%s/%s", m.config.PublicURL, m.bucketName, objectName)
 
-	m.logger.Debug("File uploaded successfully",
+	m.logger.Info("File uploaded successfully",
 		zap.String("object", objectName),
 		zap.String("url", fileURL),
+		zap.String("content_type", contentType),
+		zap.Int64("size", objectSize),
 	)
 
 	return fileURL, nil
 }
 func (m *MinioClient) UploadImage(ctx context.Context, objectName string, reader io.Reader, objectSize int64) (string, error) {
-	return m.UploadFile(ctx, objectName, reader, objectSize, "image/jpeg")
+	const maxImageSize = 10 << 20 // 10MB
+	if objectSize > maxImageSize {
+		return "", fmt.Errorf("image size exceeds maximum limit of 10MB")
+	}
+
+	buffer := make([]byte, 512)
+	_, err := reader.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", fmt.Errorf("failed to read file for content type detection: %w", err)
+	}
+
+	contentType := http.DetectContentType(buffer)
+
+	if !strings.HasPrefix(contentType, "image/") {
+		return "", fmt.Errorf("file is not an image")
+	}
+
+	multiReader := io.MultiReader(bytes.NewReader(buffer), reader)
+
+	return m.UploadFile(ctx, objectName, multiReader, objectSize, contentType)
 }
 func (m *MinioClient) UploadVideo(ctx context.Context, objectName string, reader io.Reader, objectSize int64) (string, error) {
 	return m.UploadFile(ctx, objectName, reader, objectSize, "video/mp4")

@@ -10,37 +10,33 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateJWT(jwtSecret string, tokenMetaData *entity.TokenMetadata, expiry time.Duration) (string, error) {
+func GenerateJWT(jwtSecret string, sessionData *entity.RedisSessionData, expiry time.Duration) (string, error) {
 	now := time.Now().UTC()
-	if tokenMetaData == nil {
-		return "", fmt.Errorf("token metadata cannot be nil")
+	if sessionData == nil {
+		return "", fmt.Errorf("session data cannot be nil")
 	}
-	if tokenMetaData.UserID == uuid.Nil {
+	if sessionData.UserID == uuid.Nil {
 		return "", fmt.Errorf("user ID cannot be empty")
 	}
+	if sessionData.SessionID == "" {
+		return "", fmt.Errorf("session ID cannot be empty")
+	}
+
 	claims := dto.JWTClaims{
-		UserID:             tokenMetaData.UserID.String(),
-		Email:              tokenMetaData.Email,
-		RoleID:             tokenMetaData.Role.ID.String(),
-		RoleName:           tokenMetaData.RoleName,
-		Permissions:        tokenMetaData.PermissionName,
-		PermissionResource: tokenMetaData.PermissionResource,
-		PermissionAction:   tokenMetaData.PermissionAction,
+		UserID:       sessionData.UserID.String(),
+		Email:        sessionData.Email,
+		TenantID:     sessionData.TenantID.String(),
+		UserTenantID: sessionData.UserTenantID.String(),
+		RoleID:       sessionData.RoleID.String(),
+		SessionID:    sessionData.SessionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    "social-forge",
-			Subject:   tokenMetaData.UserID.String(),
-			ID:        uuid.New().String(), // Add JWT ID untuk security
+			Subject:   sessionData.UserID.String(),
+			ID:        sessionData.SessionID,
 		},
-	}
-
-	if tokenMetaData.TenantID != nil {
-		claims.TenantID = tokenMetaData.TenantID.String()
-	}
-	if tokenMetaData.UserTenantID != nil {
-		claims.UserTenantID = tokenMetaData.UserTenantID.String()
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

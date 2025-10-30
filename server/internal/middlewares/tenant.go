@@ -47,7 +47,7 @@ func (m *TenantMiddleware) TenantGuard() fiber.Handler {
 			return helpers.Respond(c, fiber.StatusBadRequest, "Invalid tenant ID format", nil)
 		}
 
-		tenant, err := m.tenantHelper.GetCacheTenantByUserID(subCtx, tenantUUID)
+		tenant, err := m.tenantHelper.GetCacheTenantByID(subCtx, tenantUUID)
 		if err != nil || tenant == nil {
 			m.logger.Error("Failed to get tenant by ID", zap.Error(err))
 			return helpers.Respond(c, fiber.StatusInternalServerError, "Internal server error, tenant not registered", nil)

@@ -39,6 +39,10 @@ func initJSONLogger(app *AppConfig) (*zap.Logger, error) {
 
 	jsonEncoder := zapcore.NewJSONEncoder(encoderConfig)
 
+	consoleEncoderConfig := encoderConfig
+	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
+
 	fileWriter, err := createFileWriter(jsonPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create log file writer: %w", err)
@@ -53,7 +57,7 @@ func initJSONLogger(app *AppConfig) (*zap.Logger, error) {
 
 	core := zapcore.NewTee(
 		zapcore.NewCore(jsonEncoder, fileWriter, logLevel),
-		zapcore.NewCore(jsonEncoder, consoleWriter, logLevel),
+		zapcore.NewCore(consoleEncoder, consoleWriter, logLevel),
 	)
 
 	// Buat logger dengan sampling

@@ -39,4 +39,7 @@ func (r *UserRoutes) RegisterRoutes(parent fiber.Router) {
 	router := parent.Group(r.path)
 
 	router.Get("/me", r.auth.JWTAuth(), r.tenant.TenantGuard(), r.handler.GetCurrentUser)
+	router.Post("/logout", r.auth.JWTAuth(), r.tenant.TenantGuard(), r.handler.Logout)
+
+	router.Post("/avatar", r.auth.JWTAuth(), r.tenant.TenantGuard(), r.handler.ChangeAvatar)
 }

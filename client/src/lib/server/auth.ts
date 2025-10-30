@@ -1,5 +1,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import type { RegisterSchema, LoginSchema, ForgotSchema, ResetPasswordSchema } from '@/utils';
+import type {
+	RegisterSchema,
+	LoginSchema,
+	ForgotSchema,
+	ResetPasswordSchema,
+	VerifyTwoFactorSchema
+} from '@/utils';
 
 export const createAuthHelper = (event: RequestEvent): ServerAuth => {
 	const { apiHandler } = event.locals;
@@ -19,11 +25,21 @@ export const createAuthHelper = (event: RequestEvent): ServerAuth => {
 	const resetPassword = async (value: ResetPasswordSchema) => {
 		return await apiHandler.publicRequest('POST', '/auth/reset-password', value);
 	};
+	const verifyTwoFactor = async (value: VerifyTwoFactorSchema) => {
+		return await apiHandler.publicRequest<LoginResponse>('POST', '/auth/verify-two-factor', value);
+	};
+	const refreshToken = async (refreshToken: string) => {
+		return await apiHandler.publicRequest<LoginResponse>('POST', '/auth/refresh-token', {
+			refresh_token: refreshToken
+		});
+	};
 	return {
 		register,
 		login,
 		forgot,
 		verifyEmail,
-		resetPassword
+		resetPassword,
+		verifyTwoFactor,
+		refreshToken
 	};
 };

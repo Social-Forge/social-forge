@@ -32,6 +32,14 @@
 			await goto('/auth/sign-in');
 		}
 	});
+
+	$effect(() => {
+		if (data.token.trim().length === 0) {
+			errorMessage = 'Token is required';
+			return;
+		}
+		$form.token = data.token;
+	});
 </script>
 
 <MetaTags {...metaTags} />

@@ -26,7 +26,8 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindByUsername(ctx context.Context, username string) (*entity.User, error)
 	FindByEmailOrUsername(ctx context.Context, identifier string) (*entity.User, error)
-	GetUserTenantWithDetails(ctx context.Context, id uuid.UUID) (*entity.UserTenantWithDetails, error)
+	GetUserTenantWithDetailsByUserID(ctx context.Context, id uuid.UUID) (*entity.UserTenantWithDetails, error)
+	GetUserTenantWithDetailsByTenantID(ctx context.Context, tenantID uuid.UUID) (*entity.UserTenantWithDetails, error)
 	GetUserTenantWithDetailsWithNested(ctx context.Context, userID uuid.UUID) (*entity.UserTenantWithDetailsNested, error)
 	Search(ctx context.Context, opts *ListOptions) ([]*entity.User, int64, error)
 	Count(ctx context.Context, filter *Filter) (int64, error)
@@ -40,6 +41,7 @@ type UserRepository interface {
 	RemoveTwoFaSecret(ctx context.Context, id uuid.UUID) error
 	SetEmailVerified(ctx context.Context, id uuid.UUID, isVerified bool) error
 	UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error
+	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) (string, error)
 	// Delete operations
 	Delete(ctx context.Context, id uuid.UUID) error // Soft delete
 	HardDelete(ctx context.Context, id uuid.UUID) error
@@ -230,7 +232,142 @@ func (r *userRepository) FindByEmailOrUsername(ctx context.Context, identifier s
 	return &user, nil
 }
 
-func (r *userRepository) GetUserTenantWithDetails(ctx context.Context, userID uuid.UUID) (*entity.UserTenantWithDetails, error) {
+func (r *userRepository) GetUserTenantWithDetailsByUserID(ctx context.Context, userID uuid.UUID) (*entity.UserTenantWithDetails, error) {
+	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT 
+			json_build_object(
+				'user_tenant', json_build_object(
+					'id', ut.id,
+					'user_id', ut.user_id,
+					'tenant_id', ut.tenant_id,
+					'role_id', ut.role_id,
+					'is_active', ut.is_active,
+					'created_at', ut.created_at,
+					'updated_at', ut.updated_at
+				),
+				'user', json_build_object(
+					'id', u.id,
+					'email', u.email,
+					'username', u.username,
+					'full_name', u.full_name,
+					'phone', u.phone,
+					'avatar_url', u.avatar_url,
+					'two_fa_secret', u.two_fa_secret,
+					'is_active', u.is_active,
+					'is_verified', u.is_verified,
+					'email_verified_at', u.email_verified_at,
+					'last_login_at', u.last_login_at,
+					'created_at', u.created_at,
+					'updated_at', u.updated_at
+				),
+				'tenant', json_build_object(
+					'id', t.id,
+					'name', t.name,
+					'slug', t.slug,
+					'owner_id', t.owner_id,
+					'subdomain', t.subdomain,
+					'logo_url', t.logo_url,
+					'description', t.description,
+					'max_divisions', t.max_divisions,
+					'max_agents', t.max_agents,
+					'max_quick_replies', t.max_quick_replies,
+					'max_pages', t.max_pages,
+					'max_whatsapp', t.max_whatsapp,
+					'max_meta_whatsapp', t.max_meta_whatsapp,
+					'max_meta_messenger', t.max_meta_messenger,
+					'max_instagram', t.max_instagram,
+					'max_telegram', t.max_telegram,
+					'max_webchat', t.max_webchat,
+					'max_linkchat', t.max_linkchat,
+					'subscription_plan', t.subscription_plan,
+					'subscription_status', t.subscription_status,
+					'trial_ends_at', t.trial_ends_at,
+					'is_active', t.is_active,
+					'created_at', t.created_at,
+					'updated_at', t.updated_at
+				),
+				'role', json_build_object(
+					'id', r.id,
+					'name', r.name,
+					'slug', r.slug,
+					'description', r.description,
+					'level', r.level,
+					'created_at', r.created_at,
+					'updated_at', r.updated_at
+				),
+				'role_permissions', COALESCE(
+					(
+						SELECT json_agg(
+							json_build_object(
+								'id', rp.id,
+								'role_id', rp.role_id,
+								'permission_id', rp.permission_id,
+								'created_at', rp.created_at,
+								'updated_at', rp.updated_at,
+								'role_name', r2.name,
+								'role_slug', r2.slug,
+								'role_level', r2.level,
+								'permission_name', p.name,
+								'permission_slug', p.slug,
+								'permission_resource', p.resource,
+								'permission_action', p.action
+							)
+							ORDER BY p.resource, p.action
+						)
+						FROM role_permissions rp
+						JOIN roles r2 ON rp.role_id = r2.id AND r2.deleted_at IS NULL
+						JOIN permissions p ON rp.permission_id = p.id AND p.deleted_at IS NULL
+						WHERE rp.role_id = ut.role_id AND rp.deleted_at IS NULL
+					),
+					'[]'
+				),
+				'metadata', json_build_object(
+					'permission_count', (
+						SELECT COUNT(*) 
+						FROM role_permissions rp 
+						WHERE rp.role_id = ut.role_id AND rp.deleted_at IS NULL
+					),
+					'user_status', CASE 
+						WHEN u.is_active AND ut.is_active THEN 'active'
+						WHEN NOT u.is_active THEN 'user_inactive'
+						WHEN NOT ut.is_active THEN 'tenant_access_inactive'
+						ELSE 'unknown'
+					END,
+					'last_updated', GREATEST(
+						ut.updated_at, 
+						u.updated_at, 
+						t.updated_at,
+						COALESCE((SELECT MAX(updated_at) FROM role_permissions WHERE role_id = ut.role_id), ut.updated_at)
+					)
+				)
+			) as user_tenant_data
+		FROM user_tenants ut
+		JOIN users u ON ut.user_id = u.id AND u.deleted_at IS NULL
+		JOIN tenants t ON ut.tenant_id = t.id AND t.deleted_at IS NULL
+		JOIN roles r ON ut.role_id = r.id AND r.deleted_at IS NULL
+		WHERE ut.user_id = $1 AND ut.deleted_at IS NULL
+		ORDER BY ut.created_at DESC
+		LIMIT 1
+	`
+
+	var result struct {
+		UserTenantData entity.UserTenantWithDetails `db:"user_tenant_data"`
+	}
+
+	err := pgxscan.Get(subCtx, r.db, &result, query, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("user tenant not found")
+		}
+		return nil, fmt.Errorf("failed to get user tenant with details: %w", err)
+	}
+
+	return &result.UserTenantData, nil
+}
+func (r *userRepository) GetUserTenantWithDetailsByTenantID(ctx context.Context, tenantID uuid.UUID) (*entity.UserTenantWithDetails, error) {
 	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
@@ -344,15 +481,17 @@ func (r *userRepository) GetUserTenantWithDetails(ctx context.Context, userID uu
 		FROM user_tenants ut
 		JOIN users u ON ut.user_id = u.id AND u.deleted_at IS NULL
 		JOIN tenants t ON ut.tenant_id = t.id AND t.deleted_at IS NULL
-		JOIN roles r ON ut.role_id = r.id AND r.deleted_at IS NULL  -- ✅ Join roles
-		WHERE ut.id = $1 AND ut.deleted_at IS NULL
+		JOIN roles r ON ut.role_id = r.id AND r.deleted_at IS NULL
+		WHERE ut.tenant_id = $1 AND ut.deleted_at IS NULL
+		ORDER BY ut.created_at DESC
+		LIMIT 1
 	`
 
 	var result struct {
 		UserTenantData entity.UserTenantWithDetails `db:"user_tenant_data"`
 	}
 
-	err := pgxscan.Get(subCtx, r.db, &result, query, userID)
+	err := pgxscan.Get(subCtx, r.db, &result, query, tenantID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("user tenant not found")
@@ -491,7 +630,9 @@ func (r *userRepository) GetUserTenantWithDetailsWithNested(ctx context.Context,
 		JOIN users u ON ut.user_id = u.id AND u.deleted_at IS NULL
 		JOIN tenants t ON ut.tenant_id = t.id AND t.deleted_at IS NULL
 		JOIN roles r ON ut.role_id = r.id AND r.deleted_at IS NULL  -- ✅ Join roles
-		WHERE ut.id = $1 AND ut.deleted_at IS NULL
+		WHERE ut.user_id = $1 AND ut.deleted_at IS NULL
+		ORDER BY ut.created_at DESC
+		LIMIT 1
 	`
 
 	var result struct {
@@ -786,6 +927,26 @@ func (r *userRepository) UpdatePassword(ctx context.Context, id uuid.UUID, passw
 		return fmt.Errorf("user not found or already updated")
 	}
 	return nil
+}
+func (r *userRepository) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) (string, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `UPDATE users SET avatar_url = $1 WHERE id = $2 AND deleted_at IS NULL RETURNING avatar_url`
+	args := []interface{}{
+		avatarURL,
+		id,
+	}
+
+	var newAvatarURL string
+	err := r.db.QueryRow(subCtx, query, args...).Scan(&newAvatarURL)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", fmt.Errorf("user not found or already updated")
+		}
+		return "", fmt.Errorf("failed to update avatar: %w", err)
+	}
+	return newAvatarURL, nil
 }
 
 func (r *userRepository) UpdateLastLogin(ctx context.Context, id uuid.UUID) error {

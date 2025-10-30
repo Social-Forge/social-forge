@@ -7,7 +7,7 @@
 </script>
 
 <MetaTags {...metaTags} />
-<AppSidebarLayout page="Chats">
+<AppSidebarLayout page="Chats" user={data.userTenant}>
 	<!-- Your HTML content here -->
 </AppSidebarLayout>
 

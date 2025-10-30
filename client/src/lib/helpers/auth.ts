@@ -7,7 +7,9 @@ export const createSessionHelper = (event: RequestEvent): SessionHelper => {
 		tokens: {
 			accessToken: string;
 			refreshToken: string;
-		} | null
+		} | null,
+		expiresAccIn: number,
+		expiresRefreshIn: number
 	) => {
 		const isProduction = NODE_ENV === 'production';
 		if (!tokens) {
@@ -20,7 +22,8 @@ export const createSessionHelper = (event: RequestEvent): SessionHelper => {
 			httpOnly: false,
 			secure: isProduction,
 			sameSite: 'lax',
-			maxAge: 60 * 60 * 24 // 1 day
+			maxAge: expiresAccIn,
+			expires: new Date(Date.now() + expiresAccIn * 1000)
 		});
 
 		event.cookies.set('refresh_token', tokens.refreshToken, {
@@ -28,7 +31,8 @@ export const createSessionHelper = (event: RequestEvent): SessionHelper => {
 			httpOnly: false,
 			secure: isProduction,
 			sameSite: 'lax',
-			maxAge: 60 * 60 * 24 * 7 // 7 hari
+			maxAge: expiresRefreshIn,
+			expires: new Date(Date.now() + expiresRefreshIn * 1000)
 		});
 	};
 	const validateCSRF = (): boolean => {
@@ -46,21 +50,54 @@ export const createSessionHelper = (event: RequestEvent): SessionHelper => {
 		event.cookies.delete('refresh_token', { path: '/' });
 		event.cookies.delete('twofa_session_id', { path: '/' });
 	};
+	const isAuthenticated = async (): Promise<boolean> => {
+		const accessToken = getAccessToken();
+		const refreshToken = getRefreshToken();
+
+		if (accessToken && !isTokenExpired(accessToken)) {
+			return true;
+		}
+		if (refreshToken && !isTokenExpired(refreshToken)) {
+			return true;
+		}
+		return false;
+	};
 	const handleUnauthorized = (redirectTo = '/auth/sign-in') => {
 		clearAuthCookies();
 		return redirect(302, `/auth/sign-in?from=${encodeURIComponent(redirectTo)}`);
+	};
+	const getAccessToken = (): string | undefined => {
+		return event.cookies.get('access_token');
+	};
+	const getRefreshToken = (): string | undefined => {
+		return event.cookies.get('refresh_token');
 	};
 	const getTwoSessionToken = (): string | undefined => {
 		const twoFaSession =
 			event.request.headers.get('X-2FA-Session') || event.cookies.get('twofa_session_id');
 		return twoFaSession;
 	};
+	const isTokenExpired = (token: string): boolean => {
+		try {
+			const payload = JSON.parse(atob(token.split('.')[1]));
+			const exp = payload.exp * 1000;
+			const now = Date.now();
+			const buffer = 5 * 60 * 1000;
+			return now >= exp - buffer;
+		} catch {
+			return true;
+		}
+	};
 	return {
 		setAuthCookies,
 		validateCSRF,
 		setSecurityHeaders,
 		clearAuthCookies,
+		isAuthenticated,
 		handleUnauthorized,
-		getTwoSessionToken
+		getAccessToken,
+		getRefreshToken,
+		getTwoSessionToken,
+		isTokenExpired
 	};
 };

@@ -14,6 +14,7 @@ type MiddlewareFactory struct {
 	TenantMiddleware       *middlewares.TenantMiddleware
 	CSRFMiddleware         *middlewares.CSRFMiddleware
 	RequireFlagsMiddleware *middlewares.RequireFlagsMiddleware
+	PlatformMiddleware     *middlewares.PlatformMiddleware
 }
 
 func NewMiddlewareFactory(cont *dependencies.Container) *MiddlewareFactory {
@@ -27,5 +28,6 @@ func NewMiddlewareFactory(cont *dependencies.Container) *MiddlewareFactory {
 		TenantMiddleware:       middlewares.NewTenantMiddleware(cont.Notifier, ctxinject, cont.Logger, cont.TenantHelper),
 		CSRFMiddleware:         middlewares.NewCSRFMiddleware(cont.Notifier, ctxinject, cont.TokenHelper, cont.TenantHelper, cont.Logger),
 		RequireFlagsMiddleware: middlewares.NewRequireFlagsMiddleware(ctxinject, cont.UserHelper, cont.Logger),
+		PlatformMiddleware:     middlewares.NewPlatformMiddleware(ctxinject, cont.Logger),
 	}
 }

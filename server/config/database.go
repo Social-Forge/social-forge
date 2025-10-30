@@ -229,7 +229,7 @@ func (db *Database) ExtractQueryLabel(query string) string {
 }
 func ObserveDBDuration(label, status string, start time.Time) {
 	duration := time.Since(start).Seconds()
-	fmt.Sprintf("Query %s executed in %v", label, duration)
+	Logger.Info(fmt.Sprintf("Query %s executed in %v", label, duration))
 	metrics.GetAppMetrics().DBQueryDuration.WithLabelValues(label, status).Observe(duration)
 }
 func maskPasswordInDSN(dsn string) string {

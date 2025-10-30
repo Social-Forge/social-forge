@@ -81,7 +81,7 @@ func (r *conversationRepository) FindByID(ctx context.Context, id uuid.UUID) (*e
 	query := `SELECT * FROM conversations WHERE id = $1 AND deleted_at IS NULL`
 	args := []interface{}{id}
 	conv := &entity.Conversation{}
-	err := pgxscan.Get(subCtx, r.db, conv, query, args...)
+	err := pgxscan.Get(subCtx, r.db, &conv, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("conversation not found: %w", err)

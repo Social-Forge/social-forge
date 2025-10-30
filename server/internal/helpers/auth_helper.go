@@ -13,13 +13,15 @@ import (
 type AuthHelper struct {
 	userHelper  *UserHelper
 	tokenHelper *TokenHelper
+	appConfig   *config.AppConfig
 	mailConfig  *config.EmailConfig
 }
 
-func NewAuthHelper(userHelper *UserHelper, tokenHelper *TokenHelper, mailConfig *config.EmailConfig) *AuthHelper {
+func NewAuthHelper(userHelper *UserHelper, tokenHelper *TokenHelper, appConfig *config.AppConfig, mailConfig *config.EmailConfig) *AuthHelper {
 	return &AuthHelper{
 		userHelper:  userHelper,
 		tokenHelper: tokenHelper,
+		appConfig:   appConfig,
 		mailConfig:  mailConfig,
 	}
 }
@@ -38,7 +40,7 @@ func (h *AuthHelper) SendEmail(payload *dto.SendMailMetaData) error {
 }
 
 func (h *AuthHelper) SendVerificationEmail(payload *dto.SendMailMetaData) error {
-	url := fmt.Sprintf("https://%s/auth/verify-email?token=%s", payload.Origin, payload.Token)
+	url := fmt.Sprintf("https://%s/auth/confirm?token=%s", h.appConfig.ClientOrigin, payload.Token)
 
 	data := struct {
 		VerificationURL string
@@ -60,7 +62,7 @@ func (h *AuthHelper) SendVerificationEmail(payload *dto.SendMailMetaData) error 
 }
 
 func (h *AuthHelper) SendResetPasswordEmail(payload *dto.SendMailMetaData) error {
-	url := fmt.Sprintf("https://%s/auth/reset?token=%s", payload.Origin, payload.Token)
+	url := fmt.Sprintf("https://%s/auth/reset?token=%s", h.appConfig.ClientOrigin, payload.Token)
 
 	data := struct {
 		ResetURL string
@@ -92,7 +94,7 @@ func (h *AuthHelper) SendRegistrationInfo(payload *dto.SendMailMetaData) error {
 		Email:    payload.To,
 		Password: payload.Password,
 		Username: payload.User.Username,
-		LoginURL: fmt.Sprintf("https://%s/auth/sign-in", payload.Origin),
+		LoginURL: fmt.Sprintf("https://%s/auth/sign-in", h.appConfig.ClientOrigin),
 		Year:     2025,
 	}
 

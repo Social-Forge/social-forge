@@ -27,16 +27,12 @@ var (
 )
 
 type JWTClaims struct {
-	UserID             string   `json:"user_id"`
-	Email              string   `json:"email"`
-	TenantID           string   `json:"tenant_id,omitempty"`
-	UserTenantID       string   `json:"user_tenant_id,omitempty"`
-	RoleID             string   `json:"role_id,omitempty"`
-	RoleName           []string `json:"role_name,omitempty"`
-	PermissionName     []string `json:"permission_name"`
-	PermissionResource []string `json:"permission_resource"`
-	PermissionAction   []string `json:"permission_action"`
-	Permissions        []string `json:"permissions"`
+	UserID       string `json:"uid"`
+	Email        string `json:"em,omitempty"`
+	TenantID     string `json:"tid,omitempty"`
+	UserTenantID string `json:"utid,omitempty"`
+	RoleID       string `json:"rid"`
+	SessionID    string `json:"sid"`
 	jwt.RegisteredClaims
 }
 
@@ -46,13 +42,14 @@ type LoginRequest struct {
 	RememberMe bool   `json:"remember_me" validate:"omitempty"`
 }
 type LoginResponse struct {
-	AccessToken  string               `json:"access_token"`
-	RefreshToken string               `json:"refresh_token"`
-	TwoFaToken   string               `json:"two_fa_token"`
-	TokenType    string               `json:"token_type"`
-	ExpiresIn    int64                `json:"expires_in"`
-	User         *entity.UserResponse `json:"user,omitempty"`
-	Status       string               `json:"status"`
+	AccessToken      string               `json:"access_token"`
+	RefreshToken     string               `json:"refresh_token"`
+	TwoFaToken       string               `json:"two_fa_token"`
+	TokenType        string               `json:"token_type"`
+	ExpiresIn        int64                `json:"expires_in"`
+	ExpiresRefreshIn int64                `json:"expires_refresh_in"`
+	User             *entity.UserResponse `json:"user,omitempty"`
+	Status           string               `json:"status"`
 }
 type RegisterUserRequest struct {
 	FirstName       string `json:"first_name" validate:"required,min=2"`
@@ -61,7 +58,7 @@ type RegisterUserRequest struct {
 	Email           string `json:"email" validate:"required,email"`
 	Phone           string `json:"phone,omitempty" validate:"omitempty,e164"`
 	Password        string `json:"password" validate:"required,min=8"`
-	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=password"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=Password"`
 }
 type VerifyEmailRequest struct {
 	Token string `json:"token" validate:"required"`
@@ -74,13 +71,20 @@ type ResetPasswordRequest struct {
 	NewPassword     string `json:"new_password" validate:"required,min=8"`
 	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=NewPassword"`
 }
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type VerifyTwoFactorRequest struct {
+	Token string `json:"token" validate:"required"`
+	OTP   string `json:"otp" validate:"required,len=6"`
+}
 
 type SendMailMetaData struct {
 	Token     string               `json:"token"`
 	Type      TypeVerify           `json:"type"`
 	To        string               `json:"to"`
 	User      *entity.UserResponse `json:"user,omitempty"`
-	Origin    string               `json:"origin"`
 	Password  string               `json:"password,omitempty"`
 	ExpiredAt time.Time            `json:"expired_at"`
 }

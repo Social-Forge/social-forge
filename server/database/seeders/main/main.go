@@ -52,13 +52,13 @@ func main() {
 	// 	}
 	// }()
 
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	if err := seeder.RolePermissionSeed(ctx); err != nil {
-	// 		config.Logger.Error("Failed to seed role permissions", zap.Error(err))
-	// 	}
-	// }()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := seeder.RolePermissionSeed(ctx); err != nil {
+			config.Logger.Error("Failed to seed role permissions", zap.Error(err))
+		}
+	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

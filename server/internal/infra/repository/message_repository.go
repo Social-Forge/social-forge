@@ -175,9 +175,6 @@ func (r *messageRepository) UpdateWithRecovery(ctx context.Context, msg *entity.
 		if os != nil {
 			oldStatus = *os
 		}
-		if err != nil {
-			return err
-		}
 		return nil
 	})
 	return &oldContent, &oldStatus, nil
@@ -572,7 +569,7 @@ func (r *messageRepository) GetMessageAnalytics(ctx context.Context, tenantID uu
 	`
 
 	analytics := &entity.MessageAnalytics{}
-	err := pgxscan.Get(subCtx, r.db, analytics, query, tenantID, days)
+	err := pgxscan.Get(subCtx, r.db, &analytics, query, tenantID, days)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get message analytics: %w", err)
 	}

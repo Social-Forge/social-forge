@@ -37,7 +37,7 @@
 		isScroll && 'border-background/80 bg-background/40 backdrop-blur-md'
 	)}
 >
-	<HomeAnimationContainer reverse delay={0.1} class="size-full py-3">
+	<HomeAnimationContainer delay={0.1} class="size-full py-3">
 		<HomeMaxWidthWrapper class="flex items-center justify-between">
 			<nav class="flex items-center space-x-12">
 				<Button href="/" class="flex items-center" variant="link">
@@ -109,11 +109,9 @@
 										</ul>
 									</NavigationMenu.Content>
 								{:else}
-									<a href={link.href}>
-										<NavigationMenu.Link>
-											{link.title}
-										</NavigationMenu.Link>
-									</a>
+									<NavigationMenu.Link href={link.href}>
+										{link.title}
+									</NavigationMenu.Link>
 								{/if}
 							</NavigationMenu.Item>
 						{/each}

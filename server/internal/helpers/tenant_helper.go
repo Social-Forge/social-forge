@@ -181,17 +181,17 @@ func (h *TenantHelper) updateAllowedTenantIDs(tenantIDs []uuid.UUID) {
 }
 
 // Helper
-func (h *TenantHelper) GetCacheTenantByUserID(ctx context.Context, userID uuid.UUID) (*entity.Tenant, error) {
+func (h *TenantHelper) GetCacheTenantByID(ctx context.Context, tenantID uuid.UUID) (*entity.Tenant, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
-	val, err := h.client.GetByte(subCtx, h.tenantKey(userID))
+	val, err := h.client.GetByte(subCtx, h.tenantKey(tenantID))
 	if err == redis.Nil {
-		tenantData, errTenant := h.getTenantByUserID(subCtx, userID)
+		tenantData, errTenant := h.getTenantByID(subCtx, tenantID)
 		if errTenant != nil {
 			return nil, errTenant
 		}
-		err = h.setCacheTenant(subCtx, userID, tenantData)
+		err = h.setCacheTenant(subCtx, tenantID, tenantData)
 		if err != nil {
 			return nil, err
 		}
@@ -199,14 +199,14 @@ func (h *TenantHelper) GetCacheTenantByUserID(ctx context.Context, userID uuid.U
 	}
 	tenant := new(entity.Tenant)
 	if err = json.Unmarshal([]byte(val), &tenant); err != nil {
-		if err = h.DeleteCacheTenantByUserID(subCtx, userID); err != nil {
-			h.logger.Warn("failed to delete cache tenant by user ID", zap.Error(err), zap.Any("userID", userID))
+		if err = h.DeleteCacheTenantByID(subCtx, tenantID); err != nil {
+			h.logger.Warn("failed to delete cache tenant by tenant ID", zap.Error(err), zap.Any("tenantID", tenantID))
 		}
-		tenantData, err := h.getTenantByUserID(subCtx, userID)
+		tenantData, err := h.getTenantByID(subCtx, tenantID)
 		if err != nil {
 			return nil, err
 		}
-		if err = h.setCacheTenant(subCtx, userID, tenantData); err != nil {
+		if err = h.setCacheTenant(subCtx, tenantID, tenantData); err != nil {
 			return nil, err
 		}
 
@@ -215,20 +215,20 @@ func (h *TenantHelper) GetCacheTenantByUserID(ctx context.Context, userID uuid.U
 
 	return tenant, nil
 }
-func (h *TenantHelper) DeleteCacheTenantByUserID(ctx context.Context, userID uuid.UUID) error {
+func (h *TenantHelper) DeleteCacheTenantByID(ctx context.Context, tenantID uuid.UUID) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
-	return h.client.DeleteCache(subCtx, h.tenantKey(userID))
+	return h.client.DeleteCache(subCtx, h.tenantKey(tenantID))
 }
-func (h *TenantHelper) tenantKey(userID uuid.UUID) string {
-	return fmt.Sprintf("%s%s", TenantPrefix, userID)
+func (h *TenantHelper) tenantKey(tenantID uuid.UUID) string {
+	return fmt.Sprintf("%s%s", TenantPrefix, tenantID)
 }
-func (h *TenantHelper) getTenantByUserID(ctx context.Context, userID uuid.UUID) (*entity.Tenant, error) {
+func (h *TenantHelper) getTenantByID(ctx context.Context, tenantID uuid.UUID) (*entity.Tenant, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
 	defer cancel()
 
-	userTenant, err := h.userRepo.GetUserTenantWithDetails(subCtx, userID)
+	userTenant, err := h.userRepo.GetUserTenantWithDetailsByTenantID(subCtx, tenantID)
 	if err != nil {
 		return nil, err
 	}

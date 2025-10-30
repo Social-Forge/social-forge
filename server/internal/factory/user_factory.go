@@ -22,7 +22,10 @@ func NewUserFactory(cont *dependencies.Container, mw *MiddlewareFactory) *UserFa
 		cont.TenantRepo,
 		cont.DivisionRepo,
 		cont.UserTenantRepo,
+		cont.UserHelper,
+		cont.TokenHelper,
 		cont.Logger,
+		cont.MinioClient,
 	)
 	handler := handlers.NewUserHandler(
 		mw.ContextMiddleware,
@@ -43,6 +46,6 @@ func NewUserFactory(cont *dependencies.Container, mw *MiddlewareFactory) *UserFa
 		),
 	}
 }
-func (f *UserFactory) GetRoutes(parent fiber.Router) {
-	f.routes.RegisterRoutes(parent)
+func (f *UserFactory) GetRoutes(router fiber.Router) {
+	f.routes.RegisterRoutes(router)
 }

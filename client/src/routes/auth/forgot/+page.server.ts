@@ -21,3 +21,44 @@ export const load = async ({ url, locals }) => {
 		form
 	};
 };
+export const actions = {
+	default: async ({ request, locals }) => {
+		const form = await superValidate(request, zod4(forgotSchema));
+
+		if (!form.valid) {
+			return fail(400, {
+				form,
+				success: false,
+				error: {
+					message: 'Email is not valid'
+				}
+			});
+		}
+
+		try {
+			const response = await locals.authServer.forgot(form.data);
+			if (!response.success) {
+				return fail(400, {
+					form,
+					success: false,
+					error: {
+						message: response?.message || 'Email not found'
+					}
+				});
+			}
+			return {
+				form,
+				success: true,
+				message: response.message || 'Password reset email sent'
+			};
+		} catch (error) {
+			return fail(500, {
+				form,
+				success: false,
+				error: {
+					message: error instanceof Error ? error.message : 'Internal server error'
+				}
+			});
+		}
+	}
+};

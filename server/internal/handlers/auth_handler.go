@@ -5,7 +5,6 @@ import (
 	"social-forge/internal/helpers"
 	"social-forge/internal/middlewares"
 	"social-forge/internal/services"
-	"social-forge/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -42,9 +41,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		return helpers.Respond(c, fiber.StatusBadRequest, helpers.ValidationErrors{Errors: errs}.Error(), nil)
 	}
 
-	origin := utils.GetOriginHost(c)
-
-	_, err := h.authService.Register(ctx, &req, origin)
+	_, err := h.authService.Register(ctx, &req)
 	if err != nil {
 		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
@@ -65,10 +62,12 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	if !ok {
 		ip = c.IP()
 	}
+	platform, ok := c.Locals("platform").(string)
+	if !ok {
+		platform = "browser"
+	}
 
-	origin := utils.GetOriginHost(c)
-
-	response, err := h.authService.Login(ctx, &req, ip, origin)
+	response, err := h.authService.Login(ctx, &req, ip, platform)
 	if err != nil {
 		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
@@ -116,13 +115,14 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 	if !ok {
 		ip = c.IP()
 	}
-	origin := utils.GetOriginHost(c)
 
-	if err := h.authService.ForgotPassword(ctx, &req, ip, origin); err != nil {
+	if err := h.authService.ForgotPassword(ctx, &req, ip); err != nil {
 		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
-	return helpers.Respond(c, fiber.StatusOK, "Password reset email sent", nil)
+	h.rateLimiter.ResetLimitCounters(c)
+
+	return helpers.Respond(c, fiber.StatusOK, "Password reset email sent, please check your email", nil)
 }
 func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error {
 	ctx := h.ctxinject.HandlerContext(c)
@@ -140,4 +140,58 @@ func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error {
 	}
 
 	return helpers.Respond(c, fiber.StatusOK, "Password reset successfully", nil)
+}
+func (h *AuthHandler) VerifyTwoFactor(c *fiber.Ctx) error {
+	ctx := h.ctxinject.HandlerContext(c)
+
+	var req dto.VerifyTwoFactorRequest
+	if err := c.BodyParser(&req); err != nil {
+		return helpers.Respond(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+	if errs := helpers.ValidateStruct(req); len(errs) > 0 {
+		return helpers.Respond(c, fiber.StatusBadRequest, helpers.ValidationErrors{Errors: errs}.Error(), nil)
+	}
+
+	ip, ok := c.Locals("real_ip").(string)
+	if !ok {
+		ip = c.IP()
+	}
+	platform, ok := c.Locals("platform").(string)
+	if !ok {
+		platform = "browser"
+	}
+
+	payload, err := h.authService.VerifyTwoFactor(ctx, &req, ip, platform)
+	if err != nil {
+		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+
+	h.rateLimiter.ResetLimitCounters(c)
+
+	return helpers.Respond(c, fiber.StatusOK, "Two-factor authentication verified successfully", payload)
+}
+func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+	ctx := h.ctxinject.HandlerContext(c)
+
+	var req dto.RefreshTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return helpers.Respond(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+	if errs := helpers.ValidateStruct(req); len(errs) > 0 {
+		return helpers.Respond(c, fiber.StatusBadRequest, helpers.ValidationErrors{Errors: errs}.Error(), nil)
+	}
+
+	platform, ok := c.Locals("platform").(string)
+	if !ok {
+		platform = "browser"
+	}
+
+	payload, err := h.authService.RefreshToken(ctx, req.RefreshToken, platform)
+	if err != nil {
+		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+
+	h.rateLimiter.ResetLimitCounters(c)
+
+	return helpers.Respond(c, fiber.StatusOK, "Token refreshed successfully", payload)
 }

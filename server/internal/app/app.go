@@ -17,7 +17,7 @@ var App *fiber.App
 
 func Start(cont *dependencies.Container) {
 	App = fiber.New(fiber.Config{
-		BodyLimit:    50 * 1024 * 1024,
+		BodyLimit:    10 * 1024 * 1024, // 10MB global limit
 		AppName:      cont.Config.App.Name,
 		ProxyHeader:  fiber.HeaderXForwardedFor,
 		WriteTimeout: 10 * time.Second,
@@ -55,6 +55,7 @@ func setupMiddlewares(app *fiber.App, cont *dependencies.Container) {
 		middleware.Recovery.NewRecoveryMiddleware(),
 		middleware.ApiMiddleware.SetupCompression(),
 		middleware.ApiMiddleware.SetupCORS(),
+		middleware.PlatformMiddleware.Setup(),
 		middleware.ApiMiddleware.SetupLogger(),
 		middleware.ApiMiddleware.SetupRequestID(),
 		middleware.ApiMiddleware.SetupMetrics(cont.Logger),

@@ -8,12 +8,15 @@
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import Icon from '@iconify/svelte';
 	import * as Alert from '$lib/components/ui/alert/index.js';
+	import type { E164Number } from 'svelte-tel-input/types';
+	import { PhoneInput } from '@/components/ui-extras/phone-input/index.js';
 
 	let { data } = $props();
 	let metaTags = $derived(data.pageMetaTags);
 
 	let passwordType = $state('password');
 	let confirmPasswordType = $state('password');
+	let phoneInput = $state<E164Number | undefined>('');
 	let errorMessage = $state<string | undefined>(undefined);
 	let successMessage = $state<string | undefined>(undefined);
 
@@ -28,8 +31,8 @@
 				return;
 			}
 			successMessage = event.result.data.message;
-			await invalidateAll();
 			await goto(`/auth/verify-email?email=${$form.email}`);
+			await invalidateAll();
 		}
 	});
 	const formatPhoneInput = (event: Event) => {
@@ -45,6 +48,17 @@
 		(event.target as HTMLInputElement).value = value;
 		$form.phone = value;
 	};
+	$effect(() => {
+		if (data.form.data.phone && !phoneInput) {
+			phoneInput = data.form.data.phone as E164Number;
+		}
+		if (phoneInput && typeof phoneInput === 'string' && phoneInput.trim() !== '') {
+			const cleanNumber = phoneInput.replace(/[\s-]/g, '');
+			$form.phone = cleanNumber;
+		} else {
+			$form.phone = '';
+		}
+	});
 </script>
 
 <MetaTags {...metaTags} />
@@ -145,20 +159,13 @@
 				<Field.Label for="phone">
 					Phone <span class="text-red-500 dark:text-red-400">*</span>
 				</Field.Label>
-				<div class="relative">
-					<Icon icon="mdi:phone" class="absolute left-3 top-1/2 -translate-y-1/2" />
-					<Input
-						bind:value={$form.phone}
-						name="phone"
-						type="text"
-						class="ps-10"
-						placeholder="Enter your phone"
-						aria-invalid={!!$errors.phone}
-						autocomplete="tel"
-						disabled={$submitting}
-						oninput={formatPhoneInput}
-					/>
-				</div>
+				<PhoneInput
+					bind:value={phoneInput}
+					name="phone"
+					country="US"
+					placeholder="Enter your phone"
+					disabled={$submitting}
+				/>
 				{#if $errors.phone}
 					<Field.Error>{$errors.phone}</Field.Error>
 				{/if}
