@@ -27,7 +27,7 @@
 		"@playwright/test": "^1.55.1",
 		"@shikijs/langs": "^3.14.0",
 		"@shikijs/themes": "^3.14.0",
-		"@sveltejs/adapter-auto": "^6.1.0",
+		"@sveltejs/adapter-node": "^5.4.0",
 		"@sveltejs/kit": "^2.43.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.0",
 		"@tailwindcss/forms": "^0.5.10",
@@ -71,6 +71,7 @@
 		"d3-shape": "^3.2.0",
 		"d3-timer": "^3.0.1",
 		"d3-transition": "^3.0.1",
+		"dotenv": "^17.2.3",
 		"embla-carousel-svelte": "^8.6.0",
 		"eslint": "^9.36.0",
 		"eslint-config-prettier": "^10.1.8",
@@ -118,5 +119,5 @@
 			"@tailwindcss/oxide"
 		]
 	},
-	"packageManager": "pnpm@10.19.0+sha512.c9fc7236e92adf5c8af42fd5bf1612df99c2ceb62f27047032f4720b33f8eacdde311865e91c411f2774f618d82f320808ecb51718bfa82c060c4ba7c76a32b8"
+	"packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd"
 }

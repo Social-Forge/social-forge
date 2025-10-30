@@ -36,6 +36,7 @@ coverage
 # Dependency directories
 node_modules/
 vendor/
+.svelte-kit
 
 # Go specific
 # Binaries for programs and plugins

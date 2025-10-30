@@ -30,8 +30,8 @@ FROM golang:1.25-alpine AS builder
 
 # Install build dependencies with pinned versions
 RUN apk add --no-cache \
-    git=~2.45 \
-    make=~4.4
+    git \
+    make
 
 # Set working directory
 WORKDIR /app
@@ -55,15 +55,15 @@ FROM alpine:3.19 AS production
 
 # Install ca-certificates for HTTPS requests with pinned version
 RUN apk --no-cache add \
-    ca-certificates=~20240226 \
-    tzdata=~2024a
+    ca-certificates \
+    tzdata
 
 # Set timezone
 ENV TZ=Asia/Jakarta
 
 # Create non-root user
-RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser
+RUN addgroup -S appuser && \
+    adduser -S -D -G appuser appuser
 
 # Set working directory
 WORKDIR /app

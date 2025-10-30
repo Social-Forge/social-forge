@@ -28,6 +28,16 @@ CMD ["pnpm", "run", "dev", "--", "--host", "0.0.0.0"]
 # Stage 2: Builder
 FROM base AS builder
 
+ARG PUBLIC_API_URL
+ARG PUBLIC_CENTRIFUGO_URL
+ARG CLIENT_ORIGIN
+ARG CLIENT_SECRET
+
+ENV PUBLIC_API_URL=${PUBLIC_API_URL}
+ENV PUBLIC_CENTRIFUGO_URL=${PUBLIC_CENTRIFUGO_URL}
+ENV CLIENT_ORIGIN=${CLIENT_ORIGIN}
+ENV CLIENT_SECRET=${CLIENT_SECRET}
+
 # Set working directory
 WORKDIR /app
 
@@ -53,8 +63,8 @@ FROM node:24-alpine AS production
 RUN apk add --no-cache dumb-init=~1.2
 
 # Create non-root user
-RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser
+RUN addgroup -S appuser && \
+    adduser -S -D -G appuser appuser
 
 # Set working directory
 WORKDIR /app

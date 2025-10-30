@@ -248,11 +248,17 @@ services:
       context: ./client
       dockerfile: Dockerfile
       target: production
+      args:
+        PUBLIC_API_URL: ${PUBLIC_API_URL}
+        PUBLIC_CENTRIFUGO_URL: ${PUBLIC_CENTRIFUGO_URL}
+        CLIENT_ORIGIN: ${CLIENT_ORIGIN}
+        CLIENT_SECRET: ${CLIENT_SECRET}
     restart: always
     environment:
       PUBLIC_API_URL: ${PUBLIC_API_URL}
       PUBLIC_CENTRIFUGO_URL: ${PUBLIC_CENTRIFUGO_URL}
-      ORIGIN: ${CLIENT_ORIGIN}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN}
+      CLIENT_SECRET: ${CLIENT_SECRET}
     networks:
       - socialforge-network
     depends_on:
@@ -287,8 +293,8 @@ services:
       - minio
       - postgres
       - redis
-      # - backend
-      # - client
+      - backend
+      - client
 
   certbot:
     image: certbot/certbot
