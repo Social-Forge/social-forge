@@ -9,7 +9,10 @@ docker-compose.dev.yml
 .env.local
 .env.*.local
 .env.dev
+.env.example
+.env.*.example
 *.env
+
 
 # Logs
 logs/
@@ -82,7 +85,7 @@ Thumbs.db
 
 # Docker
 *.pid
-.dockerignore
+# .dockerignore
 
 # Database
 *.db

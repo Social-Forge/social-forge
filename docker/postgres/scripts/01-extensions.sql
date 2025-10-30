@@ -1,12 +1,12 @@
--- Enable extensions
+\c postgres
+-- Wajib dibuat di database 'postgres' agar pg_cron berfungsi
 CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+\c socialforge_db
+-- Extension untuk database aplikasi
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
--- Create pgvector extension (jika diinstall manual)
+-- Create pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
-
--- Enable additional features
-ALTER SYSTEM SET shared_preload_libraries = 'pg_cron';
-SELECT pg_reload_conf();

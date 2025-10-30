@@ -70,7 +70,7 @@ RUN addgroup -S appuser && \
 WORKDIR /app
 
 # Copy built application from builder
-COPY --from=builder --chown=appuser:appuser /app/build ./build
+COPY --from=builder --chown=appuser:appuser /app/.svelte-kit/output ./build
 COPY --from=builder --chown=appuser:appuser /app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appuser /app/package.json ./
 
