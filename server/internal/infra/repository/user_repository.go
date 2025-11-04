@@ -231,7 +231,6 @@ func (r *userRepository) FindByEmailOrUsername(ctx context.Context, identifier s
 	}
 	return &user, nil
 }
-
 func (r *userRepository) GetUserTenantWithDetailsByUserID(ctx context.Context, userID uuid.UUID) (*entity.UserTenantWithDetails, error) {
 	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
@@ -390,6 +389,7 @@ func (r *userRepository) GetUserTenantWithDetailsByTenantID(ctx context.Context,
 					'full_name', u.full_name,
 					'phone', u.phone,
 					'avatar_url', u.avatar_url,
+					'two_fa_secret', u.two_fa_secret,
 					'is_active', u.is_active,
 					'is_verified', u.is_verified,
 					'email_verified_at', u.email_verified_at,
@@ -704,6 +704,100 @@ func (r *userRepository) Count(ctx context.Context, filter *Filter) (int64, erro
 		return 0, fmt.Errorf("failed to count users: %w", err)
 	}
 	return count, nil
+}
+func (r *userRepository) GetUserByRole(ctx context.Context, role string, opts *ListOptions) ([]*entity.User, int64, error) {
+	subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	if opts == nil {
+		opts = NewListOptions()
+	}
+
+	baseQuery := `
+		SELECT 
+			u.id, u.email, u.username, u.password_hash, u.full_name, 
+			u.phone, u.avatar_url, u.two_fa_secret, u.is_active, u.is_verified,
+			u.email_verified_at, u.last_login_at, u.created_at, u.updated_at, u.deleted_at
+		FROM users u
+		INNER JOIN user_tenants ut ON u.id = ut.user_id
+		INNER JOIN roles r ON ut.role_id = r.id
+		WHERE ut.tenant_id = $? AND r.slug = $? AND u.deleted_at IS NULL
+	`
+
+	qb := NewQueryBuilder(baseQuery)
+	qb.Where("ut.tenant_id = $?", opts.Filter.TenantID)
+	qb.Where("r.slug = $?", role)
+	qb.Where("u.deleted_at IS NULL")
+	qb.Where("ut.deleted_at IS NULL")
+
+	if opts.Filter != nil {
+		if opts.Filter.Search != "" {
+			searchPattern := "%" + opts.Filter.Search + "%"
+			qb.Where("(u.full_name ILIKE $? OR u.email ILIKE $? OR u.username ILIKE $?)",
+				searchPattern, searchPattern, searchPattern)
+		}
+
+		if opts.Filter.IsActive != nil {
+			qb.Where("u.is_active = $?", *opts.Filter.IsActive)
+		}
+
+		if opts.Filter.IsVerified != nil {
+			qb.Where("u.is_verified = $?", *opts.Filter.IsVerified)
+		}
+
+		if opts.Filter.RangeDate != nil {
+			var startDate time.Time
+			var endDate time.Time
+
+			if !opts.Filter.RangeDate.StartDate.IsZero() {
+				startDate = opts.Filter.RangeDate.StartDate
+			} else {
+				startDate = time.Now().AddDate(0, 0, -7)
+			}
+			if !opts.Filter.RangeDate.EndDate.IsZero() {
+				endDate = opts.Filter.RangeDate.EndDate
+			} else {
+				endDate = time.Now()
+			}
+			if !startDate.IsZero() || !endDate.IsZero() {
+				qb.Where("created_at BETWEEN $? AND $?", startDate, endDate)
+			}
+		}
+	}
+
+	if opts.OrderBy != "" {
+		safeOrderBy := opts.OrderBy
+		if safeOrderBy == "created_at" || safeOrderBy == "updated_at" {
+			safeOrderBy = "u." + safeOrderBy
+		}
+		qb.OrderByField(safeOrderBy, opts.OrderDir)
+	} else {
+		qb.OrderByField("u.created_at", "DESC")
+	}
+
+	if opts.Pagination != nil && opts.Pagination.Limit > 0 {
+		qb.WithLimit(opts.Pagination.Limit)
+		if opts.Pagination.Page > 1 {
+			qb.WithOffset(opts.Pagination.GetOffset())
+		}
+	}
+
+	query, args := qb.Build()
+	var users []*entity.User
+	err := pgxscan.Select(subCtx, r.db, &users, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, 0, fmt.Errorf("no users found")
+		}
+		return nil, 0, fmt.Errorf("failed to list users: %w", err)
+	}
+
+	totalRows, err := r.CountUsersByRole(ctx, *opts.Filter.TenantID, role, opts.Filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, totalRows, nil
 }
 
 func (r *userRepository) Update(ctx context.Context, user *entity.User) (*entity.User, error) {
@@ -1174,6 +1268,65 @@ func (r *userRepository) buildBaseQuery(baseQuery string, filter *Filter) *Query
 	if filter.IsVerified != nil {
 		qb.Where("is_verified = $?", *filter.IsVerified)
 	}
+	if filter.RangeDate != nil {
+		var startDate time.Time
+		var endDate time.Time
+
+		if !filter.RangeDate.StartDate.IsZero() {
+			startDate = filter.RangeDate.StartDate
+		} else {
+			startDate = time.Now().AddDate(0, 0, -7)
+		}
+		if !filter.RangeDate.EndDate.IsZero() {
+			endDate = filter.RangeDate.EndDate
+		} else {
+			endDate = time.Now()
+		}
+		if !startDate.IsZero() || !endDate.IsZero() {
+			qb.Where("created_at BETWEEN $? AND $?", startDate, endDate)
+		}
+	}
 
 	return qb
+}
+func (r *userRepository) CountUsersByRole(ctx context.Context, tenantID uuid.UUID, roleSlug string, filter *Filter) (int64, error) {
+	baseQuery := `
+		SELECT COUNT(*)
+		FROM users u
+		INNER JOIN user_tenants ut ON u.id = ut.user_id
+		INNER JOIN roles r ON ut.role_id = r.id
+		WHERE ut.tenant_id = $? AND r.slug = $? AND u.deleted_at IS NULL AND ut.deleted_at IS NULL
+	`
+
+	qb := NewQueryBuilder(baseQuery)
+	qb.Where("ut.tenant_id = $?", tenantID)
+	qb.Where("r.slug = $?", roleSlug)
+	qb.Where("u.deleted_at IS NULL")
+	qb.Where("ut.deleted_at IS NULL")
+
+	if filter != nil {
+		if filter.Search != "" {
+			searchPattern := "%" + filter.Search + "%"
+			qb.Where("(u.full_name ILIKE $? OR u.email ILIKE $? OR u.username ILIKE $?)",
+				searchPattern, searchPattern, searchPattern)
+		}
+
+		if filter.IsActive != nil {
+			qb.Where("u.is_active = $?", *filter.IsActive)
+		}
+
+		if filter.IsVerified != nil {
+			qb.Where("u.is_verified = $?", *filter.IsVerified)
+		}
+	}
+
+	query, args := qb.Build()
+
+	var count int64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count users by role %s: %w", roleSlug, err)
+	}
+
+	return count, nil
 }

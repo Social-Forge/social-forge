@@ -14,14 +14,14 @@ type Division struct {
 	TenantID      uuid.UUID      `json:"tenant_id" db:"tenant_id" validate:"required"`
 	Name          string         `json:"name" db:"name" validate:"required,max=255"`
 	Slug          string         `json:"slug" db:"slug" validate:"required,max=100"`
-	Description   *string        `json:"description,omitempty" db:"description"`
+	Description   NullString     `json:"description,omitempty" db:"description"`
 	RoutingType   string         `json:"routing_type" db:"routing_type" validate:"required,oneof=equal percentage priority"`
 	RoutingConfig *RoutingConfig `json:"routing_config,omitempty" db:"routing_config"`
 	IsActive      bool           `json:"is_active" db:"is_active"`
-	LinkURL       *string        `json:"link_url,omitempty" db:"link_url"`
+	LinkURL       NullString     `json:"link_url,omitempty" db:"link_url"`
 	CreatedAt     time.Time      `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at" db:"updated_at"`
-	DeletedAt     *time.Time     `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedAt     NullTime       `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 // Routing types
@@ -62,7 +62,7 @@ func (Division) TableName() string {
 
 // IsDeleted checks if division is soft deleted
 func (d *Division) IsDeleted() bool {
-	return d.DeletedAt != nil
+	return d.DeletedAt.Valid
 }
 
 // GenerateLinkURL generates a public link URL for this division

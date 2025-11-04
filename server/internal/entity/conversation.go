@@ -21,18 +21,19 @@ type Conversation struct {
 	Priority             string                `json:"priority" db:"priority" validate:"required,oneof=low normal high urgent"`
 	LabelIDs             pq.StringArray        `json:"label_ids,omitempty" db:"label_ids"`
 	Tags                 pq.StringArray        `json:"tags,omitempty" db:"tags"`
-	FirstMessageAt       *time.Time            `json:"first_message_at,omitempty" db:"first_message_at"`
-	LastMessageAt        *time.Time            `json:"last_message_at,omitempty" db:"last_message_at"`
-	AssignedAt           *time.Time            `json:"assigned_at,omitempty" db:"assigned_at"`
-	ResolvedAt           *time.Time            `json:"resolved_at,omitempty" db:"resolved_at"`
-	ClosedAt             *time.Time            `json:"closed_at,omitempty" db:"closed_at"`
-	ArchivedAt           *time.Time            `json:"archived_at,omitempty" db:"archived_at"`
+	FirstMessageAt       NullTime              `json:"first_message_at,omitempty" db:"first_message_at"`
+	LastMessageAt        NullTime              `json:"last_message_at,omitempty" db:"last_message_at"`
+	AssignedAt           NullTime              `json:"assigned_at,omitempty" db:"assigned_at"`
+	ResolvedAt           NullTime              `json:"resolved_at,omitempty" db:"resolved_at"`
+	ClosedAt             NullTime              `json:"closed_at,omitempty" db:"closed_at"`
+	ArchivedAt           NullTime              `json:"archived_at,omitempty" db:"archived_at"`
 	MessageCount         int                   `json:"message_count" db:"message_count"`
-	AgentResponseTime    *int                  `json:"agent_response_time,omitempty" db:"agent_response_time"`
+	AgentResponseTime    NullInt16             `json:"agent_response_time,omitempty" db:"agent_response_time"`
 	Metadata             *ConversationMetadata `json:"metadata,omitempty" db:"metadata"`
+	IsActive             bool                  `json:"is_active" db:"is_active"`
 	CreatedAt            time.Time             `json:"created_at" db:"created_at"`
 	UpdatedAt            time.Time             `json:"updated_at" db:"updated_at"`
-	DeletedAt            *time.Time            `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedAt            NullTime              `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 const (
@@ -80,17 +81,17 @@ func (c *Conversation) AssignToAgent(agentID uuid.UUID) {
 	now := time.Now()
 	c.AssignedAgentID = &agentID
 	c.Status = ConversationStatusAssigned
-	c.AssignedAt = &now
+	c.AssignedAt = NewNullTime(now)
 }
 
 func (c *Conversation) Resolve() {
 	now := time.Now()
 	c.Status = ConversationStatusResolved
-	c.ResolvedAt = &now
+	c.ResolvedAt = NewNullTime(now)
 }
 
 func (c *Conversation) Close() {
 	now := time.Now()
 	c.Status = ConversationStatusClosed
-	c.ClosedAt = &now
+	c.ClosedAt = NewNullTime(now)
 }

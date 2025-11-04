@@ -16,9 +16,19 @@
 			href: '/app/analytics'
 		},
 		{
+			label: 'Chatbot AI',
+			icon: 'ri:robot-2-fill',
+			href: '/app/chatbots'
+		},
+		{
 			label: 'Contacts',
 			icon: 'ri:contacts-book-3-fill',
 			href: '/app/contacts'
+		},
+		{
+			label: 'Organizations',
+			icon: 'clarity:employee-group-solid',
+			href: '/app/organizations'
 		}
 	];
 	const settingNav = [
@@ -71,7 +81,7 @@
 				<Sidebar.MenuItem>
 					<Sidebar.MenuButton size="lg" class="md:h-8 md:p-0">
 						{#snippet child({ props })}
-							<a href="##" {...props} class="flex items-center gap-2 py-0.5">
+							<a href="/app/chats" {...props} class="flex items-center gap-2 py-0.5">
 								<div
 									class="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
 								>

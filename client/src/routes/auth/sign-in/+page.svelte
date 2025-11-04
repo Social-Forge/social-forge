@@ -24,13 +24,8 @@
 		},
 		async onUpdate(event) {
 			if (event.result.type === 'failure') {
-				if (event.result.status === 202 && event.result.data.error.two_fa_token) {
-					await goto(`/auth/verify-two-factor?token=${event.result.data.error.two_fa_token}`);
-					return;
-				} else {
-					errorMessage = event.result.data.error.message;
-					return;
-				}
+				errorMessage = event.result.data.error.message;
+				return;
 			}
 			successMessage = event.result.data.message;
 			await invalidateAll();

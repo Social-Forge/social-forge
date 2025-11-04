@@ -68,7 +68,12 @@
 				<Field.Label for="otp">
 					One-Time Password <span class="text-red-500 dark:text-red-400">*</span>
 				</Field.Label>
-				<InputOTP.Root maxlength={6} pattern={REGEXP_ONLY_DIGITS_AND_CHARS} bind:value={$form.otp}>
+				<InputOTP.Root
+					maxlength={6}
+					pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+					bind:value={$form.otp}
+					name="otp"
+				>
 					{#snippet children({ cells })}
 						<InputOTP.Group>
 							{#each cells as cell (cell)}

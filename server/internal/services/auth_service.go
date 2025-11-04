@@ -381,6 +381,7 @@ func (s *AuthService) Register(ctx context.Context, req *dto.RegisterUserRequest
 		MaxPages:           1,
 		SubscriptionStatus: entity.StatusActive,
 		SubscriptionPlan:   entity.PlanFree,
+		IsActive:           true,
 		TrialEndsAt:        entity.NewNullTimeFromNow(0, 0, 7),
 		CreatedAt:          time.Now(),
 	}
@@ -485,8 +486,8 @@ func (s *AuthService) VerifyEmail(ctx context.Context, tokenString string) error
 		return fmt.Errorf("failed to set email verified: %w", err)
 	}
 
-	if err := s.tokenRepo.RevokeAllUserTokens(subCtx, token.UserID, token.Type); err != nil {
-		return fmt.Errorf("failed to revoke all user tokens: %w", err)
+	if err := s.tokenRepo.HardDeleteByToken(subCtx, token.Token); err != nil {
+		return fmt.Errorf("failed to hard delete token: %w", err)
 	}
 
 	return nil
@@ -600,8 +601,8 @@ func (s *AuthService) ResetPassword(ctx context.Context, req *dto.ResetPasswordR
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
-	if err := s.tokenRepo.RevokeAllUserTokens(subCtx, token.UserID, token.Type); err != nil {
-		return fmt.Errorf("failed to revoke all user tokens: %w", err)
+	if err := s.tokenRepo.HardDeleteByToken(subCtx, token.Token); err != nil {
+		return fmt.Errorf("failed to hard delete token: %w", err)
 	}
 
 	return nil
@@ -643,11 +644,11 @@ func (s *AuthService) VerifyTwoFactor(ctx context.Context, req *dto.VerifyTwoFac
 		return nil, errors.New("user is inactive")
 	}
 
-	if userTenant.User.TwoFaSecret.Valid && userTenant.User.TwoFaSecret.String != "" {
+	if userTenant.User.TwoFaSecret.String == "" {
 		return nil, errors.New("two factor authentication not enabled")
 	}
 
-	valid, err := s.userHelper.Validate2FA(subCtx, userTenant.User.ID.String(), req.OTP, userTenant.User.TwoFaSecret.String)
+	valid, err := s.userHelper.Verify2FA(subCtx, userTenant.User.ID, req.OTP, userTenant.User.TwoFaSecret.String)
 	if err != nil || !valid {
 		attemptsKey := fmt.Sprintf("delay:%s:%s", "verify2fa", ip)
 		attempts, errIncrement := s.userHelper.IncrementAndGet(subCtx, attemptsKey, time.Hour)

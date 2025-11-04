@@ -12,6 +12,7 @@ type NullString struct {
 type NullTime struct {
 	sql.NullTime
 }
+
 type NullInt16 struct {
 	sql.NullInt16
 }

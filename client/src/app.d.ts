@@ -1,5 +1,5 @@
 import type { RequestEvent, ResolveOptions, MaybePromise } from '@sveltejs/kit';
-import { ApiHandler, createAuthHelper, createUserHelper } from '@/server';
+import { ApiHandler, createAuthHelper, createUserHelper, createTenantHelper } from '@/server';
 import { createSessionHelper } from '@/helpers';
 
 declare global {
@@ -12,6 +12,7 @@ declare global {
 			authServer: ReturnType<typeof createAuthHelper>;
 			userServer: ReturnType<typeof createUserHelper>;
 			sessionHelper: ReturnType<typeof createSessionHelper>;
+			tenantServer: ReturnType<typeof createTenantHelper>;
 			safeGetUser: () => Promise<UserTenantWithDetails | null | undefined>;
 			userTenant?: UserTenantWithDetails | null;
 		}

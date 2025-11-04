@@ -17,7 +17,7 @@ DOCKER_COMPOSE=docker compose
 DOCKER_COMPOSE_PROD=docker compose -f docker-compose.prod.yml
 
 # Database variables
-DB_HOST?=localhost
+DB_HOST?=164.92.78.16
 DB_PORT?=5432
 DB_USER?=socialforge
 DB_PASSWORD?=JombSky@2305Ryan

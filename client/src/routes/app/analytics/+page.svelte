@@ -7,7 +7,7 @@
 </script>
 
 <MetaTags {...metaTags} />
-<AppSidebarLayout page="Home">
+<AppSidebarLayout page="Analytics" user={data.user}>
 	<!-- Your HTML content here -->
 </AppSidebarLayout>
 

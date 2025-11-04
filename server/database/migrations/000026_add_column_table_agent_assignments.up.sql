@@ -1,0 +1,11 @@
+ALTER TABLE IF EXISTS agent_assignments
+ADD COLUMN percentage INTEGER DEFAULT 0;
+
+ALTER TABLE IF EXISTS agent_assignments
+ADD COLUMN weight INTEGER DEFAULT 0;
+
+ALTER TABLE IF EXISTS agent_assignments
+ADD COLUMN priority INTEGER DEFAULT 0;
+
+ALTER TABLE IF EXISTS agent_assignments
+ADD COLUMN meta_data JSONB DEFAULT '{}';

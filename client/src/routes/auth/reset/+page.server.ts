@@ -39,32 +39,16 @@ export const actions = {
 			});
 		}
 
-		try {
-			const response = await locals.authServer.resetPassword(form.data);
-			if (!response.success) {
-				return fail(400, {
-					form,
-					succcess: false,
-					error: {
-						message: response.message
-					}
-				});
-			}
-
-			return {
-				form,
-				succcess: true,
-				message: response.message || 'Password reset successfully',
-				data: response.data
-			};
-		} catch (error) {
-			return fail(500, {
+		const response = await locals.authServer.resetPassword(form.data);
+		if (!response.success) {
+			return fail(400, {
 				form,
 				succcess: false,
 				error: {
-					message: error instanceof Error ? error.message : 'Reset password failed'
+					message: response.message
 				}
 			});
 		}
+		throw redirect(302, '/auth/sign-in');
 	}
 };

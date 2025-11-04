@@ -1,13 +1,18 @@
 <script lang="ts">
 	import type { SuperValidated } from 'sveltekit-superforms';
-	import type { UpdateProfileSchema } from '@/utils';
+	import type { UpdateProfileSchema, UpdateTenantSchema } from '@/utils';
 	import * as Card from '@/components/ui/card';
 	import * as Avatar from '@/components/ui/avatar';
 	import { Separator } from '@/components/ui/separator';
 	import { Button } from '@/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import { AppAccountUploadAvatar, AppAccountEditForm } from '@/components/app';
+	import {
+		AppAccountUploadAvatar,
+		AppAccountEditForm,
+		AppTenantUploadLogo,
+		AppTenantEditForm
+	} from '@/components/app';
 	import {
 		User,
 		Mail,
@@ -23,11 +28,17 @@
 	} from '@lucide/svelte';
 	import { cn } from '@/utils';
 	import Icon from '@iconify/svelte';
+	import { createCountdownStore, DateUtils } from '@/stores';
 
 	let {
 		user: profile,
-		form
-	}: { user?: UserTenantWithDetails | null; form: SuperValidated<UpdateProfileSchema> } = $props();
+		form,
+		tenantForm
+	}: {
+		user?: UserTenantWithDetails | null;
+		form: SuperValidated<UpdateProfileSchema>;
+		tenantForm: SuperValidated<UpdateTenantSchema>;
+	} = $props();
 
 	let user = $derived(profile?.user);
 	let tenant = $derived(profile?.tenant);
@@ -35,6 +46,10 @@
 	let metadata = $derived(profile?.metadata);
 	let activeTab = $state('personal');
 	let openFormEditProfile = $state(false);
+	let openFormEditTenant = $state(false);
+
+	const countdown = $derived(createCountdownStore(tenant?.trial_ends_at || ''));
+	const status = $derived(DateUtils.getExpirationStatus(tenant?.trial_ends_at || ''));
 
 	function formatDate(dateString?: string): string {
 		if (!dateString || dateString === '0001-01-01T00:00:00Z') {
@@ -243,7 +258,7 @@
 								onclick={() => (openFormEditProfile = false)}
 							>
 								<Icon icon="ic:outline-close" class="size-4" />
-								Cansel
+								Cancel
 							</Button>
 						{:else}
 							<Button
@@ -260,7 +275,7 @@
 				<Separator />
 				<Card.Content>
 					{#if openFormEditProfile}
-						<AppAccountEditForm {user} {form} />
+						<AppAccountEditForm bind:openform={openFormEditProfile} {user} {form} />
 					{:else}
 						<div class="space-y-4 px-6 py-4">
 							<!-- Full Name -->
@@ -346,6 +361,61 @@
 									</div>
 								</div>
 							</div>
+
+							<!-- Expires Date-->
+							<div class="flex items-start gap-3">
+								<CheckCircle class="mt-0.5 h-5 w-5 text-neutral-400" />
+								<div class="flex-1">
+									<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+										Expires Date
+									</p>
+									{#if status.status === 'active'}
+										<p class="mt-1 text-sm text-neutral-900 dark:text-white">
+											{formatDate(tenant?.trial_ends_at) || 'N/A'}
+										</p>
+									{:else if status.status === 'warning'}
+										<div class="space-y-2">
+											<h1 class="text-sm font-medium text-yellow-500 dark:text-yellow-100">
+												The active subscription period status will end on:
+											</h1>
+											<div class="flex items-center gap-4 text-center text-lg">
+												<div
+													class="w-16 rounded-lg border border-yellow-500 bg-yellow-500/20 py-2 text-yellow-500 dark:border-yellow-500 dark:bg-yellow-700/30"
+												>
+													<div class="font-mono leading-none">{$countdown.timeRemaining.days}</div>
+													<div class="font-mono text-xs uppercase leading-none">Days</div>
+												</div>
+												<div
+													class="w-16 rounded-lg border border-yellow-500 bg-yellow-500/20 py-2 text-yellow-500 dark:border-yellow-500 dark:bg-yellow-700/30"
+												>
+													<div class="font-mono leading-none">{$countdown.timeRemaining.hours}</div>
+													<div class="font-mono text-xs uppercase leading-none">Hours</div>
+												</div>
+												<div
+													class="w-16 rounded-lg border border-yellow-500 bg-yellow-500/20 py-2 text-yellow-500 dark:border-yellow-500 dark:bg-yellow-700/30"
+												>
+													<div class="font-mono leading-none">
+														{$countdown.timeRemaining.minutes}
+													</div>
+													<div class="font-mono text-xs uppercase leading-none">Minutes</div>
+												</div>
+												<div
+													class="w-16 rounded-lg border border-yellow-500 bg-yellow-500/20 py-2 text-yellow-500 dark:border-yellow-500 dark:bg-yellow-700/30"
+												>
+													<div class="font-mono leading-none">
+														{$countdown.timeRemaining.seconds}
+													</div>
+													<div class="font-mono text-xs uppercase leading-none">Seconds</div>
+												</div>
+											</div>
+										</div>
+									{:else}
+										<p class="mt-1 text-sm text-red-600 dark:text-red-400">
+											Your account has expired. Please upgrade to continue using our services.
+										</p>
+									{/if}
+								</div>
+							</div>
 						</div>
 					{/if}
 				</Card.Content>
@@ -354,87 +424,133 @@
 		<Tabs.Content value="organization" class="w-full">
 			<Card.Root>
 				<Card.Header>
-					<Card.Title>
+					<Card.Title class="flex items-center justify-between">
 						<h2
 							class="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white"
 						>
 							<Building2 class="h-5 w-5" />
 							Organization Information
 						</h2>
+						{#if openFormEditTenant}
+							<Button
+								variant="destructive"
+								class="text-sm font-medium text-white"
+								onclick={() => (openFormEditTenant = false)}
+							>
+								<Icon icon="ic:outline-close" class="size-4" />
+								Cancel
+							</Button>
+						{:else}
+							<Button
+								variant="default"
+								class="text-sm font-medium"
+								onclick={() => (openFormEditTenant = true)}
+							>
+								<Icon icon="material-symbols:edit-square-outline" class="size-4" />
+								Edit
+							</Button>
+						{/if}
 					</Card.Title>
 				</Card.Header>
 				<Separator />
 				<Card.Content>
-					<div class="space-y-4 px-6 py-4">
-						<!-- Organization Name -->
-						<div class="flex items-start gap-3">
-							<Building2 class="mt-0.5 h-5 w-5 text-neutral-400" />
-							<div class="flex-1">
-								<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-									Organization Name
-								</p>
-								<p class="mt-1 text-base text-neutral-900 dark:text-white">
-									{tenant?.name || 'N/A'}
-								</p>
+					{#if openFormEditTenant}
+						<AppTenantEditForm bind:openform={openFormEditTenant} {tenant} form={tenantForm} />
+					{:else}
+						<div class="space-y-4 px-6 py-4">
+							<div class=" flex items-start gap-3">
+								<Icon
+									icon="material-symbols:branding-watermark-outline"
+									class="mt-0.5 h-5 w-5 text-neutral-400"
+								/>
+								<div class="space-y-2">
+									<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+										Organization Logo
+									</p>
+									<div class="relative">
+										<Avatar.Root class="h-24 w-24">
+											<Avatar.Image
+												src={tenant?.logo_url || ''}
+												alt={tenant?.name || 'Organization Avatar'}
+											/>
+											<Avatar.Fallback>
+												{tenant?.name?.slice(0, 2).toUpperCase() || 'Org'}
+											</Avatar.Fallback>
+										</Avatar.Root>
+										<AppTenantUploadLogo {tenant} />
+									</div>
+								</div>
 							</div>
-						</div>
-
-						<!-- Slug -->
-						<div class="flex items-start gap-3">
-							<Hash class="mt-0.5 h-5 w-5 text-neutral-400" />
-							<div class="flex-1">
-								<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-									Organization Slug
-								</p>
-								<p class="mt-1 font-mono text-base text-neutral-900 dark:text-white">
-									{tenant?.slug || 'N/A'}
-								</p>
+							<!-- Organization Name -->
+							<div class="flex items-start gap-3">
+								<Building2 class="mt-0.5 h-5 w-5 text-neutral-400" />
+								<div class="flex-1">
+									<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+										Organization Name
+									</p>
+									<p class="mt-1 text-base text-neutral-900 dark:text-white">
+										{tenant?.name || 'N/A'}
+									</p>
+								</div>
 							</div>
-						</div>
 
-						<!-- Subscription Plan -->
-						<div class="flex items-start gap-3">
-							<Shield class="mt-0.5 h-5 w-5 text-neutral-400" />
-							<div class="flex-1">
-								<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-									Subscription Plan
+							<!-- Slug -->
+							<div class="flex items-start gap-3">
+								<Hash class="mt-0.5 h-5 w-5 text-neutral-400" />
+								<div class="flex-1">
+									<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+										Organization Slug
+									</p>
+									<p class="mt-1 font-mono text-base text-neutral-900 dark:text-white">
+										{tenant?.slug || 'N/A'}
+									</p>
+								</div>
+							</div>
+
+							<!-- Subscription Plan -->
+							<div class="flex items-start gap-3">
+								<Shield class="mt-0.5 h-5 w-5 text-neutral-400" />
+								<div class="flex-1">
+									<p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+										Subscription Plan
+									</p>
+									<div class="mt-1 flex flex-wrap items-center gap-2">
+										<span
+											class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium capitalize {getPlanColor(
+												tenant?.subscription_plan || 'free'
+											)}"
+										>
+											{tenant?.subscription_plan || 'N/A'}
+										</span>
+										<span
+											class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {getStatusColor(
+												tenant?.subscription_status === 'active' || false
+											)}"
+										>
+											{tenant?.subscription_status === 'active' ? 'Active' : 'Inactive'}
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Limits -->
+							<div class="border-t border-neutral-300 pt-4 dark:border-neutral-700">
+								<p class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+									Plan Limits
 								</p>
-								<div class="mt-1 flex flex-wrap items-center gap-2">
-									<span
-										class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium capitalize {getPlanColor(
-											tenant?.subscription_plan || 'free'
-										)}"
-									>
-										{tenant?.subscription_plan || 'N/A'}
-									</span>
-									<span
-										class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {getStatusColor(
-											tenant?.subscription_status === 'active' || false
-										)}"
-									>
-										{tenant?.subscription_status === 'active' ? 'Active' : 'Inactive'}
-									</span>
+								<div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+									{#each limitCards as card}
+										<div class="rounded-lg bg-neutral-100 p-3 dark:bg-neutral-700/50">
+											<p class="text-xs text-neutral-500 dark:text-neutral-400">{card.label}</p>
+											<p class="text-lg font-semibold text-neutral-900 dark:text-white">
+												{card.value()}
+											</p>
+										</div>
+									{/each}
 								</div>
 							</div>
 						</div>
-
-						<!-- Limits -->
-						<div class="border-t border-neutral-300 pt-4 dark:border-neutral-700">
-							<p class="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-								Plan Limits
-							</p>
-							<div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-								{#each limitCards as card}
-									<div class="rounded-lg bg-neutral-100 p-3 dark:bg-neutral-700/50">
-										<p class="text-xs text-neutral-500 dark:text-neutral-400">{card.label}</p>
-										<p class="text-lg font-semibold text-neutral-900 dark:text-white">
-											{card.value()}
-										</p>
-									</div>
-								{/each}
-							</div>
-						</div>
-					</div>
+					{/if}
 				</Card.Content>
 			</Card.Root>
 		</Tabs.Content>

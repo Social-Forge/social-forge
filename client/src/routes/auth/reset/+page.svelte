@@ -3,19 +3,23 @@
 	import { MetaTags } from 'svelte-meta-tags';
 	import { superForm } from 'sveltekit-superforms';
 	import * as Field from '$lib/components/ui/field/index.js';
+	import * as Password from '$lib/components/ui-extras/password';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import type { ZxcvbnResult } from '@zxcvbn-ts/core';
 	import Icon from '@iconify/svelte';
 	import * as Alert from '$lib/components/ui/alert/index.js';
 
 	let { data } = $props();
 	let metaTags = $derived(data.pageMetaTags);
 
-	let passwordType = $state('password');
-	let confirmPasswordType = $state('password');
+	let showConfirmPassword = $state(false);
 	let errorMessage = $state<string | undefined>(undefined);
 	let successMessage = $state<string | undefined>(undefined);
+	let passwordInput = $state<string | undefined>('');
+	const SCORE_NAMING = ['Poor', 'Weak', 'Average', 'Strong', 'Secure'];
+	let strength = $state<ZxcvbnResult>();
 
 	const { form, enhance, errors, submitting } = superForm(data.form, {
 		async onSubmit(input) {
@@ -68,28 +72,28 @@
 					New Password <span class="text-red-500 dark:text-red-400">*</span>
 				</Field.Label>
 				<div class="relative">
-					<Icon icon="material-symbols:key" class="absolute left-3 top-1/2 -translate-y-1/2" />
-					<Input
-						bind:value={$form.new_password}
-						name="new_password"
-						type={passwordType}
-						class="pe-10 ps-10"
-						placeholder="Enter your password"
-						aria-invalid={!!$errors.new_password}
-						autocomplete="new-password"
-					/>
-
-					<Button
-						variant="ghost"
-						size="icon"
-						class="absolute right-1 top-1/2 size-8 -translate-y-1/2 cursor-pointer"
-						onclick={() => (passwordType = passwordType === 'password' ? 'text' : 'password')}
-					>
-						<Icon
-							icon={passwordType === 'password' ? 'mdi:eye' : 'mdi:eye-off'}
-							class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-						/>
-					</Button>
+					<Icon icon="material-symbols:key" class="top-4.5 absolute left-3 -translate-y-1/2" />
+					<Password.Root minScore={2}>
+						<Password.Input
+							bind:value={passwordInput}
+							name="new_password"
+							class="pe-10 ps-10"
+							disabled={$submitting}
+							placeholder="Enter your password"
+							autocomplete="new-password"
+							oninput={(e) => {
+								$form.new_password = (e.target as HTMLInputElement).value;
+							}}
+						>
+							<Password.ToggleVisibility />
+						</Password.Input>
+						<div class="flex flex-col gap-1">
+							<Password.Strength bind:strength />
+							<span class="text-muted-foreground text-sm">
+								{SCORE_NAMING[strength?.score ?? 0]}
+							</span>
+						</div>
+					</Password.Root>
 				</div>
 				{#if $errors.new_password}
 					<Field.Error>{$errors.new_password}</Field.Error>
@@ -104,7 +108,7 @@
 					<Input
 						bind:value={$form.confirm_password}
 						name="confirm_password"
-						type={confirmPasswordType}
+						type={showConfirmPassword ? 'text' : 'password'}
 						class="pe-10 ps-10"
 						placeholder="Enter your confirm password"
 						aria-invalid={!!$errors.confirm_password}
@@ -115,11 +119,10 @@
 						variant="ghost"
 						size="icon"
 						class="absolute right-1 top-1/2 size-8 -translate-y-1/2 cursor-pointer"
-						onclick={() =>
-							(confirmPasswordType = confirmPasswordType === 'password' ? 'text' : 'password')}
+						onclick={() => (showConfirmPassword = !showConfirmPassword)}
 					>
 						<Icon
-							icon={confirmPasswordType === 'password' ? 'mdi:eye' : 'mdi:eye-off'}
+							icon={showConfirmPassword ? 'mdi:eye' : 'mdi:eye-off'}
 							class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
 						/>
 					</Button>

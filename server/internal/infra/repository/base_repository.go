@@ -7,6 +7,7 @@ import (
 	"social-forge/config"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -111,7 +112,7 @@ func NewQueryBuilder(baseQuery string) *QueryBuilder {
 // Where adds a WHERE condition
 func (qb *QueryBuilder) Where(condition string, args ...interface{}) *QueryBuilder {
 	processedCondition := condition
-	for _ = range args {
+	for range args {
 		placeholder := "$" + strconv.Itoa(qb.argCounter)
 		processedCondition = strings.Replace(processedCondition, "$?", placeholder, 1)
 		qb.argCounter++
@@ -229,7 +230,13 @@ type Filter struct {
 	TenantID       *uuid.UUID             `json:"tenant_id,omitempty"`
 	UserID         *uuid.UUID             `json:"user_id,omitempty"`
 	DivisionID     *uuid.UUID             `json:"division_id,omitempty"`
+	RangeDate      *RangeDate             `json:"range_date,omitempty"`
 	Extra          map[string]interface{} `json:"extra,omitempty"`
+}
+
+type RangeDate struct {
+	StartDate time.Time `json:"start_date,omitempty"`
+	EndDate   time.Time `json:"end_date,omitempty"`
 }
 
 // ListOptions combines pagination and filtering
@@ -264,7 +271,7 @@ func sanitizeField(field string) string {
 	}
 	return result.String()
 }
-func isValidColumnName(name string) bool {
+func IsValidColumnName(name string) bool {
 	if name == "" || len(name) > 50 {
 		return false
 	}

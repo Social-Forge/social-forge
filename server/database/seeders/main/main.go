@@ -59,13 +59,13 @@ func main() {
 			config.Logger.Error("Failed to seed role permissions", zap.Error(err))
 		}
 	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := seeder.ChannelSeed(ctx); err != nil {
-			config.Logger.Error("Failed to seed channels", zap.Error(err))
-		}
-	}()
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	if err := seeder.ChannelSeed(ctx); err != nil {
+	// 		config.Logger.Error("Failed to seed channels", zap.Error(err))
+	// 	}
+	// }()
 	// if err := seeder.RolePermissionSeed(ctx); err != nil {
 	// 	config.Logger.Error("Failed to seed role permissions (Serial Step)", zap.Error(err))
 	// }

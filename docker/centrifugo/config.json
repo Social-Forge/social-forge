@@ -10,7 +10,7 @@
     "http://localhost:5173",
     "http://localhost:3000",
     "https://app.socialforge.com",
-    "https://staging-app.socialforge.com"
+    "https://socialforge.com"
   ],
   "namespaces": [
     {

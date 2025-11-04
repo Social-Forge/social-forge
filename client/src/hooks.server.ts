@@ -1,7 +1,7 @@
 import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
-import { createApiHandler, createAuthHelper, createUserHelper } from '@/server';
+import { createApiHandler, createAuthHelper, createUserHelper, createTenantHelper } from '@/server';
 import {
 	handleAdminRoute,
 	handleTenantRoute,
@@ -17,6 +17,7 @@ const initServer: Handle = async ({ event, resolve }) => {
 	event.locals.authServer = createAuthHelper(event);
 	event.locals.userServer = createUserHelper(event);
 	event.locals.sessionHelper = createSessionHelper(event);
+	event.locals.tenantServer = createTenantHelper(event);
 	event.locals.safeGetUser = async () => {
 		try {
 			const shouldRefresh = await handleAutoRefresh(event);

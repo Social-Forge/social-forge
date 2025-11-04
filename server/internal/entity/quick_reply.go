@@ -15,16 +15,16 @@ type QuickReply struct {
 	Title       string              `json:"title" db:"title" validate:"required,max=255"`
 	Shortcut    string              `json:"shortcut" db:"shortcut" validate:"required,max=50"`
 	Content     string              `json:"content" db:"content" validate:"required"`
-	MediaType   *string             `json:"media_type,omitempty" db:"media_type" validate:"omitempty,oneof=text image video audio document file location contact button quick_reply"`
-	MediaURL    *string             `json:"media_url,omitempty" db:"media_url"`
+	MediaType   NullString          `json:"media_type,omitempty" db:"media_type" validate:"omitempty,oneof=text image video audio document file location contact button quick_reply"`
+	MediaURL    NullString          `json:"media_url,omitempty" db:"media_url"`
 	IsShared    bool                `json:"is_shared" db:"is_shared"`
 	UsageCount  int                 `json:"usage_count" db:"usage_count"`
-	LastUsedAt  *time.Time          `json:"last_used_at,omitempty" db:"last_used_at"`
+	LastUsedAt  NullTime            `json:"last_used_at,omitempty" db:"last_used_at"`
 	MetaData    *QuickReplyMetaData `json:"meta_data,omitempty" db:"meta_data"`
 	IsActive    bool                `json:"is_active" db:"is_active"`
 	CreatedAt   time.Time           `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time           `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time          `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedAt   NullTime            `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 const (
@@ -67,5 +67,5 @@ func (cm *QuickReplyMetaData) Scan(value interface{}) error {
 func (qr *QuickReply) IncrementUsage() {
 	qr.UsageCount++
 	now := time.Now()
-	qr.LastUsedAt = &now
+	qr.LastUsedAt = NewNullTime(now)
 }

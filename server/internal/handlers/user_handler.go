@@ -103,12 +103,105 @@ func (h *UserHandler) ChangeAvatar(c *fiber.Ctx) error {
 		case strings.Contains(err.Error(), "upload"):
 			return helpers.Respond(c, fiber.StatusInternalServerError, "Failed to upload avatar", nil)
 		default:
-			return helpers.Respond(c, fiber.StatusInternalServerError, "Failed to update avatar", nil)
+			return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
 		}
 	}
 	return helpers.Respond(c, fiber.StatusOK, "Avatar changed successfully", fiber.Map{
 		"avatar_url": avatarURL,
 	})
+}
+func (h *UserHandler) UpdateProfile(c *fiber.Ctx) error {
+	ctx := h.ctxinject.HandlerContext(c)
+
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return helpers.Respond(c, fiber.StatusUnauthorized, "User authentication required", nil)
+	}
+
+	var req dto.UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return helpers.Respond(c, fiber.StatusBadRequest, "Invalid request payload", nil)
+	}
+
+	if errs := helpers.ValidateStruct(req); len(errs) > 0 {
+		return helpers.Respond(c, fiber.StatusUnprocessableEntity, helpers.ValidationErrors{Errors: errs}.Error(), nil)
+	}
+
+	userUpdate, err := h.userService.UpdateProfile(ctx, userID, &req)
+	if err != nil {
+		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+	return helpers.Respond(c, fiber.StatusOK, "Profile updated successfully", userUpdate)
+}
+func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
+	ctx := h.ctxinject.HandlerContext(c)
+
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return helpers.Respond(c, fiber.StatusUnauthorized, "User authentication required", nil)
+	}
+
+	var req dto.ChangePasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return helpers.Respond(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	if errs := helpers.ValidateStruct(req); len(errs) > 0 {
+		return helpers.Respond(c, fiber.StatusUnprocessableEntity, helpers.ValidationErrors{Errors: errs}.Error(), nil)
+	}
+
+	if err := h.userService.UpdatePassword(ctx, userID, &req); err != nil {
+		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+	return helpers.Respond(c, fiber.StatusOK, "Password changed successfully", nil)
+}
+func (h *UserHandler) EnableTwoFactor(c *fiber.Ctx) error {
+	ctx := h.ctxinject.HandlerContext(c)
+
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return helpers.Respond(c, fiber.StatusUnauthorized, "User authentication required", nil)
+	}
+	var req dto.EnableTwoFactorRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return helpers.Respond(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	if errs := helpers.ValidateStruct(req); len(errs) > 0 {
+		return helpers.Respond(c, fiber.StatusUnprocessableEntity, helpers.ValidationErrors{Errors: errs}.Error(), nil)
+	}
+
+	qr, secret, err := h.userService.EnableTwoFactor(ctx, userID, &req)
+	if err != nil {
+		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+	return helpers.Respond(c, fiber.StatusOK, "Two-factor authentication enabled successfully", fiber.Map{
+		"qr_code": qr,
+		"secret":  secret,
+	})
+}
+func (h *UserHandler) VerifyTwoFactor(c *fiber.Ctx) error {
+	ctx := h.ctxinject.HandlerContext(c)
+
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return helpers.Respond(c, fiber.StatusUnauthorized, "User authentication required", nil)
+	}
+
+	var req dto.ActivateTwoFactorRequest
+	if err := c.BodyParser(&req); err != nil {
+		return helpers.Respond(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	if errs := helpers.ValidateStruct(req); len(errs) > 0 {
+		return helpers.Respond(c, fiber.StatusUnprocessableEntity, helpers.ValidationErrors{Errors: errs}.Error(), nil)
+	}
+
+	if err := h.userService.ActivateTwoFactor(ctx, userID, &req); err != nil {
+		return helpers.Respond(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+	return helpers.Respond(c, fiber.StatusOK, "Two-factor authentication verified successfully", nil)
 }
 func (h *UserHandler) isValidImageType(contentType string) bool {
 	allowedTypes := map[string]bool{

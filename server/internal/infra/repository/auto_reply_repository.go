@@ -65,7 +65,11 @@ func (r *autoReplyRepository) Create(ctx context.Context, autoReply *entity.Auto
 			case "chk_auto_replies_trigger_type":
 				return fmt.Errorf("auto reply with trigger_type %s already exists", autoReply.TriggerType)
 			case "chk_auto_replies_media_type":
-				return fmt.Errorf("auto reply with media_type %v already exists for tenant %s", *autoReply.MediaType, autoReply.TenantID)
+				val, errCons := autoReply.MediaType.Value()
+				if errCons != nil {
+					return fmt.Errorf("failed to get media_type value: %w", errCons)
+				}
+				return fmt.Errorf("auto reply with media_type %v already exists for tenant %s", val, autoReply.TenantID)
 			default:
 				return fmt.Errorf("unique constraint violation (%s): %w", pgErr.ConstraintName, err)
 			}
@@ -111,7 +115,11 @@ func (r *autoReplyRepository) Update(ctx context.Context, autoReply *entity.Auto
 			case "chk_auto_replies_trigger_type":
 				return nil, fmt.Errorf("auto reply with trigger_type %s already exists", autoReply.TriggerType)
 			case "chk_auto_replies_media_type":
-				return nil, fmt.Errorf("auto reply with media_type %v already exists for tenant %s", *autoReply.MediaType, autoReply.TenantID)
+				val, errCons := autoReply.MediaType.Value()
+				if errCons != nil {
+					return nil, fmt.Errorf("failed to get media_type value: %w", errCons)
+				}
+				return nil, fmt.Errorf("auto reply with media_type %v already exists for tenant %s", val, autoReply.TenantID)
 			default:
 				return nil, fmt.Errorf("unique constraint violation (%s): %w", pgErr.ConstraintName, err)
 			}

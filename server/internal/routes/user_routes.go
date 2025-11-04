@@ -38,8 +38,15 @@ func NewUserRoutes(
 func (r *UserRoutes) RegisterRoutes(parent fiber.Router) {
 	router := parent.Group(r.path)
 
-	router.Get("/me", r.auth.JWTAuth(), r.tenant.TenantGuard(), r.handler.GetCurrentUser)
-	router.Post("/logout", r.auth.JWTAuth(), r.tenant.TenantGuard(), r.handler.Logout)
+	protected := router.Group("/protected")
+	protected.Use(r.auth.JWTAuth(), r.tenant.TenantGuard())
 
-	router.Post("/avatar", r.auth.JWTAuth(), r.tenant.TenantGuard(), r.handler.ChangeAvatar)
+	protected.Get("/me", r.handler.GetCurrentUser)
+	protected.Post("/logout", r.handler.Logout)
+
+	protected.Post("/avatar", r.handler.ChangeAvatar)
+	protected.Put("/profile", r.handler.UpdateProfile)
+	protected.Put("/password", r.handler.ChangePassword)
+	protected.Post("/two-factor/enable", r.handler.EnableTwoFactor)
+	protected.Post("/two-factor/verify", r.handler.VerifyTwoFactor)
 }

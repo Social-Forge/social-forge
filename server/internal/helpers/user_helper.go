@@ -102,21 +102,21 @@ func (us *UserHelper) Clear2FaStatus(ctx context.Context, sessionID, key string)
 	keys := fmt.Sprintf("%s%s:%s", TwoFaStatusPrefix, sessionID, key)
 	return us.client.DeleteCache(subCtx, keys)
 }
-func (us *UserHelper) Set2FaCode(ctx context.Context, userID, secret, qrCode string) error {
+func (us *UserHelper) Set2FaCode(ctx context.Context, userID uuid.UUID, secret, qrCode string) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
 	keys := fmt.Sprintf("%s%s:%s", TwoFaCodePrefix, userID, secret)
 	return us.client.SetAny(subCtx, keys, qrCode, 10*time.Minute)
 }
-func (us *UserHelper) Get2FaCode(ctx context.Context, userID, secret string) (string, error) {
+func (us *UserHelper) Get2FaCode(ctx context.Context, userID uuid.UUID, secret string) (string, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
 	keys := fmt.Sprintf("%s%s:%s", TwoFaCodePrefix, userID, secret)
 	return us.client.GetString(subCtx, keys)
 }
-func (us *UserHelper) GetTemp2FASecret(ctx context.Context, userID string) (map[string]interface{}, error) {
+func (us *UserHelper) GetTemp2FASecret(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
@@ -131,39 +131,6 @@ func (us *UserHelper) GetTemp2FASecret(ctx context.Context, userID string) (map[
 	} else if err != redis.Nil {
 		return nil, fmt.Errorf("redis error: %v", err)
 	}
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID format: %w", err)
-	}
-
-	user, err := us.userRepo.FindByID(subCtx, userUUID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %v", err)
-	}
-
-	if !user.TwoFaSecret.Valid || user.TwoFaSecret.String == "" {
-		urlQr, secret, err := us.Generate2FAQRCode(subCtx, userID, user.Email)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get user: %v", err)
-		}
-
-		err = us.userRepo.UpdateTwoFaSecret(subCtx, user.ID, &secret)
-		if err != nil {
-			return nil, fmt.Errorf("failed to save 2FA secret: %v", err)
-		}
-
-		payload := map[string]interface{}{
-			"qr_url":  urlQr,
-			"secret":  secret,
-			"user_id": user.ID,
-		}
-
-		if err := us.SetTemp2FASecret(subCtx, user.ID.String(), payload); err != nil {
-			return nil, fmt.Errorf("failed to cache 2FA secret: %v", err)
-		}
-
-		return payload, nil
-	}
 
 	var payload map[string]interface{}
 	if err := json.Unmarshal([]byte(val), &payload); err != nil {
@@ -171,9 +138,7 @@ func (us *UserHelper) GetTemp2FASecret(ctx context.Context, userID string) (map[
 	}
 	return payload, nil
 }
-func (us *UserHelper) Generate2FAQRCode(ctx context.Context, userID, email string) (string, string, error) {
-	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
-	defer cancel()
+func (us *UserHelper) Generate2FAQRCode(userID uuid.UUID, email string) (string, string, error) {
 
 	key, err := totp.Generate(totp.GenerateOpts{
 		Issuer:      "Social-Forge",
@@ -190,14 +155,14 @@ func (us *UserHelper) Generate2FAQRCode(ctx context.Context, userID, email strin
 	base64QR := "data:image/png;base64," + base64.StdEncoding.EncodeToString(qr)
 
 	// Simpan ke Redis 10 menit
-	err = us.Set2FaCode(subCtx, userID, key.Secret(), base64QR)
-	if err != nil {
-		return "", "", err
-	}
+	// err = us.Set2FaCode(subCtx, userID, key.Secret(), base64QR)
+	// if err != nil {
+	// 	return "", "", err
+	// }
 
 	return base64QR, key.Secret(), nil
 }
-func (us *UserHelper) SetTemp2FASecret(ctx context.Context, userID string, payload map[string]interface{}) error {
+func (us *UserHelper) SetTemp2FASecret(ctx context.Context, userID uuid.UUID, payload map[string]interface{}) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
@@ -208,15 +173,14 @@ func (us *UserHelper) SetTemp2FASecret(ctx context.Context, userID string, paylo
 	keys := fmt.Sprintf("%s%s", TwoFaCodePrefix, userID)
 	return us.client.Setbyte(subCtx, keys, jsonData, 30*time.Minute)
 }
-
-func (us *UserHelper) ClearTemp2FASecret(ctx context.Context, userID string) error {
+func (us *UserHelper) ClearTemp2FASecret(ctx context.Context, userID uuid.UUID) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()
 
 	keys := fmt.Sprintf("%s%s", TwoFaCodePrefix, userID)
 	return us.client.DeleteCache(subCtx, keys)
 }
-func (us *UserHelper) Validate2FA(ctx context.Context, userID, otp, secret string) (bool, error) {
+func (us *UserHelper) Verify2FA(ctx context.Context, userID uuid.UUID, otp, secret string) (bool, error) {
 	valid, err := totp.ValidateCustom(
 		otp,
 		secret,
@@ -228,11 +192,12 @@ func (us *UserHelper) Validate2FA(ctx context.Context, userID, otp, secret strin
 		},
 	)
 	if err != nil {
-		return false, fmt.Errorf("failed to verity otp code: %w", err)
+		return false, fmt.Errorf("failed to verify OTP code: %w", err)
 	}
 
 	return valid, nil
 }
+
 func (us *UserHelper) SetBlockedAttemptCredential(ctx context.Context, key string, val interface{}, expiration time.Duration) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 3*time.Second)
 	defer cancel()

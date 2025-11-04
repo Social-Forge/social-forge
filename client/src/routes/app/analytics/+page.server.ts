@@ -12,6 +12,7 @@ export const load = async ({ url, locals }) => {
 	});
 
 	return {
-		pageMetaTags
+		pageMetaTags,
+		user: locals.userTenant
 	};
 };

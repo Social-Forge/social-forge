@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"social-forge/config"
+	"social-forge/internal/entity"
 	"social-forge/internal/helpers"
 	"social-forge/internal/infra/contextpool"
 	"time"
@@ -51,6 +52,18 @@ func (m *TenantMiddleware) TenantGuard() fiber.Handler {
 		if err != nil || tenant == nil {
 			m.logger.Error("Failed to get tenant by ID", zap.Error(err))
 			return helpers.Respond(c, fiber.StatusInternalServerError, "Internal server error, tenant not registered", nil)
+		}
+		if !tenant.IsActive {
+			m.logger.Error("Tenant is inactive")
+			return helpers.Respond(c, fiber.StatusForbidden, "Tenant is inactive", nil)
+		}
+		if tenant.SubscriptionStatus != entity.StatusActive {
+			m.logger.Error("Tenant subscription is not active")
+			return helpers.Respond(c, fiber.StatusForbidden, "Tenant subscription is not active", nil)
+		}
+		if tenant.TrialEndsAt.Valid && tenant.TrialEndsAt.Time.Before(time.Now()) {
+			m.logger.Error("Tenant subscription has expired")
+			return helpers.Respond(c, fiber.StatusForbidden, "Tenant subscription has expired", nil)
 		}
 		return c.Next()
 	}

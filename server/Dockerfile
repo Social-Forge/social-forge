@@ -31,6 +31,10 @@ FROM golang:1.25-alpine AS builder
 # Install build dependencies with pinned versions
 RUN apk add --no-cache \
     git \
+    ca-certificates \
+    tzdata \
+    gcc \
+    musl-dev \
     make
 
 # Set working directory
@@ -46,7 +50,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o /app/bin/api ./cmd/api/main.go && \
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o /app/bin/server ./cmd/api/main.go && \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o /app/bin/worker ./cmd/worker/main.go && \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o /app/bin/migrate ./cmd/migrate/main.go
 
@@ -56,7 +60,9 @@ FROM alpine:3.19 AS production
 # Install ca-certificates for HTTPS requests with pinned version
 RUN apk --no-cache add \
     ca-certificates \
-    tzdata
+    tzdata \
+    curl \
+    wget
 
 # Set timezone
 ENV TZ=Asia/Jakarta
@@ -69,7 +75,7 @@ RUN addgroup -S appuser && \
 WORKDIR /app
 
 # Copy binaries from builder
-COPY --from=builder /app/bin/api /app/api
+COPY --from=builder /app/bin/server /app/server
 COPY --from=builder /app/bin/worker /app/worker
 COPY --from=builder /app/bin/migrate /app/migrate
 
@@ -78,6 +84,7 @@ COPY --from=builder /app/database/migrations /app/database/migrations
 
 # Change ownership
 RUN chown -R appuser:appuser /app
+RUN chmod +x /app/worker
 
 # Switch to non-root user
 USER appuser
@@ -90,4 +97,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Default command for production
-CMD ["/app/api"]
+CMD ["/app/server"]

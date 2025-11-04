@@ -35,33 +35,17 @@ export const actions = {
 				}
 			});
 		}
-		try {
-			const response = await locals.authServer.register(form.data);
-			if (!response.success) {
-				return fail(400, {
-					form,
-					success: false,
-					error: {
-						message: response.message || 'Invalid input',
-						fields: response.error?.details || form.errors
-					}
-				});
-			}
-
-			return {
-				form,
-				success: true,
-				message: response.message || 'Registration successful',
-				data: response.data
-			};
-		} catch (error) {
-			return fail(500, {
+		const response = await locals.authServer.register(form.data);
+		if (!response.success) {
+			return fail(400, {
 				form,
 				success: false,
 				error: {
-					message: error instanceof Error ? error.message : 'Internal server error'
+					message: response.message || 'Invalid input',
+					fields: response.error?.details || form.errors
 				}
 			});
 		}
+		throw redirect(302, `/auth/verify-email?email=${form.data.email}`);
 	}
 };

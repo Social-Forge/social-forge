@@ -51,6 +51,7 @@ func (u *UserTenantWithDetails) ToResponse() *UserResponse {
 		FullName:        u.User.FullName,
 		Phone:           u.User.Phone.String,
 		AvatarURL:       u.User.AvatarURL.String,
+		TwoFaSecret:     u.User.TwoFaSecret.String,
 		IsActive:        u.User.IsActive,
 		IsVerified:      u.User.IsVerified,
 		EmailVerifiedAt: u.User.EmailVerifiedAt.Time,

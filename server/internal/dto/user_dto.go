@@ -9,14 +9,20 @@ var (
 	ErrWeakPassword          = errors.New("password too weak")
 )
 
-type UpdateUserRequest struct {
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
-	Phone     string `json:"phone,omitempty" validate:"omitempty,e164"`
-	Avatar    string `json:"avatar,omitempty"`
+type UpdateProfileRequest struct {
+	FullName string `json:"full_name" validate:"required"`
+	Email    string `json:"email" validate:"email"`
+	Username string `json:"username" validate:"required"`
+	Phone    string `json:"phone" validate:"omitempty,e164"`
 }
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"current_password" validate:"required"`
 	NewPassword     string `json:"new_password" validate:"required,min=8"`
-	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=new_password"`
+	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=NewPassword"`
+}
+type EnableTwoFactorRequest struct {
+	Status bool `json:"status" validate:"boolean"`
+}
+type ActivateTwoFactorRequest struct {
+	Code string `json:"code" validate:"required"`
 }

@@ -22,6 +22,7 @@ type TokenRepository interface {
 	Update(ctx context.Context, token *entity.Token) (*entity.Token, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error
+	HardDeleteByToken(ctx context.Context, token string) error
 	List(ctx context.Context, opts *ListOptions) ([]*entity.Token, int64, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, opts *ListOptions) ([]*entity.Token, int64, error)
 	FindActiveByUser(ctx context.Context, userID uuid.UUID) ([]*entity.Token, error)
@@ -211,6 +212,23 @@ func (r *tokenRepository) HardDelete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM tokens WHERE id = $1`
 
 	cmdTag, err := r.db.Exec(subCtx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to hard delete token: %w", err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("token not found")
+	}
+
+	return nil
+}
+func (r *tokenRepository) HardDeleteByToken(ctx context.Context, token string) error {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `DELETE FROM tokens WHERE token = $1`
+
+	cmdTag, err := r.db.Exec(subCtx, query, token)
 	if err != nil {
 		return fmt.Errorf("failed to hard delete token: %w", err)
 	}

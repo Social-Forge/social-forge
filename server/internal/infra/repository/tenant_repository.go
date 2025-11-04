@@ -31,6 +31,7 @@ type TenantRepository interface {
 	Update(ctx context.Context, tenant *entity.Tenant) (*entity.Tenant, error)
 	UpdateTx(ctx context.Context, tx pgx.Tx, tenant *entity.Tenant) (*entity.Tenant, error)
 	UpdateWithRecovery(ctx context.Context, tenant *entity.Tenant) (*entity.Tenant, error)
+	UpdateLogo(ctx context.Context, tenantID uuid.UUID, logoURL string) (string, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	HardDelete(ctx context.Context, id uuid.UUID) error
 	Restore(ctx context.Context, id uuid.UUID) error
@@ -481,6 +482,32 @@ func (r *tenantRepository) UpdateWithRecovery(ctx context.Context, tenant *entit
 		return nil, fmt.Errorf("failed to update tenant with recovery: %w", err)
 	}
 	return updateTenant, nil
+}
+func (r *tenantRepository) UpdateLogo(ctx context.Context, tenantID uuid.UUID, logoURL string) (string, error) {
+	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)
+	defer cancel()
+
+	query := `
+		UPDATE tenants SET
+			logo_url = $1
+		WHERE id = $2 AND deleted_at IS NULL AND is_active = true
+		RETURNING logo_url
+	`
+	args := []interface{}{
+		logoURL,
+		tenantID,
+	}
+
+	var newLogoURL string
+	err := r.db.QueryRow(subCtx, query, args...).Scan(&newLogoURL)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", fmt.Errorf("tenant not found or not active")
+		}
+		return "", fmt.Errorf("failed to update logo: %w", err)
+	}
+
+	return newLogoURL, nil
 }
 func (r *tenantRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 15*time.Second)

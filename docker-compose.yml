@@ -204,6 +204,18 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "wget -q -O- http://localhost:8080/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # Asynq Worker (Background Jobs)
   worker:
@@ -231,7 +243,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: /app/worker
+    command: ["/app/worker"]
     deploy:
       replicas: 2
       resources:

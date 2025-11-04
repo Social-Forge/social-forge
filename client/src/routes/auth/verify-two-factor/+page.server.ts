@@ -39,52 +39,36 @@ export const actions = {
 			});
 		}
 
-		try {
-			const response = await locals.authServer.verifyTwoFactor(form.data);
-			if (!response.success) {
-				return fail(response.status, {
-					form,
-					success: false,
-					error: {
-						message: response.message,
-						fields: form.errors
-					}
-				});
-			}
-			if (!response.data?.access_token || !response.data?.refresh_token) {
-				return fail(500, {
-					form,
-					success: false,
-					error: {
-						message: 'Invalid response',
-						fields: form.errors
-					}
-				});
-			}
-			locals.sessionHelper.setAuthCookies(
-				{
-					accessToken: response.data.access_token,
-					refreshToken: response.data.refresh_token
-				},
-				response.data?.expires_in || 60 * 60 * 24,
-				response.data?.expires_refresh_in || 60 * 60 * 24 * 7
-			);
-
-			return {
-				form,
-				success: true,
-				message: response.message || 'Two factor authentication verified',
-				error: null
-			};
-		} catch (error) {
-			return fail(500, {
+		const response = await locals.authServer.verifyTwoFactor(form.data);
+		if (!response.success) {
+			return fail(response.status, {
 				form,
 				success: false,
 				error: {
-					message: error instanceof Error ? error.message : 'Unknown error',
+					message: response.message,
 					fields: form.errors
 				}
 			});
 		}
+		if (!response.data?.access_token || !response.data?.refresh_token) {
+			return fail(500, {
+				form,
+				success: false,
+				error: {
+					message: 'Invalid response',
+					fields: form.errors
+				}
+			});
+		}
+		locals.sessionHelper.setAuthCookies(
+			{
+				accessToken: response.data.access_token,
+				refreshToken: response.data.refresh_token
+			},
+			response.data?.expires_in || 60 * 60 * 24,
+			response.data?.expires_refresh_in || 60 * 60 * 24 * 7
+		);
+
+		throw redirect(302, '/app/chats');
 	}
 };

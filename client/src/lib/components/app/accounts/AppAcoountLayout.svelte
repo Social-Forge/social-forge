@@ -28,18 +28,10 @@
 			exact: true
 		},
 		{
-			label: 'Password',
-			name: 'password',
-			description: 'Change your password here. Click save when you&apos;re done.',
-			icon: 'mdi:lock',
-			to: '/app/accounts?key=password',
-			exact: true
-		},
-		{
-			label: 'Two-Factor Authentication',
+			label: 'Security',
 			name: 'security',
-			description: 'Enable two-factor authentication for your account.',
-			icon: 'mdi:two-factor-authentication',
+			description: 'Change your password or enable two-factor authentication.',
+			icon: 'mdi:lock',
 			to: '/app/accounts?key=security',
 			exact: true
 		}

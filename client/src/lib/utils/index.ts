@@ -22,3 +22,5 @@ export * from './is-number';
 export * from './result';
 export * from './utils';
 export * from './url';
+export * from './time';
+export * from './query';

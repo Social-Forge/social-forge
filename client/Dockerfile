@@ -50,6 +50,9 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Build Environment variables adapter node
+# RUN node --env-file=.env build
+
 # Build application
 RUN pnpm run build
 
@@ -70,7 +73,7 @@ RUN addgroup -S appuser && \
 WORKDIR /app
 
 # Copy built application from builder
-COPY --from=builder --chown=appuser:appuser /app/.svelte-kit/output ./build
+COPY --from=builder --chown=appuser:appuser /app/build ./build
 COPY --from=builder --chown=appuser:appuser /app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appuser /app/package.json ./
 
@@ -88,4 +91,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["node", "build"]
+CMD ["node", "./build"]

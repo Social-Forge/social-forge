@@ -45,6 +45,19 @@ declare global {
 		type: 'success' | 'error' | 'warning' | 'info';
 		duration?: number;
 	};
+	interface TimeRemaining {
+		days: number;
+		hours: number;
+		minutes: number;
+		seconds: number;
+		totalMilliseconds: number;
+		isExpired: boolean;
+	}
+	interface CountdownStore {
+		timeRemaining: TimeRemaining;
+		formattedTime: string;
+		isRunning: boolean;
+	}
 }
 
 export {};

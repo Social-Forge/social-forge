@@ -52,6 +52,11 @@ type TenantWithOwner struct {
 	Tenant
 	Owner *User `json:"owner,omitempty"`
 }
+type TenantOrganizationData struct {
+	Divisions   []Division `json:"divisions"`
+	Supervisors []User     `json:"supervisors"`
+	Agents      []User     `json:"agents"`
+}
 
 func (Tenant) TableName() string {
 	return "tenants"

@@ -80,7 +80,7 @@ func (s *Seeder) RoleSeed(ctx context.Context) error {
 	return nil
 }
 func (s *Seeder) PermissionSeed(ctx context.Context) error {
-	subCtx, cancel := contextpool.WithTimeoutIfNone(ctx, 5*time.Second)
+	subCtx, cancel := contextpool.WithTimeoutFallback(ctx, 2*time.Minute)
 	defer cancel()
 
 	permissions := []entity.Permission{
@@ -1014,7 +1014,7 @@ func (s *Seeder) PermissionSeed(ctx context.Context) error {
 	return nil
 }
 func (s *Seeder) RolePermissionSeed(ctx context.Context) error {
-	subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	subCtx, cancel := contextpool.WithTimeoutFallback(ctx, 10*time.Minute)
 	defer cancel()
 
 	roles, err := s.roleRepo.GetAll(subCtx)

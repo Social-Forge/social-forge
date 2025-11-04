@@ -1,4 +1,4 @@
-import { string, z } from 'zod';
+import { nullable, string, z } from 'zod';
 
 export const registerSchema = z
 	.object({
@@ -140,6 +140,41 @@ export const updateProfileSchema = z.object({
 		.optional()
 		.or(z.literal(''))
 });
+export const updateTenantSchema = z.object({
+	id: z.string().nonempty('Tenant ID is required'),
+	name: z
+		.string({ error: 'Name is required' })
+		.min(3, 'Name must be at least 3 characters long')
+		.nonempty('Name is required'),
+	slug: z
+		.string({ error: 'Slug is required' })
+		.min(3, 'Slug must be at least 3 characters long')
+		.nonempty('Slug is required'),
+	subdomain: z.string().nullable().optional(),
+	description: z.string().nullable().optional()
+});
+export const updatePasswordSchema = z.object({
+	current_password: z
+		.string({ error: 'Current password is required' })
+		.min(1, { message: 'Current password is required' })
+		.min(6, { message: 'Current password must be at least 6 characters long' })
+		.transform((value) => value.replaceAll(/\s+/g, '')),
+	new_password: z
+		.string({ error: 'New password is required' })
+		.min(6, { message: 'New password must be at least 6 characters long' })
+		.transform((value) => value.replaceAll(/\s+/g, '')),
+	confirm_password: z
+		.string({ error: 'Confirm password is required' })
+		.nonempty({ message: 'Confirm password is required' })
+		.transform((value) => value.replaceAll(/\s+/g, ''))
+});
+export const activatedTwoFactorSchema = z.object({
+	code: z
+		.string()
+		.min(6, 'Two factor authentication code must be at least 6 characters long')
+		.max(6, 'Two factor authentication code must be at most 6 characters long')
+		.nonempty('Two factor authentication code is required')
+});
 
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type LoginSchema = z.infer<typeof loginSchema>;
@@ -147,3 +182,6 @@ export type ForgotSchema = z.infer<typeof forgotSchema>;
 export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
 export type VerifyTwoFactorSchema = z.infer<typeof verifyTwoFactorSchema>;
 export type UpdateProfileSchema = z.infer<typeof updateProfileSchema>;
+export type UpdateTenantSchema = z.infer<typeof updateTenantSchema>;
+export type UpdatePasswordSchema = z.infer<typeof updatePasswordSchema>;
+export type ActivatedTwoFactorSchema = z.infer<typeof activatedTwoFactorSchema>;

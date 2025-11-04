@@ -63,7 +63,7 @@ func (r *quickReplyRepository) Create(ctx context.Context, autoReply *entity.Qui
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
 			case "chk_quick_replies_media_type":
-				return fmt.Errorf("quick reply with media type '%s' already exists for tenant '%s': %w", *autoReply.MediaType, autoReply.TenantID, err)
+				return fmt.Errorf("quick reply with media type '%s' already exists for tenant '%s': %w", autoReply.MediaType.String, autoReply.TenantID, err)
 			default:
 				return fmt.Errorf("failed to create quick reply: %w", err)
 			}
@@ -111,7 +111,7 @@ func (r *quickReplyRepository) Update(ctx context.Context, autoReply *entity.Qui
 			case "chk_quick_replies_tenant_id_shortcut":
 				return nil, fmt.Errorf("quick reply with shortcut '%s' already exists for tenant '%s': %w", autoReply.Shortcut, autoReply.TenantID, err)
 			case "chk_quick_replies_media_type":
-				return nil, fmt.Errorf("quick reply with media type '%s' already exists for tenant '%s': %w", *autoReply.MediaType, autoReply.TenantID, err)
+				return nil, fmt.Errorf("quick reply with media type '%s' already exists for tenant '%s': %w", autoReply.MediaType.String, autoReply.TenantID, err)
 			default:
 				return nil, fmt.Errorf("failed to create quick reply: %w", err)
 			}
