@@ -5,6 +5,7 @@ docker-compose.dev.yml
 Dockerfile.backend
 Dockerfile.client
 docker-compose.mini.yml
+docker-compose.yml
 .rsync-exclude
 .vscode/
 # Environment files
