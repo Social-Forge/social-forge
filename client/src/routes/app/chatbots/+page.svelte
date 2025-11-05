@@ -10,6 +10,7 @@
 <AppSidebarLayout page="Chatbot AI" user={data.user}>
 	<!-- Your HTML content here -->
 </AppSidebarLayout>
+f
 
 <style scoped>
 	/* Your styles here */
