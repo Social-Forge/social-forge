@@ -4,7 +4,9 @@ type ParamValue = string | number | bigint | boolean
 
 export type ScannedRoutes = {
   ALL: {
+    'prometheus.metrics': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'health': { paramsTuple?: []; params?: {} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
@@ -20,7 +22,9 @@ export type ScannedRoutes = {
     'app.chats.index': { paramsTuple?: []; params?: {} }
   }
   GET: {
+    'prometheus.metrics': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'health': { paramsTuple?: []; params?: {} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'password.forgot': { paramsTuple?: []; params?: {} }
@@ -30,7 +34,9 @@ export type ScannedRoutes = {
     'app.chats.index': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
+    'prometheus.metrics': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'health': { paramsTuple?: []; params?: {} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'password.forgot': { paramsTuple?: []; params?: {} }

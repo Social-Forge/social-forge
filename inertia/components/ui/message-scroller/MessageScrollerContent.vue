@@ -9,12 +9,8 @@ const props = defineProps<{
   spacerClass?: HTMLAttributes['class']
 }>()
 
-const {
-  handleContentChange,
-  handleResize,
-  setContentElement,
-  setSpacerElement,
-} = useMessageScrollerContext()
+const { handleContentChange, handleResize, setContentElement, setSpacerElement } =
+  useMessageScrollerContext()
 
 const contentRef = useTemplateRef<HTMLElement>('content')
 const spacerRef = useTemplateRef<HTMLElement>('spacer')
@@ -25,8 +21,7 @@ let resizeFrame = 0
 
 onMounted(() => {
   const content = contentRef.value
-  if (!content)
-    return
+  if (!content) return
 
   setContentElement(content)
   setSpacerElement(spacerRef.value ?? null)

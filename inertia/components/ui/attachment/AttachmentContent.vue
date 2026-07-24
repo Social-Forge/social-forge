@@ -10,10 +10,12 @@ const props = defineProps<{
 <template>
   <div
     data-slot="attachment-content"
-    :class="cn(
-      'leading-tight group-data-[orientation=vertical]/attachment:px-1 max-w-full min-w-0 flex-1',
-      props.class,
-    )"
+    :class="
+      cn(
+        'leading-tight group-data-[orientation=vertical]/attachment:px-1 max-w-full min-w-0 flex-1',
+        props.class
+      )
+    "
     v-bind="props"
   >
     <slot />

@@ -31,11 +31,13 @@ const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
       '--gray5': 'var(--border)',
       '--gray12': 'var(--popover-foreground)',
     }"
-    :toast-options="props.toastOptions ?? {
-      classes: {
-        toast: 'rounded-2xl',
-      },
-    }"
+    :toast-options="
+      props.toastOptions ?? {
+        classes: {
+          toast: 'rounded-2xl',
+        },
+      }
+    "
     v-bind="delegatedProps"
   >
     <template #success-icon>

@@ -10,10 +10,12 @@ const props = defineProps<{
 <template>
   <div
     data-slot="field-label"
-    :class="cn(
-      'gap-2 text-sm font-medium group-data-[disabled=true]/field:opacity-50 flex w-fit items-center leading-snug',
-      props.class,
-    )"
+    :class="
+      cn(
+        'gap-2 text-sm font-medium group-data-[disabled=true]/field:opacity-50 flex w-fit items-center leading-snug',
+        props.class
+      )
+    "
   >
     <slot />
   </div>

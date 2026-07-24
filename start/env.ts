@@ -49,14 +49,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   REDIS_PORT: Env.schema.number(),
   REDIS_PASSWORD: Env.schema.string.optional(),
 
-  // mongodb
-  MONGODB_HOST_PORT: Env.schema.string(),
-  MONGO_INITDB_ROOT_USERNAME: Env.schema.string(),
-  MONGO_INITDB_ROOT_PASSWORD: Env.schema.string.optional(),
-  MONGO_INITDB_DATABASE: Env.schema.string(),
-
   // RabbitMQ
-  HEALTHCHECK_ENQUEUE_ENABLED: Env.schema.boolean.optional(),
   RABBITMQ_URL: Env.schema.string.optional(),
   RABBITMQ_HOST: Env.schema.string.optional(),
   RABBITMQ_PORT: Env.schema.number.optional(),
@@ -73,10 +66,17 @@ export default await Env.create(new URL('../', import.meta.url), {
   MINIO_SERVER_URL: Env.schema.string(),
 
   // Centrifugo
+  CENTRIFUGO_URL: Env.schema.string.optional(),
   CENTRIFUGO_TOKEN_SECRET: Env.schema.string(),
   CENTRIFUGO_API_KEY: Env.schema.string(),
   CENTRIFUGO_ADMIN_PASSWORD: Env.schema.string(),
   CENTRIFUGO_ADMIN_SECRET: Env.schema.string(),
+
+  // Typesense (search)
+  TYPESENSE_API_KEY: Env.schema.string.optional(),
+  TYPESENSE_HOST: Env.schema.string.optional(),
+  TYPESENSE_PORT: Env.schema.number.optional(),
+  TYPESENSE_PROTOCOL: Env.schema.enum.optional(['http', 'https'] as const),
 
   // Other
   ENABLE_REGISTRATION: Env.schema.boolean.optional(),

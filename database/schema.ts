@@ -7,14 +7,31 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
+export class RoleSchema extends BaseModel {
+  static $columns = ['createdAt', 'description', 'id', 'level', 'name', 'updatedAt'] as const
+  $columns = RoleSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare level: number | null
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class UserSchema extends BaseModel {
   static $columns = [
     'createdAt',
     'email',
+    'emailVerifiedAt',
     'fullName',
     'id',
     'isActive',
-    'emailVerifiedAt',
     'lastLoginAt',
     'password',
     'updatedAt',
@@ -24,6 +41,8 @@ export class UserSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare email: string
+  @column.dateTime()
+  declare emailVerifiedAt: DateTime | null
   @column()
   declare fullName: string | null
   @column({ isPrimary: true })
@@ -32,8 +51,6 @@ export class UserSchema extends BaseModel {
   declare isActive: boolean | null
   @column.dateTime()
   declare lastLoginAt: DateTime | null
-  @column.dateTime()
-  declare emailVerifiedAt: DateTime | null
   @column({ serializeAs: null })
   declare password: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })

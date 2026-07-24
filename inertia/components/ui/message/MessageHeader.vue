@@ -1,4 +1,4 @@
-<script lang='ts' setup>
+<script lang="ts" setup>
 import type { PrimitiveProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
 import { Primitive } from 'reka-ui'
@@ -17,10 +17,12 @@ const props = withDefaults(defineProps<Props>(), {
     data-slot="message-header"
     :as="as"
     :as-child="asChild"
-    :class="cn(
-      'text-xs font-medium text-muted-foreground px-3 group-has-data-[variant=ghost]/message:px-0 flex max-w-full min-w-0 items-center',
-      props.class,
-    )"
+    :class="
+      cn(
+        'text-xs font-medium text-muted-foreground px-3 group-has-data-[variant=ghost]/message:px-0 flex max-w-full min-w-0 items-center',
+        props.class
+      )
+    "
   >
     <slot />
   </Primitive>

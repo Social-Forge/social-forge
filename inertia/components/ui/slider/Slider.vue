@@ -18,10 +18,12 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     v-slot="{ modelValue }"
     data-slot="slider"
     :data-vertical="props.orientation === 'vertical' ? '' : undefined"
-    :class="cn(
-      'data-vertical:min-h-40 relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
-      props.class,
-    )"
+    :class="
+      cn(
+        'data-vertical:min-h-40 relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
+        props.class
+      )
+    "
     v-bind="forwarded"
   >
     <SliderTrack

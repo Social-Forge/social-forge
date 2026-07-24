@@ -31,7 +31,7 @@ export const itemVariants = cva(
       variant: 'default',
       size: 'default',
     },
-  },
+  }
 )
 
 export const itemMediaVariants = cva(
@@ -41,13 +41,14 @@ export const itemMediaVariants = cva(
       variant: {
         default: 'bg-transparent',
         icon: '[&_svg:not([class*=size-])]:size-4',
-        image: 'size-10 overflow-hidden rounded-sm group-data-[size=sm]/item:size-8 group-data-[size=xs]/item:size-6 [&_img]:size-full [&_img]:object-cover',
+        image:
+          'size-10 overflow-hidden rounded-sm group-data-[size=sm]/item:size-8 group-data-[size=xs]/item:size-6 [&_img]:size-full [&_img]:object-cover',
       },
     },
     defaultVariants: {
       variant: 'default',
     },
-  },
+  }
 )
 
 export type ItemVariants = VariantProps<typeof itemVariants>

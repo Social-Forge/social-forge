@@ -8,15 +8,17 @@ import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 
 const props = withDefaults(
-  defineProps<AlertDialogCancelProps & {
-    class?: HTMLAttributes['class']
-    variant?: ButtonVariants['variant']
-    size?: ButtonVariants['size']
-  }>(),
+  defineProps<
+    AlertDialogCancelProps & {
+      class?: HTMLAttributes['class']
+      variant?: ButtonVariants['variant']
+      size?: ButtonVariants['size']
+    }
+  >(),
   {
     variant: 'outline',
     size: 'default',
-  },
+  }
 )
 
 const delegatedProps = reactiveOmit(props, 'class', 'variant', 'size')
@@ -26,11 +28,7 @@ const delegatedProps = reactiveOmit(props, 'class', 'variant', 'size')
   <AlertDialogCancel
     data-slot="alert-dialog-cancel"
     v-bind="delegatedProps"
-    :class="cn(
-      '',
-      buttonVariants({ variant, size }),
-      props.class,
-    )"
+    :class="cn('', buttonVariants({ variant, size }), props.class)"
   >
     <slot />
   </AlertDialogCancel>

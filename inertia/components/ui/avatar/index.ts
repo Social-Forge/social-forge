@@ -21,7 +21,7 @@ export const avatarVariants = cva(
     defaultVariants: {
       size: 'default',
     },
-  },
+  }
 )
 
 export type AvatarVariants = VariantProps<typeof avatarVariants>

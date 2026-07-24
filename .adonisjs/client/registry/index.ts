@@ -6,11 +6,23 @@ import type { ApiDefinition } from './tree.d.ts'
 const placeholder: any = {}
 
 const routes = {
+  'prometheus.metrics': {
+    methods: ["GET","HEAD"],
+    pattern: '/metrics',
+    tokens: [{"old":"/metrics","type":0,"val":"metrics","end":""}],
+    types: placeholder as Registry['prometheus.metrics']['types'],
+  },
   'home': {
     methods: ["GET","HEAD"],
     pattern: '/',
     tokens: [{"old":"/","type":0,"val":"/","end":""}],
     types: placeholder as Registry['home']['types'],
+  },
+  'health': {
+    methods: ["GET","HEAD"],
+    pattern: '/health',
+    tokens: [{"old":"/health","type":0,"val":"health","end":""}],
+    types: placeholder as Registry['health']['types'],
   },
   'new_account.create': {
     methods: ["GET","HEAD"],

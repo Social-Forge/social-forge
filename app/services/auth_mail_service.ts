@@ -26,7 +26,7 @@ export async function sendVerificationEmail(user: User, origin: string) {
       .to(user.email)
       .subject('Verify your email address')
       .html(
-        `<h1>Verify your email</h1><p>Confirm your Residential Proxy account by clicking the link below.</p><p><a href="${url}">Verify email address</a></p><p>This link expires in 24 hours.</p>`
+        `<h1>Verify your email</h1><p>Confirm your Social Forge account by clicking the link below.</p><p><a href="${url}">Verify email address</a></p><p>This link expires in 24 hours.</p>`
       )
   })
 }

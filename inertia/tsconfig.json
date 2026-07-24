@@ -4,6 +4,11 @@
     "jsx": "preserve",
     "module": "ESNext",
     "jsxImportSource": "vue",
+    // vue-tsc's noUnusedLocals miscounts string template refs (`ref="fooRef"`)
+    // as unused, causing false positives in vendored shadcn-vue components.
+    // ESLint enforces unused-vars for .vue files template-aware instead.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "~/*": ["./*"],
       "@generated/*": ["../.adonisjs/client/*"],

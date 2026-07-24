@@ -24,4 +24,8 @@ yarn-error.log
 
 # Platform specific
 .DS_Store
+
+# Scratch notes stay local; keep the architecture/roadmap docs tracked
 docs/*
+!docs/ARCHITECTURE.md
+!docs/ROADMAP.md

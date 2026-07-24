@@ -8,10 +8,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div
-    data-slot="popover-title"
-    :class="cn('font-medium cn-font-heading', props.class)"
-  >
+  <div data-slot="popover-title" :class="cn('font-medium cn-font-heading', props.class)">
     <slot />
   </div>
 </template>

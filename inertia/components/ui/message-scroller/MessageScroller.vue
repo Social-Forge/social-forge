@@ -15,10 +15,12 @@ const { autoscrolling, scrollableAttr } = useMessageScrollerContext()
     data-slot="message-scroller"
     :data-scrollable="scrollableAttr"
     :data-autoscrolling="autoscrolling ? '' : undefined"
-    :class="cn(
-      'group/message-scroller relative flex size-full min-h-0 flex-col overflow-hidden',
-      props.class,
-    )"
+    :class="
+      cn(
+        'group/message-scroller relative flex size-full min-h-0 flex-col overflow-hidden',
+        props.class
+      )
+    "
   >
     <slot />
   </div>

@@ -9,9 +9,7 @@
   "redis_address": "socialforge-redis:6379",
   "redis_password": "167562ceff8737db3628b02ada5c7b9c",
   "redis_db": 0,
-  "allowed_origins": [
-    "null"
-  ],
+  "allowed_origins": ["null"],
   "namespaces": [
     {
       "name": "chat",

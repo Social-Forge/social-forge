@@ -1,0 +1,17 @@
+# Normalize line endings to LF on commit for all text files, matching
+# .editorconfig (end_of_line = lf). Prevents CRLF/LF churn between Windows
+# dev machines and the Linux CI runner.
+* text=auto eol=lf
+
+# Binary assets — never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary

@@ -17,9 +17,10 @@ volumes:
   redis-data:
   rabbitmq-data:
   minio-data:
-  # prometheus-data:
-  # grafana-data:
-  # loki-data:
+  typesense-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
 
 services:
   postgres:
@@ -139,7 +140,7 @@ services:
     <<: [*restart, *logging]
     environment:
       WAHA_WORKER_ID: waha-worker-1
-      WHATSAPP_SESSIONS_POSTGRESQL_URL: ${WHATSAPP_SESSIONS_POSTGRESQL_URL:-postgresql://postgres:socialforge@localhost:5432/social_forge}
+      WHATSAPP_SESSIONS_POSTGRESQL_URL: ${WHATSAPP_SESSIONS_POSTGRESQL_URL:?set WHATSAPP_SESSIONS_POSTGRESQL_URL in .env}
       WAHA_MEDIA_STORAGE: S3
       WAHA_S3_REGION: ${MINIO_REGION:-eu-west-1}
       WAHA_S3_BUCKET: ${MINIO_BUCKET:-waha}
@@ -163,7 +164,7 @@ services:
     <<: [*restart, *logging]
     environment:
       WAHA_WORKER_ID: waha-worker-2
-      WHATSAPP_SESSIONS_POSTGRESQL_URL: ${WHATSAPP_SESSIONS_POSTGRESQL_URL:-postgresql://postgres:socialforge@localhost:5432/social_forge}
+      WHATSAPP_SESSIONS_POSTGRESQL_URL: ${WHATSAPP_SESSIONS_POSTGRESQL_URL:?set WHATSAPP_SESSIONS_POSTGRESQL_URL in .env}
       WAHA_MEDIA_STORAGE: S3
       WAHA_S3_REGION: ${MINIO_REGION:-eu-west-1}
       WAHA_S3_BUCKET: ${MINIO_BUCKET:-waha}
@@ -188,7 +189,7 @@ services:
     environment:
       WAHA_WORKER_ID: waha-worker-3
       GODEBUG: 'netdns=go'
-      WHATSAPP_SESSIONS_POSTGRESQL_URL: ${WHATSAPP_SESSIONS_POSTGRESQL_URL:-postgresql://postgres:socialforge@localhost:5432/social_forge}
+      WHATSAPP_SESSIONS_POSTGRESQL_URL: ${WHATSAPP_SESSIONS_POSTGRESQL_URL:?set WHATSAPP_SESSIONS_POSTGRESQL_URL in .env}
       WAHA_GOWS_DEVICE_REQUIRE_FULL_SYNC: ${WAHA_GOWS_DEVICE_REQUIRE_FULL_SYNC:-false}
       WAHA_GOWS_DEVICE_HISTORY_SYNC_FULL_SYNC_DAYS_LIMIT: ${WAHA_GOWS_DEVICE_HISTORY_SYNC_FULL_SYNC_DAYS_LIMIT:-365}
       WAHA_GOWS_DEVICE_HISTORY_SYNC_RECENT_SYNC_DAYS_LIMIT: ${WAHA_GOWS_DEVICE_HISTORY_SYNC_RECENT_SYNC_DAYS_LIMIT:-30}
@@ -218,26 +219,128 @@ services:
       minio:
         condition: service_started
 
-  # rabbitmq:
-  #   image: rabbitmq:3.13-management-alpine
-  #   container_name: socialforge-rabbitmq
-  #   <<: [*restart, *logging]
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-user}
-  #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in .env}
-  #     RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/social_forge}
-  #   ports:
-  #     # For prduction ubuntu docker server
-  #     # - "127.0.0.1:${RABBITMQ_HOST_PORT:-5672}:5672"
-  #     # - "127.0.0.1:${RABBITMQ_MGMT_HOST_PORT:-15672}:15672"
-  #     # For development localhost docker desktop
-  #     - '${RABBITMQ_HOST_PORT:-5672}:5672'
-  #     - '${RABBITMQ_MGMT_HOST_PORT:-15672}:15672'
-  #   volumes:
-  #     - rabbitmq-data:/var/lib/rabbitmq
-  #   networks: [social-forge]
-  #   healthcheck:
-  #     test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
-  #     interval: 15s
-  #     timeout: 10s
-  #     retries: 10
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: socialforge-rabbitmq
+    <<: [*restart, *logging]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-forge}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in .env}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-social_forge}
+    ports:
+      # AMQP + management UI, bound to localhost (SSH-tunnel for remote access)
+      - '127.0.0.1:${RABBITMQ_PORT:-5672}:5672'
+      - '127.0.0.1:${RABBITMQ_MGMT_PORT:-15672}:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infra/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    networks: [social-forge]
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  typesense:
+    image: typesense/typesense:27.1
+    container_name: socialforge-typesense
+    <<: [*restart, *logging]
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:?set TYPESENSE_API_KEY in .env}
+      TYPESENSE_DATA_DIR: /data
+      TYPESENSE_ENABLE_CORS: 'true'
+    ports:
+      - '127.0.0.1:${TYPESENSE_PORT:-8108}:8108'
+    volumes:
+      - typesense-data:/data
+    networks: [social-forge]
+    healthcheck:
+      # The Typesense image ships bash but no curl/wget — use a bash TCP probe.
+      test: ['CMD', 'bash', '-c', 'exec 3<>/dev/tcp/127.0.0.1/8108']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ============================================================
+  # MONITORING STACK — opt-in: `docker compose --profile monitoring up -d`
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: socialforge-prometheus
+    profiles: [monitoring]
+    <<: [*restart, *logging]
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    ports:
+      - '127.0.0.1:9090:9090'
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks: [social-forge]
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: socialforge-loki
+    profiles: [monitoring]
+    <<: [*restart, *logging]
+    command: ['-config.file=/etc/loki/loki.yml']
+    ports:
+      - '127.0.0.1:3100:3100'
+    volumes:
+      - ./infra/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    networks: [social-forge]
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: socialforge-promtail
+    profiles: [monitoring]
+    <<: [*restart, *logging]
+    command: ['-config.file=/etc/promtail/promtail.yml']
+    volumes:
+      - ./infra/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log:/var/log:ro
+    networks: [social-forge]
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: socialforge-grafana
+    profiles: [monitoring]
+    <<: [*restart, *logging]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3003}
+    ports:
+      - '127.0.0.1:${GRAFANA_HOST_PORT:-3003}:3000'
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks: [social-forge]
+    depends_on:
+      - prometheus
+      - loki

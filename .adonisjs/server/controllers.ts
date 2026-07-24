@@ -8,6 +8,7 @@ export const controllers = {
     Chats: () => import('#controllers/app/chats_controller'),
   },
   Auth: () => import('#controllers/auth_controller'),
+  Health: () => import('#controllers/health_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
   Session: () => import('#controllers/session_controller'),
 }

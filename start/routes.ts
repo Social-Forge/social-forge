@@ -14,6 +14,9 @@ import { authThrottle } from '#start/limiter'
 
 router.on('/').renderInertia('home', {}).as('home')
 
+const HealthController = () => import('#controllers/health_controller')
+router.get('/health', [HealthController, 'index']).as('health')
+
 router
   .group(() => {
     router.get('signup', [controllers.NewAccount, 'create'])

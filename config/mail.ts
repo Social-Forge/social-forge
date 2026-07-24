@@ -8,7 +8,7 @@ const mailConfig = defineConfig({
   default: 'smtp',
   from: {
     address: env.get('SMTP_FROM_EMAIL', 'noreply@localhost'),
-    name: env.get('SMTP_FROM_NAME', 'Residential Proxy'),
+    name: env.get('SMTP_FROM_NAME', 'Social Forge'),
   },
   mailers: {
     smtp: transports.smtp({

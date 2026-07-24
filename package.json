@@ -73,6 +73,7 @@
     "edge.js": "^6.5.1",
     "embla-carousel-vue": "^8.6.0",
     "luxon": "^3.7.2",
+    "pg": "^8.22.0",
     "radix-vue": "^1.9.17",
     "reflect-metadata": "^0.2.2",
     "reka-ui": "^2.10.1",
