@@ -1,0 +1,8 @@
+allowBuilds:
+  '@swc/core': true
+  better-sqlite3: true
+  esbuild: true
+  maplibre-gl: true
+  vue-demi: true
+onlyBuiltDependencies:
+  - better-sqlite3

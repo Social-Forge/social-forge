@@ -1,0 +1,88 @@
+# ============================================================
+# Traefik — Dynamic Middleware Configuration
+# ============================================================
+
+http:
+  middlewares:
+
+    # Rate limiting — default untuk semua route
+    rate-limit-default:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # Rate limiting ketat — untuk endpoint sensitif
+    rate-limit-strict:
+      rateLimit:
+        average: 10
+        burst: 5
+        period: 1m
+
+    # Security headers
+    secure-headers:
+      headers:
+        accessControlAllowMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+        accessControlMaxAge: 100
+        hostsProxyHeaders:
+        - "X-Forwarded-Host"
+        sslRedirect: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        customFrameOptionsValue: SAMEORIGIN
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+
+    # CORS untuk API internal
+    cors-api:
+      headers:
+        accessControlAllowOriginList:
+        - "*"
+        accessControlAllowHeaders:
+        - "Content-Type"
+        - "Authorization"
+        - "X-Api-Key"
+        - "X-Session-Id"
+        accessControlAllowMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+
+    # Strip prefix untuk Go services
+    strip-engine-prefix:
+      stripPrefix:
+        prefixes:
+        - "/engine"
+
+    strip-scraper-prefix:
+      stripPrefix:
+        prefixes:
+        - "/scraper"
+
+    strip-checker-prefix:
+      stripPrefix:
+        prefixes:
+        - "/checker"
+
+    # Compress response
+    gzip:
+      compress:
+        minResponseBodyBytes: 1024
+        excludedContentTypes:
+        - "text/event-stream" # SSE jangan dicompress
