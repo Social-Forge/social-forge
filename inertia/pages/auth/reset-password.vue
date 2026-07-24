@@ -22,7 +22,11 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <Head title="Reset password" robot="noindex, nofollow" />
+  <MetaHead
+    title="Reset password"
+    description="Enter your new password below and start connecting."
+    robot="noindex, nofollow"
+  />
   <Auth
     type="reset"
     title="Reset password"

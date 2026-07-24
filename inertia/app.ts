@@ -7,6 +7,7 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import { TuyauProvider } from '@adonisjs/inertia/vue'
 import { createApp, type DefineComponent, h } from 'vue'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+// import { router } from '@inertiajs/vue3'
 import Vue3Toastify, { type ToastContainerOptions } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
@@ -40,3 +41,11 @@ createInertiaApp({
     color: '#007a55',
   },
 })
+// router.on('navigate', (event) => {
+//   if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+//     ;(window as any).gtag('config', 'G-XXXXXXXXXX', {
+//       page_title: document.title,
+//       page_path: event.detail.page.url,
+//     })
+//   }
+// })

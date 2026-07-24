@@ -24,9 +24,13 @@ export default function render(page: any) {
       )
     },
     setup: ({ App, props, plugin }) => {
-      return createSSRApp({
+      const app = createSSRApp({
         render: () => h(TuyauProvider, { client }, { default: () => h(App, props) }),
       })
+
+      const isBrowser = typeof window !== 'undefined'
+
+      return app
         .use(plugin)
         .use(createPinia())
         .use(Vue3Toastify, {
@@ -36,6 +40,7 @@ export default function render(page: any) {
           position: 'top-right',
           newestOnTop: true,
           multiple: true,
+          disabled: !isBrowser,
         } as ToastContainerOptions)
     },
   })

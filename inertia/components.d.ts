@@ -249,6 +249,7 @@ declare module 'vue' {
     MessageScrollerItem: typeof import('./components/ui/message-scroller/MessageScrollerItem.vue')['default']
     MessageScrollerProvider: typeof import('./components/ui/message-scroller/MessageScrollerProvider.vue')['default']
     MessageScrollerViewport: typeof import('./components/ui/message-scroller/MessageScrollerViewport.vue')['default']
+    MetaHead: typeof import('./components/MetaHead.vue')['default']
     NativeSelect: typeof import('./components/ui/native-select/NativeSelect.vue')['default']
     NativeSelectOptGroup: typeof import('./components/ui/native-select/NativeSelectOptGroup.vue')['default']
     NativeSelectOption: typeof import('./components/ui/native-select/NativeSelectOption.vue')['default']

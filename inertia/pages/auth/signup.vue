@@ -20,7 +20,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <Head title="Signup" robot="index, follow" />
+  <MetaHead title="Signup" description="Enter your details below and start connecting." />
   <Auth type="signup" title="Signup" description="Enter your details below and start connecting.">
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing, errors }" route="new_account.store">

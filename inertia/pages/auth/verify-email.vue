@@ -17,7 +17,11 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <Head title="Verify email" robot="noindex, nofollow" />
+  <MetaHead
+    title="Verify email"
+    description="We sent you a verification link. Open it to activate your account. The link expires in 24 hours."
+    robot="noindex, nofollow"
+  />
   <Auth
     type="verify"
     title="Verify email"

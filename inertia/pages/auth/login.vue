@@ -19,7 +19,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <Head title="Login" robot="index, follow" />
+  <MetaHead title="Login" description="Enter your account and start connecting." />
   <Auth type="login" title="Login" description="Enter your account and start connecting.">
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing, errors }" route="session.store">

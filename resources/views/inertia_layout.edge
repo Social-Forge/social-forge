@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html>
   <head>
-     <meta charset="utf-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
-     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/favicon-96x96.png" type="image/png" sizes="96x96" />
     <link rel="icon" href="/android-chrome-192x192.png" type="image/png" sizes="192x192" />
     <link rel="icon" href="/android-chrome-512x512.png" type="image/png" sizes="512x512" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <title inertia>
-      Social Forge
-    </title>
+    {{--  <script async src="https://googletagmanager.com"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // Google Analytics initialization
+      gtag('config', 'G-XXXXXXXXXX', {
+        // Turn off the default auto-pageview, already using Inertia (SPA)
+        send_page_view: false
+      });
+    </script>  --}}
 
     @vite(['inertia/app.ts'])
     @inertiaHead()
     @stack('dumper')
+
   </head>
 
   <body>

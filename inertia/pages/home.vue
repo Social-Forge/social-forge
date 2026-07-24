@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/vue3'
 </script>
 
 <template>
-  <Head title="Homepage" />
+  <MetaHead />
 
   <div class="hero">
     <h1>It works — welcome to the power of a full-stack Vue app</h1>

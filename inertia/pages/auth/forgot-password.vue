@@ -18,7 +18,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <Head title="Forgot Password" robot="index, follow" />
+  <MetaHead title="Forgot Password" description="Enter your password." />
   <Auth
     type="forgot"
     title="Forgot Password"
