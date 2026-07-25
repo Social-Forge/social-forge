@@ -5,6 +5,11 @@ export interface ApiDefinition {
   prometheus: {
     metrics: typeof routes['prometheus.metrics']
   }
+  drive: {
+    fs: {
+      serve: typeof routes['drive.fs.serve']
+    }
+  }
   home: typeof routes['home']
   health: typeof routes['health']
   webhooks: {

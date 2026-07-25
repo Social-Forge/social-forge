@@ -129,19 +129,28 @@
 
 ---
 
-## Fase 5 — AI Layer
+## Fase 5 — AI Layer ✅ SELESAI (inti auto-reply, 2026-07-25)
 
 **Tujuan:** auto-reply cerdas + webchat bot, dengan metering.
 
-- [ ] `packages/ai`: interface `AiProvider` + adapter Claude & OpenAI.
-- [ ] `ai_agents`, `ai_knowledge`, `ai_credit_ledger`, entitlement credits.
-- [ ] **ai-agent worker**: auto-reply dalam konteks percakapan + working hours.
-- [ ] Token→credit normalization + debit ledger + cek saldo.
-- [ ] Webchat widget (floating bubble) + embed script generator.
-- [ ] Webchat bot RAG (embedding knowledge base) + handoff ke agent manusia.
-- [ ] Suggest-reply untuk agent (opsional).
+- [x] Interface `AiProvider` + adapter **Claude** (Anthropic SDK, default `claude-opus-4-8`, tanpa `temperature`/thinking) & **OpenAI** (Chat Completions + embeddings). Registry lazy per-provider (`isConfigured`). _Adapter di-mirror app-local (`app/services/ai`), bukan resolve `@socialforge/ai` runtime — pola sama `messaging/constants`._
+- [x] `ai_agents` (provider, model, system_prompt, temperature, max_tokens, working_hours jsonb, auto_reply_enabled, is_active) + `ai_credit_ledger` (audit) + `tenants.ai_credits` (saldo) + `channels.ai_agent_id` + RLS. **Entitlement credits** per-plan (free 200 / pro 10000) di-grant saat provisioning.
+- [x] **ai-agent worker** (`worker:ai`, exchange `sf.ai` → queue `ai.reply`): auto-reply dalam konteks percakapan (window 12 pesan) + **working hours** (timezone-aware, silent/reply di luar jam) + handoff (stand-down bila conversation sudah di-assign manusia).
+- [x] **Token→credit normalization** (biaya USD × 1000, catalog pricing per-model, epsilon guard FP) + debit ledger atomik (row-lock `tenants`) + cek saldo sebelum generate.
+- [x] Management: CRUD AI agents (Owner, policy + validator), assign agent→channel (`PUT channels/:id`), endpoint saldo+ledger (`GET ai/credits`), katalog model (`GET ai/models`).
+- [ ] Webchat widget (floating bubble) + embed script generator — **ditunda ke Fase 5.5**.
+- [ ] Webchat bot RAG (embedding knowledge base) + handoff ke agent manusia — **ditunda ke Fase 5.5** (adapter OpenAI `embed()` sudah siap).
+- [ ] Suggest-reply untuk agent (opsional) — **ditunda** (adapter `stream()` sudah siap).
 
-**Exit criteria:** AI membalas pelanggan otomatis, credit terpotong akurat, webchat embeddable di website eksternal.
+**Exit criteria (inti):** ✅ AI membalas pelanggan otomatis pada channel dengan agent aktif; ✅ credit ternormalisasi lintas-provider & terpotong akurat via ledger; ✅ CI hijau (lint 0 · typecheck 0 · **47 test passed**, termasuk credit normalization, working-hours gate, & AI reply gating). Balasan riil butuh `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` dari user. Webchat embeddable + RAG dipindah ke **Fase 5.5**.
+
+> **Catatan implementasi:** `AiCreditLedger` butuh `static table = 'ai_credit_ledger'` (Lucid pluralize → `ai_credit_ledgers`), sama pola `message_outbox`. `creditsFor` pakai epsilon `-1e-9` sebelum `Math.ceil` agar noise floating-point (`0.03*1000 = 30.0000000004`) tidak over-charge 1 credit.
+
+### Fase 5.5 — Webchat & RAG (menyusul)
+
+- [ ] Channel type `webchat` + floating bubble widget + embed `<script>` generator (linkchat).
+- [ ] Knowledge base + embedding (OpenAI) + retrieval → jawaban ter-grounding.
+- [ ] Suggest-reply panel untuk agent (streaming).
 
 ---
 

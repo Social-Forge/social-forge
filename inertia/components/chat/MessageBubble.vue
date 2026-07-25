@@ -42,8 +42,10 @@ const statusIcon = computed(() => {
   <div :class="['flex', isOut ? 'justify-end' : 'justify-start']">
     <div
       :class="[
-        'relative max-w-[78%] rounded-lg px-2.5 py-1.5 text-sm shadow-sm',
-        isOut ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-card rounded-bl-sm border',
+        'relative max-w-[78%] rounded-lg px-2.5 py-1.5 text-sm shadow-md',
+        isOut
+          ? 'bg-primary text-primary-foreground rounded-br-sm'
+          : 'bg-background rounded-bl-sm border',
       ]"
     >
       <img
@@ -76,7 +78,7 @@ const statusIcon = computed(() => {
       </a>
 
       <!-- eslint-disable-next-line vue/no-v-html -- body is HTML-escaped in `linkified` -->
-      <p v-if="message.body" class="break-words whitespace-pre-wrap" v-html="linkified" />
+      <p v-if="message.body" class="wrap-break-word whitespace-pre-wrap" v-html="linkified" />
 
       <div
         :class="[

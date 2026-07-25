@@ -7,8 +7,96 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
+export class AiAgentSchema extends BaseModel {
+  static $columns = [
+    'autoReplyEnabled',
+    'createdAt',
+    'id',
+    'isActive',
+    'maxTokens',
+    'model',
+    'name',
+    'provider',
+    'systemPrompt',
+    'temperature',
+    'tenantId',
+    'updatedAt',
+    'workingHours',
+  ] as const
+  $columns = AiAgentSchema.$columns
+  @column()
+  declare autoReplyEnabled: boolean
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare isActive: boolean
+  @column()
+  declare maxTokens: number
+  @column()
+  declare model: string
+  @column()
+  declare name: string
+  @column()
+  declare provider: string
+  @column()
+  declare systemPrompt: string
+  @column()
+  declare temperature: number | null
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workingHours: any | null
+}
+
+export class AiCreditLedgerSchema extends BaseModel {
+  static $columns = [
+    'balanceAfter',
+    'conversationId',
+    'costUsd',
+    'createdAt',
+    'delta',
+    'id',
+    'inputTokens',
+    'messageId',
+    'model',
+    'outputTokens',
+    'reason',
+    'tenantId',
+  ] as const
+  $columns = AiCreditLedgerSchema.$columns
+  @column()
+  declare balanceAfter: number
+  @column()
+  declare conversationId: string | null
+  @column()
+  declare costUsd: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare delta: number
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare inputTokens: number | null
+  @column()
+  declare messageId: string | null
+  @column()
+  declare model: string | null
+  @column()
+  declare outputTokens: number | null
+  @column()
+  declare reason: string
+  @column()
+  declare tenantId: string
+}
+
 export class ChannelSchema extends BaseModel {
   static $columns = [
+    'aiAgentId',
     'createdAt',
     'credentials',
     'divisionId',
@@ -25,6 +113,8 @@ export class ChannelSchema extends BaseModel {
     'webhookSecret',
   ] as const
   $columns = ChannelSchema.$columns
+  @column()
+  declare aiAgentId: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -334,6 +424,7 @@ export class RoleSchema extends BaseModel {
 
 export class TenantSchema extends BaseModel {
   static $columns = [
+    'aiCredits',
     'createdAt',
     'id',
     'name',
@@ -345,6 +436,8 @@ export class TenantSchema extends BaseModel {
     'updatedAt',
   ] as const
   $columns = TenantSchema.$columns
+  @column()
+  declare aiCredits: number
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column({ isPrimary: true })

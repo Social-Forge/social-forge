@@ -11,5 +11,7 @@ watch(user, (value) => auth.setUser(value), { immediate: true })
 </script>
 
 <template>
-  <slot />
+  <div class="min-h-screen w-full">
+    <slot />
+  </div>
 </template>

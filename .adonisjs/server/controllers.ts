@@ -5,6 +5,7 @@
 
 export const controllers = {
   app: {
+    AiAgents: () => import('#controllers/app/ai_agents_controller'),
     Channels: () => import('#controllers/app/channels_controller'),
     Chats: () => import('#controllers/app/chats_controller'),
     Conversations: () => import('#controllers/app/conversations_controller'),

@@ -4,6 +4,7 @@ import string from '@adonisjs/core/helpers/string'
 import env from '#start/env'
 import Channel from '#models/channel'
 import Tenant from '#models/tenant'
+import AiAgent from '#models/ai_agent'
 import ChannelPolicy from '#policies/channel_policy'
 import EntitlementService, { ChannelLimitReachedException } from '#services/entitlement_service'
 import WahaSessionService from '#services/waha/waha_session_service'
@@ -56,6 +57,14 @@ export default class ChannelsController {
     const payload = await request.validateUsing(updateChannelValidator)
     if (payload.name !== undefined) channel.name = payload.name
     if (payload.divisionId !== undefined) channel.divisionId = payload.divisionId
+    if (payload.aiAgentId !== undefined) {
+      // Confirm the agent exists in this tenant (scoped find) before linking.
+      if (payload.aiAgentId) {
+        const agent = await AiAgent.find(payload.aiAgentId)
+        if (!agent) return response.badRequest({ message: 'AI agent not found.' })
+      }
+      channel.aiAgentId = payload.aiAgentId
+    }
     await channel.save()
     return response.ok(channel)
   }

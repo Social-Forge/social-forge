@@ -3,9 +3,23 @@ import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useChatStore } from '~/stores/chat'
 
+interface Emoji {
+  annotation?: string
+  emoji?: string
+  group?: number
+  hexcode: string
+  order?: number
+  shortcodes?: string[]
+  skins?: Emoji[]
+  tags?: string[]
+  unicode: string
+  version?: number
+}
+
 const chat = useChatStore()
 const text = ref('')
 const showEmoji = ref(false)
+const selectedEmoji = ref('')
 const emojis = [
   '😀',
   '😁',
@@ -43,19 +57,22 @@ function onKeydown(e: KeyboardEvent) {
     submit()
   }
 }
+
+const onEmojiClick = (emoji: Emoji) => {
+  const emojiChar = emoji.emoji || emoji.unicode
+  text.value += emojiChar
+}
 </script>
 
 <template>
-  <div class="bg-background border-t p-2">
-    <div v-if="showEmoji" class="bg-card mb-2 flex flex-wrap gap-1 rounded-lg border p-2">
-      <button
-        v-for="e in emojis"
-        :key="e"
-        class="text-xl transition hover:scale-125"
-        @click="text += e"
-      >
-        {{ e }}
-      </button>
+  <div class="bg-background border-t px-2 py-4">
+    <div v-if="showEmoji" class="bg-card mb-2 rounded-lg border p-2">
+      <div class="flex justify-end w-full">
+        <Button variant="outline" size="icon-xs" @click="showEmoji = false">
+          <Icon icon="lucide:x" />
+        </Button>
+      </div>
+      <EmojiPicker v-model="selectedEmoji" class="shrink-0" @select="onEmojiClick" />
     </div>
     <div class="flex items-end gap-1.5">
       <button

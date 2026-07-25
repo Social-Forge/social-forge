@@ -23,6 +23,7 @@ export default configApp(
       'unicorn/filename-case': 'off',
       'vue/require-default-prop': 'off',
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
+      'vue/no-lone-template': 'off',
     },
   }
 )

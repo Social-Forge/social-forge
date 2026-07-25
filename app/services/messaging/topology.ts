@@ -43,6 +43,7 @@ export const QUEUES = {
   inboundNormalize: 'inbound.normalize',
   outboundDispatch: 'outbound.dispatch',
   mediaMirror: 'media.mirror',
+  aiReply: 'ai.reply',
 } as const
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES]

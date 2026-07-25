@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { useChatStore, type ChatFilter } from '~/stores/chat'
+import { MessageCircleWarning, RefreshCcw } from '@lucide/vue'
 
-defineEmits<{ menu: [] }>()
+defineEmits<{
+  (e: 'menu'): void
+  (e: 'refresh'): Promise<void>
+}>()
 const chat = useChatStore()
 
 const filters: { key: ChatFilter; label: string }[] = [
@@ -59,12 +63,28 @@ const filters: { key: ChatFilter; label: string }[] = [
     </div>
 
     <div class="min-h-0 flex-1 divide-y overflow-y-auto">
-      <div v-if="chat.loadingList" class="text-muted-foreground p-6 text-center text-sm">
-        Loading conversations…
+      <div v-if="chat.loadingList" class="space-y-4">
+        <Spinner />
+        <div class="text-muted-foreground p-6 text-center text-sm">Loading conversations…</div>
       </div>
-      <div v-else-if="!chat.filtered.length" class="text-muted-foreground p-8 text-center text-sm">
-        No conversations found
-      </div>
+      <Empty
+        v-else-if="!chat.filtered.length"
+        class="from-muted/50 to-background h-full bg-linear-to-b from-30%"
+      >
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <MessageCircleWarning />
+          </EmptyMedia>
+          <EmptyTitle>No conversations found</EmptyTitle>
+          <EmptyDescription>You have no conversations yet </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button variant="outline" size="sm" @click="$emit('refresh')">
+            <RefreshCcw />
+            Refresh
+          </Button>
+        </EmptyContent>
+      </Empty>
       <ConversationItem
         v-for="c in chat.filtered"
         :key="c.id"

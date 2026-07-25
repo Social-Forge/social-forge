@@ -99,6 +99,12 @@ export default await Env.create(new URL('../', import.meta.url), {
   TYPESENSE_PORT: Env.schema.number.optional(),
   TYPESENSE_PROTOCOL: Env.schema.enum.optional(['http', 'https'] as const),
 
+  // AI providers (Phase 5) — bundled auto-reply / webchat bot
+  AI_DEFAULT_PROVIDER: Env.schema.enum.optional(['claude', 'openai'] as const),
+  AI_DEFAULT_MODEL: Env.schema.string.optional(),
+  ANTHROPIC_API_KEY: Env.schema.string.optional(),
+  OPENAI_API_KEY: Env.schema.string.optional(),
+
   // Other
   ENABLE_REGISTRATION: Env.schema.boolean.optional(),
   DEFAULT_ADMIN_EMAIL: Env.schema.string.optional(),
@@ -114,4 +120,11 @@ export default await Env.create(new URL('../', import.meta.url), {
   FACEBOOK_CLIENT_ID: Env.schema.string(),
   FACEBOOK_CLIENT_SECRET: Env.schema.string(),
   FACEBOOK_CALLBACK_URL: Env.schema.string.optional(),
+
+  // Drive Storage
+  DRIVE_DISK: Env.schema.enum(['fs', 's3'] as const),
+  AWS_ACCESS_KEY_ID: Env.schema.string(),
+  AWS_SECRET_ACCESS_KEY: Env.schema.string(),
+  AWS_REGION: Env.schema.string(),
+  S3_BUCKET: Env.schema.string(),
 })

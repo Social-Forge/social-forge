@@ -90,6 +90,17 @@ export default class MessageIngestService {
         channelId: channel.id,
       })
     }
+
+    // Hand off to the AI worker when this channel has a bot attached. The worker
+    // re-checks the agent (active / auto-reply / working hours / credits) so
+    // this stays a cheap "maybe" without an extra query on the hot path.
+    if (channel.aiAgentId) {
+      await rabbitmq.publish(EXCHANGES.ai, 'agent.reply', {
+        channelId: channel.id,
+        conversationId: conversation.id,
+        tenantId: channel.tenantId,
+      })
+    }
   }
 
   static async updateDeliveryStatus(

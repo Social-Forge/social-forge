@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { VisuallyHidden } from 'reka-ui'
 import { Icon } from '@iconify/vue'
 import { Link } from '@adonisjs/inertia/vue'
 import { usePage } from '@inertiajs/vue3'
@@ -49,7 +49,7 @@ onBeforeUnmount(() => rt.disconnect())
     <ChatNav class="hidden md:flex" />
 
     <div v-show="showList" class="h-full w-full shrink-0 md:w-90 md:border-r">
-      <ConversationList @menu="mobileNavOpen = true" />
+      <ConversationList @menu="mobileNavOpen = true" @refresh="chat.loadConversations" />
     </div>
 
     <div v-show="showRoom" class="h-full min-w-0 flex-1">
@@ -59,11 +59,15 @@ onBeforeUnmount(() => rt.disconnect())
 
     <Sheet v-model:open="mobileNavOpen">
       <SheetContent side="left" class="w-64 p-0">
+        <VisuallyHidden>
+          <SheetHeader>
+            <SheetTitle>Navigation Menu</SheetTitle>
+            <SheetDescription></SheetDescription>
+          </SheetHeader>
+        </VisuallyHidden>
         <div class="flex items-center gap-2 border-b p-4">
-          <div
-            class="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg font-bold"
-          >
-            SF
+          <div class="flex size-9 items-center justify-center rounded-lg">
+            <img src="/logo.png" alt="Social Forge" class="size-8" />
           </div>
           <span class="font-semibold">Social Forge</span>
         </div>
@@ -82,3 +86,16 @@ onBeforeUnmount(() => rt.disconnect())
     </Sheet>
   </div>
 </template>
+<style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>

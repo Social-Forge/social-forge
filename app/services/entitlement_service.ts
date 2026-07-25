@@ -26,6 +26,12 @@ const PLAN_CHANNEL_LIMITS: Record<string, ChannelLimits> = {
   },
 }
 
+/** Opening AI credit balance granted per plan on tenant provisioning. */
+const PLAN_AI_CREDITS: Record<string, number> = {
+  free: 200,
+  pro: 10000,
+}
+
 export class ChannelLimitReachedException extends Error {
   constructor(type: ChannelType, limit: number) {
     super(
@@ -38,6 +44,11 @@ export class ChannelLimitReachedException extends Error {
 export default class EntitlementService {
   static channelLimit(plan: string, type: ChannelType): number {
     return PLAN_CHANNEL_LIMITS[plan]?.[type] ?? 0
+  }
+
+  /** Opening AI credit balance for a plan (granted at tenant provisioning). */
+  static planAiCredits(plan: string): number {
+    return PLAN_AI_CREDITS[plan] ?? 0
   }
 
   /** Throws ChannelLimitReachedException when the tenant is at its limit. */

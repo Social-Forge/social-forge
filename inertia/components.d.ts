@@ -402,5 +402,7 @@ declare module 'vue' {
     TooltipContent: typeof import('./components/ui/tooltip/TooltipContent.vue')['default']
     TooltipProvider: typeof import('./components/ui/tooltip/TooltipProvider.vue')['default']
     TooltipTrigger: typeof import('./components/ui/tooltip/TooltipTrigger.vue')['default']
+    VisualHidden: typeof import('./components/VisualHidden.vue')['default']
+    VisuallyHidden: typeof import('./components/VisuallyHidden.vue')['default']
   }
 }

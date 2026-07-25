@@ -8,6 +8,7 @@ import Tenant from '#models/tenant'
 import Division from '#models/division'
 import Contact from '#models/contact'
 import Conversation from '#models/conversation'
+import AiAgent from '#models/ai_agent'
 
 export default class Channel extends compose(ChannelSchema, TenantScoped) {
   @belongsTo(() => Tenant)
@@ -15,6 +16,9 @@ export default class Channel extends compose(ChannelSchema, TenantScoped) {
 
   @belongsTo(() => Division)
   declare division: BelongsTo<typeof Division>
+
+  @belongsTo(() => AiAgent)
+  declare aiAgent: BelongsTo<typeof AiAgent>
 
   @hasMany(() => Contact)
   declare contacts: HasMany<typeof Contact>

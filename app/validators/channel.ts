@@ -12,6 +12,8 @@ export const createChannelValidator = vine.create({
 export const updateChannelValidator = vine.create({
   name: vine.string().trim().minLength(2).maxLength(80).optional(),
   divisionId: vine.string().uuid().nullable().optional(),
+  // AI agent that auto-replies on this channel (null = no bot).
+  aiAgentId: vine.string().uuid().nullable().optional(),
 })
 
 /**

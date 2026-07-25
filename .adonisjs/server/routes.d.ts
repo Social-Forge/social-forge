@@ -5,6 +5,7 @@ type ParamValue = string | number | bigint | boolean
 export type ScannedRoutes = {
   ALL: {
     'prometheus.metrics': { paramsTuple?: []; params?: {} }
+    'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'home': { paramsTuple?: []; params?: {} }
     'health': { paramsTuple?: []; params?: {} }
     'webhooks.waha': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
@@ -57,6 +58,7 @@ export type ScannedRoutes = {
   }
   GET: {
     'prometheus.metrics': { paramsTuple?: []; params?: {} }
+    'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'home': { paramsTuple?: []; params?: {} }
     'health': { paramsTuple?: []; params?: {} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
@@ -80,6 +82,7 @@ export type ScannedRoutes = {
   }
   HEAD: {
     'prometheus.metrics': { paramsTuple?: []; params?: {} }
+    'drive.fs.serve': { paramsTuple: [...ParamValue[]]; params: {'*': ParamValue[]} }
     'home': { paramsTuple?: []; params?: {} }
     'health': { paramsTuple?: []; params?: {} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }

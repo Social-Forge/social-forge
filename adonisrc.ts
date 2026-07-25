@@ -69,6 +69,7 @@ export default defineConfig({
     () => import('@adonisjs/redis/redis_provider'),
     () => import('@julr/adonisjs-prometheus/prometheus_provider'),
     () => import('@adonisjs/ally/ally_provider'),
+    () => import('@adonisjs/drive/drive_provider'),
   ],
 
   /*

@@ -17,10 +17,8 @@ function logout() {
 
 <template>
   <nav class="bg-sidebar flex h-full w-16 shrink-0 flex-col items-center gap-1 border-r py-3">
-    <div
-      class="bg-primary text-primary-foreground mb-2 flex size-9 items-center justify-center rounded-lg font-bold"
-    >
-      SF
+    <div class="mb-2 flex size-9 items-center justify-center rounded-lg">
+      <img src="/logo.png" alt="Social Forge" class="size-8" />
     </div>
     <Link
       v-for="item in chatNavItems"
@@ -34,14 +32,17 @@ function logout() {
           : 'text-muted-foreground hover:bg-muted',
       ]"
     >
-      <Icon :icon="item.icon" class="size-5" />
+      <Icon :icon="item.icon" class="size-4" />
     </Link>
-    <button
-      class="text-muted-foreground hover:bg-muted mt-auto flex size-11 items-center justify-center rounded-xl"
-      title="Logout"
-      @click="logout"
-    >
-      <Icon icon="lucide:log-out" class="size-5" />
-    </button>
+    <div class="mt-auto space-y-2">
+      <ThemeToggle />
+      <button
+        class="text-muted-foreground hover:bg-muted flex size-11 items-center justify-center rounded-xl"
+        title="Logout"
+        @click="logout"
+      >
+        <Icon icon="lucide:log-out" class="size-5" />
+      </button>
+    </div>
   </nav>
 </template>

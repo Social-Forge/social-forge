@@ -23,6 +23,7 @@ const ChannelsController = () => import('#controllers/app/channels_controller')
 const RealtimeController = () => import('#controllers/app/realtime_controller')
 const ConversationsController = () => import('#controllers/app/conversations_controller')
 const MessagesController = () => import('#controllers/app/messages_controller')
+const AiAgentsController = () => import('#controllers/app/ai_agents_controller')
 
 // Provider webhooks (public — verified by per-channel secret, not middleware).
 const WebhooksController = () => import('#controllers/webhooks_controller')
@@ -108,6 +109,15 @@ router
     router
       .post('channels/:id/disconnect', [ChannelsController, 'disconnect'])
       .as('app.channels.disconnect')
+
+    // AI agents + credits
+    router.get('ai/agents', [AiAgentsController, 'index']).as('app.ai.agents.index')
+    router.post('ai/agents', [AiAgentsController, 'store']).as('app.ai.agents.store')
+    router.get('ai/agents/:id', [AiAgentsController, 'show']).as('app.ai.agents.show')
+    router.put('ai/agents/:id', [AiAgentsController, 'update']).as('app.ai.agents.update')
+    router.delete('ai/agents/:id', [AiAgentsController, 'destroy']).as('app.ai.agents.destroy')
+    router.get('ai/models', [AiAgentsController, 'models']).as('app.ai.models')
+    router.get('ai/credits', [AiAgentsController, 'credits']).as('app.ai.credits')
 
     // Realtime (Centrifugo) tokens
     router.get('realtime/token', [RealtimeController, 'token']).as('app.realtime.token')

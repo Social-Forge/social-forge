@@ -79,4 +79,54 @@ export default class OutboundService {
 
     return message
   }
+
+  /**
+   * Enqueue an AI-authored reply. Same transactional-outbox + realtime path as
+   * `send()`, but the message is attributed to the bot (senderType 'ai', no
+   * user) so it renders distinctly and never blocks on a human sender.
+   */
+  static async sendAi(conversation: Conversation, body: string): Promise<Message> {
+    const tenantId = conversation.tenantId
+
+    const message = await db.transaction(async (trx) => {
+      const created = await Message.create(
+        {
+          tenantId,
+          conversationId: conversation.id,
+          direction: 'out',
+          senderType: 'ai',
+          senderId: null,
+          contentType: 'text',
+          body,
+          status: 'pending',
+        },
+        { client: trx }
+      )
+
+      await MessageOutbox.create(
+        { tenantId, messageId: created.id, status: 'pending' },
+        { client: trx }
+      )
+
+      conversation.useTransaction(trx)
+      conversation.lastMessageAt = DateTime.now()
+      await conversation.save()
+
+      return created
+    })
+
+    await rabbitmq.publish(
+      EXCHANGES.outbound,
+      'waha.send',
+      { messageId: message.id, tenantId },
+      { messageId: message.id }
+    )
+
+    await centrifugo.publish(centrifugo.conversationChannel(tenantId, conversation.id), {
+      type: 'message.new',
+      message: message.serialize(),
+    })
+
+    return message
+  }
 }

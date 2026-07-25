@@ -4,6 +4,7 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import Tenant from '#models/tenant'
 import User from '#models/user'
 import Role, { ROLES } from '#models/role'
+import EntitlementService from '#services/entitlement_service'
 
 const TRIAL_DAYS = 14
 
@@ -53,6 +54,7 @@ export default class TenantService {
           status: 'trial',
           plan: 'free',
           trialEndsAt: DateTime.now().plus({ days: TRIAL_DAYS }),
+          aiCredits: EntitlementService.planAiCredits('free'),
         },
         { client: trx }
       )
