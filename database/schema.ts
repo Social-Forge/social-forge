@@ -241,6 +241,19 @@ export class ConversationEventSchema extends BaseModel {
   declare type: string
 }
 
+export class ConversationLabelSchema extends BaseModel {
+  static $columns = ['conversationId', 'createdAt', 'id', 'labelId'] as const
+  $columns = ConversationLabelSchema.$columns
+  @column()
+  declare conversationId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare labelId: string
+}
+
 export class ConversationSchema extends BaseModel {
   static $columns = [
     'assignedAgentId',
@@ -305,6 +318,23 @@ export class DivisionSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare description: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class LabelSchema extends BaseModel {
+  static $columns = ['color', 'createdAt', 'id', 'name', 'tenantId', 'updatedAt'] as const
+  $columns = LabelSchema.$columns
+  @column()
+  declare color: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -436,6 +466,36 @@ export class OauthProviderSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare userId: string
+}
+
+export class QuickReplySchema extends BaseModel {
+  static $columns = [
+    'body',
+    'contentType',
+    'createdAt',
+    'id',
+    'media',
+    'shortcut',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = QuickReplySchema.$columns
+  @column()
+  declare body: string | null
+  @column()
+  declare contentType: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare media: any | null
+  @column()
+  declare shortcut: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
 }
 
 export class RoleSchema extends BaseModel {

@@ -4,6 +4,7 @@ import Message from '#models/message'
 import MessageOutbox from '#models/message_outbox'
 import rabbitmq from '#services/messaging/rabbitmq'
 import centrifugo from '#services/realtime/centrifugo_service'
+import SearchIndexer from '#services/search/search_indexer'
 import { EXCHANGES } from '#services/messaging/topology'
 import type Conversation from '#models/conversation'
 import type User from '#models/user'
@@ -76,6 +77,7 @@ export default class OutboundService {
       type: 'message.new',
       message: message.serialize(),
     })
+    await SearchIndexer.enqueue('upsert', 'message', message.id, user.tenantId!)
 
     return message
   }

@@ -161,19 +161,22 @@
 
 ---
 
-## Fase 6 — Search, Contacts & Quick Reply
+## Fase 6 — Search, Contacts & Quick Reply ✅ SELESAI (backend + picker, 2026-07-25)
 
 **Tujuan:** pencarian cepat & manajemen kontak/label.
 
-- [ ] Typesense collections (`messages`, `contacts`, `conversations`) + scoped keys per tenant.
-- [ ] **search-indexer worker** + command `search:reindex`.
-- [ ] Search UI (fuzzy, filter, highlight).
-- [ ] Contact management (Edit, Block, Delete, Export CSV) + merge manual (contact_links).
-- [ ] Label management (unik per tenant) + apply ke conversation.
-- [ ] Quick reply CRUD (text/image/video) + integrasi "/" picker.
-- [ ] Linkchat (slug + target + share page).
+- [x] **Typesense collections** (`messages`, `contacts`) via raw HTTP (`SearchService`, pola sama WAHA/Centrifugo — tanpa dep client) + **scoped search key** per tenant (HMAC, embed `filter_by tenant_id`). Best-effort: no-op/empty bila Typesense mati.
+- [x] **search-indexer worker** (`worker:search`, exchange `sf.search` → queue `search.index`) + command **`search:reindex`** (bulk backfill) + wiring index dari ingest pesan/kontak & outbound.
+- [x] **Search API** `GET /app/search?q=` → messages+contacts tenant-scoped + `_highlight`. _(Komponen UI search box ditunda ke Fase 8.)_
+- [x] **Contact management**: `index` (paginate + filter q/channel/blocked), `show`, `update` (nama + email/phone/notes di `attributes`), **block/unblock**, **delete**, **export CSV** — policy (view=agent, edit=supervisor, delete=owner). Merge/`contact_links` **ditunda**.
+- [x] **Labels** (unik per tenant) CRUD + attach/detach ke conversation (pivot `conversation_labels`, broadcast realtime) + preload di conversation list.
+- [x] **Quick reply** CRUD (text/image/video/document, shortcut unik) + **integrasi "/" picker** di `ChatInput` (filter live, Enter expand top match).
+- [ ] Search UI / label & contact management UI — **ditunda ke Fase 8** (backend + endpoint lengkap; butuh panel).
+- [ ] Linkchat (slug + target + share page) — **ditunda ke Fase 8**.
 
-**Exit criteria:** cari pesan/kontak <200ms; kontak & label & quick reply terkelola penuh.
+**Exit criteria:** ✅ backend search (Typesense) + indexer + reindex jalan, hasil tenant-scoped + highlight; ✅ kontak (edit/block/delete/export), label (CRUD+apply), quick reply (CRUD + picker) terkelola penuh via API; ✅ CI hijau (lint 0 · typecheck 0 · **60 test passed**, +search mappers/scoped-key, label attach/detach + uniqueness, quick-reply uniqueness). Search `<200ms` & UI panel diverifikasi di Fase 8 (butuh Typesense server + data).
+
+> **Catatan implementasi:** `conversation_labels` awalnya punya `tenant_id` (NOT NULL + RLS) tapi bikin query many-to-many `tenant_id` **ambiguous** (mixin TenantScoped filter unqualified `tenant_id`, cocok ke pivot & `labels`) → di-drop (migration 0025); isolasi tetap via FK cascade dari parent yang sudah tenant-scoped. Route `contacts/export` didaftarkan sebelum `contacts/:id` agar tak ketangkap sebagai param.
 
 ---
 

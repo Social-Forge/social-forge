@@ -27,6 +27,10 @@ const MessagesController = () => import('#controllers/app/messages_controller')
 const AiAgentsController = () => import('#controllers/app/ai_agents_controller')
 const AiKnowledgeController = () => import('#controllers/app/ai_knowledge_controller')
 const WebchatController = () => import('#controllers/webchat_controller')
+const SearchController = () => import('#controllers/app/search_controller')
+const ContactsController = () => import('#controllers/app/contacts_controller')
+const LabelsController = () => import('#controllers/app/labels_controller')
+const QuickRepliesController = () => import('#controllers/app/quick_replies_controller')
 
 // Provider webhooks (public — verified by per-channel secret, not middleware).
 const WebhooksController = () => import('#controllers/webhooks_controller')
@@ -144,6 +148,40 @@ router
     router
       .get('channels/:id/webchat-embed', [ChannelsController, 'webchatEmbed'])
       .as('app.channels.webchat.embed')
+
+    // Search (Typesense)
+    router.get('search', [SearchController, 'index']).as('app.search')
+
+    // Contacts management
+    router.get('contacts', [ContactsController, 'index']).as('app.contacts.index')
+    router.get('contacts/export', [ContactsController, 'exportCsv']).as('app.contacts.export')
+    router.get('contacts/:id', [ContactsController, 'show']).as('app.contacts.show')
+    router.put('contacts/:id', [ContactsController, 'update']).as('app.contacts.update')
+    router.post('contacts/:id/block', [ContactsController, 'block']).as('app.contacts.block')
+    router.post('contacts/:id/unblock', [ContactsController, 'unblock']).as('app.contacts.unblock')
+    router.delete('contacts/:id', [ContactsController, 'destroy']).as('app.contacts.destroy')
+
+    // Labels
+    router.get('labels', [LabelsController, 'index']).as('app.labels.index')
+    router.post('labels', [LabelsController, 'store']).as('app.labels.store')
+    router.put('labels/:id', [LabelsController, 'update']).as('app.labels.update')
+    router.delete('labels/:id', [LabelsController, 'destroy']).as('app.labels.destroy')
+    router
+      .post('conversations/:conversationId/labels', [LabelsController, 'attach'])
+      .as('app.conversations.labels.attach')
+    router
+      .delete('conversations/:conversationId/labels/:labelId', [LabelsController, 'detach'])
+      .as('app.conversations.labels.detach')
+
+    // Quick replies
+    router.get('quick-replies', [QuickRepliesController, 'index']).as('app.quick-replies.index')
+    router.post('quick-replies', [QuickRepliesController, 'store']).as('app.quick-replies.store')
+    router
+      .put('quick-replies/:id', [QuickRepliesController, 'update'])
+      .as('app.quick-replies.update')
+    router
+      .delete('quick-replies/:id', [QuickRepliesController, 'destroy'])
+      .as('app.quick-replies.destroy')
 
     // Realtime (Centrifugo) tokens
     router.get('realtime/token', [RealtimeController, 'token']).as('app.realtime.token')

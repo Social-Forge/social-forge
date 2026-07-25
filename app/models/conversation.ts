@@ -1,12 +1,13 @@
 import { ConversationSchema } from '#database/schema'
 import { TenantScoped } from '#models/mixins/tenant_scoped'
 import { compose } from '@adonisjs/core/helpers'
-import { belongsTo, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { belongsTo, hasMany, manyToMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import Channel from '#models/channel'
 import Contact from '#models/contact'
 import User from '#models/user'
 import Message from '#models/message'
+import Label from '#models/label'
 
 export default class Conversation extends compose(ConversationSchema, TenantScoped) {
   @belongsTo(() => Channel)
@@ -20,4 +21,11 @@ export default class Conversation extends compose(ConversationSchema, TenantScop
 
   @hasMany(() => Message)
   declare messages: HasMany<typeof Message>
+
+  @manyToMany(() => Label, {
+    pivotTable: 'conversation_labels',
+    pivotForeignKey: 'conversation_id',
+    pivotRelatedForeignKey: 'label_id',
+  })
+  declare labels: ManyToMany<typeof Label>
 }

@@ -27,5 +27,7 @@ declare module '@adonisjs/inertia/types' {
     'privacy': ExtractProps<(typeof import('../../inertia/pages/privacy.vue'))['default']>
     'roadmap': ExtractProps<(typeof import('../../inertia/pages/roadmap.vue'))['default']>
     'terms': ExtractProps<(typeof import('../../inertia/pages/terms.vue'))['default']>
+    'app/settings/index': ExtractProps<(typeof import('../../inertia/pages/app/settings/index.vue'))['default']>
+    'app/contacts/index': ExtractProps<(typeof import('../../inertia/pages/app/contacts/index.vue'))['default']>
   }
 }

@@ -19,6 +19,7 @@ export default class ConversationsController {
     const query = Conversation.query()
       .preload('contact')
       .preload('channel')
+      .preload('labels')
       .preload('messages', (q) => q.groupLimit(1).groupOrderBy('created_at', 'desc'))
       .orderBy('last_message_at', 'desc')
       .limit(200)

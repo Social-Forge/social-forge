@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useChatStore } from '~/stores/chat'
+import { api } from '~/composables/useApi'
+
+interface QuickReply {
+  id: string
+  shortcut: string
+  contentType: string
+  body: string | null
+}
 
 interface Emoji {
   annotation?: string
@@ -43,6 +51,25 @@ const emojis = [
   '😎',
 ]
 
+// --- quick replies ("/" picker) -------------------------------------------
+const quickReplies = ref<QuickReply[]>([])
+onMounted(async () => {
+  quickReplies.value = await api.get<QuickReply[]>('/app/quick-replies').catch(() => [])
+})
+
+// Show the picker while the composer holds a single "/shortcut" token.
+const quickReplyMatches = computed<QuickReply[]>(() => {
+  const value = text.value
+  if (!value.startsWith('/') || value.includes(' ') || value.includes('\n')) return []
+  const term = value.slice(1).toLowerCase()
+  return quickReplies.value.filter((q) => q.shortcut.toLowerCase().startsWith(term)).slice(0, 6)
+})
+const showQuickReplies = computed(() => quickReplyMatches.value.length > 0)
+
+function applyQuickReply(reply: QuickReply) {
+  text.value = reply.body ?? ''
+}
+
 async function submit() {
   const value = text.value
   if (!value.trim() || chat.sending) return
@@ -54,6 +81,11 @@ async function submit() {
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
+    // Enter while the picker is open expands the top match instead of sending.
+    if (showQuickReplies.value) {
+      applyQuickReply(quickReplyMatches.value[0])
+      return
+    }
     submit()
   }
 }
@@ -66,6 +98,20 @@ const onEmojiClick = (emoji: Emoji) => {
 
 <template>
   <div class="bg-background border-t px-2 py-4">
+    <div
+      v-if="showQuickReplies"
+      class="bg-card mb-2 max-h-56 overflow-y-auto rounded-lg border p-1 shadow-sm"
+    >
+      <button
+        v-for="reply in quickReplyMatches"
+        :key="reply.id"
+        class="hover:bg-muted flex w-full flex-col items-start gap-0.5 rounded-md px-3 py-2 text-left"
+        @click="applyQuickReply(reply)"
+      >
+        <span class="text-primary text-xs font-semibold">/{{ reply.shortcut }}</span>
+        <span class="text-muted-foreground line-clamp-1 text-sm">{{ reply.body }}</span>
+      </button>
+    </div>
     <div v-if="showEmoji" class="bg-card mb-2 rounded-lg border p-2">
       <div class="flex justify-end w-full">
         <Button variant="outline" size="icon-xs" @click="showEmoji = false">

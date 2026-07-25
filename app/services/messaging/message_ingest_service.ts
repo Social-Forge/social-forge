@@ -7,6 +7,7 @@ import Message from '#models/message'
 import type Channel from '#models/channel'
 import centrifugo from '#services/realtime/centrifugo_service'
 import rabbitmq from '#services/messaging/rabbitmq'
+import SearchIndexer from '#services/search/search_indexer'
 import { EXCHANGES } from '#services/messaging/topology'
 import {
   hasServiceWindow,
@@ -90,6 +91,10 @@ export default class MessageIngestService {
         channelId: channel.id,
       })
     }
+
+    // Index the new message + contact for search (best-effort).
+    await SearchIndexer.enqueue('upsert', 'message', message.id, channel.tenantId)
+    await SearchIndexer.enqueue('upsert', 'contact', conversation.contactId, channel.tenantId)
 
     // Hand off to the AI worker when this channel has a bot attached. The worker
     // re-checks the agent (active / auto-reply / working hours / credits) so

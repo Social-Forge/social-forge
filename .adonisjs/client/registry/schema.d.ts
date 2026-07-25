@@ -55,6 +55,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/health_controller').default['index']>>>
     }
   }
+  'sitemap.xml': {
+    methods: ["GET","HEAD"]
+    pattern: '/sitemap.xml'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/sitemaps_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/sitemaps_controller').default['handle']>>>
+    }
+  }
+  'robots.txt': {
+    methods: ["GET","HEAD"]
+    pattern: '/robots.txt'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/robots_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/robots_controller').default['handle']>>>
+    }
+  }
   'webhooks.waha': {
     methods: ["POST"]
     pattern: '/webhooks/waha/:channelId'
@@ -677,6 +701,222 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['webchatEmbed']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['webchatEmbed']>>>
+    }
+  }
+  'app.search': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/search'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/search_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/search_controller').default['index']>>>
+    }
+  }
+  'app.contacts.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/contacts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['index']>>>
+    }
+  }
+  'app.contacts.export': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/contacts/export'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['exportCsv']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['exportCsv']>>>
+    }
+  }
+  'app.contacts.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/contacts/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['show']>>>
+    }
+  }
+  'app.contacts.update': {
+    methods: ["PUT"]
+    pattern: '/app/contacts/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/contact').updateContactValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/contact').updateContactValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.contacts.block': {
+    methods: ["POST"]
+    pattern: '/app/contacts/:id/block'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['block']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['block']>>>
+    }
+  }
+  'app.contacts.unblock': {
+    methods: ["POST"]
+    pattern: '/app/contacts/:id/unblock'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['unblock']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['unblock']>>>
+    }
+  }
+  'app.contacts.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/contacts/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/contacts_controller').default['destroy']>>>
+    }
+  }
+  'app.labels.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/labels'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['index']>>>
+    }
+  }
+  'app.labels.store': {
+    methods: ["POST"]
+    pattern: '/app/labels'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog').createLabelValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog').createLabelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.labels.update': {
+    methods: ["PUT"]
+    pattern: '/app/labels/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog').updateLabelValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog').updateLabelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.labels.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/labels/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['destroy']>>>
+    }
+  }
+  'app.conversations.labels.attach': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:conversationId/labels'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { conversationId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['attach']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['attach']>>>
+    }
+  }
+  'app.conversations.labels.detach': {
+    methods: ["DELETE"]
+    pattern: '/app/conversations/:conversationId/labels/:labelId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { conversationId: ParamValue; labelId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['detach']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/labels_controller').default['detach']>>>
+    }
+  }
+  'app.quick-replies.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/quick-replies'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['index']>>>
+    }
+  }
+  'app.quick-replies.store': {
+    methods: ["POST"]
+    pattern: '/app/quick-replies'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog').createQuickReplyValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog').createQuickReplyValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.quick-replies.update': {
+    methods: ["PUT"]
+    pattern: '/app/quick-replies/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog').updateQuickReplyValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog').updateQuickReplyValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.quick-replies.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/quick-replies/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['destroy']>>>
     }
   }
   'app.realtime.token': {
