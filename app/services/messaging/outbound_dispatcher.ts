@@ -3,9 +3,14 @@ import redis from '@adonisjs/redis/services/main'
 import logger from '@adonisjs/core/services/logger'
 import Message from '#models/message'
 import MessageOutbox from '#models/message_outbox'
+import type Channel from '#models/channel'
+import type Contact from '#models/contact'
 import TenantContext from '#services/tenant_context'
 import centrifugo from '#services/realtime/centrifugo_service'
 import wahaClient from '#services/waha/waha_client'
+import telegramClient from '#services/telegram/telegram_client'
+import { TelegramAdapter } from '#services/telegram/telegram_adapter'
+import metaClient from '#services/meta/meta_client'
 import type { WahaEngine } from '#services/messaging/constants'
 
 export type OutboundJob = { messageId: string; tenantId: string }
@@ -80,36 +85,127 @@ export default class OutboundDispatcher {
   static async #sendViaChannel(message: Message): Promise<string> {
     const channel = message.conversation.channel
     const contact = message.conversation.contact
+    const replyProviderId = await this.#resolveReplyProviderId(message)
 
-    if (channel.type !== 'whatsapp_waha') {
-      throw new Error(`Outbound not supported for channel type "${channel.type}" yet`)
+    switch (channel.type) {
+      case 'whatsapp_waha':
+        return this.#sendWaha(channel, contact, message, replyProviderId)
+      case 'telegram':
+        return this.#sendTelegram(channel, contact, message, replyProviderId)
+      case 'messenger':
+      case 'instagram':
+        return this.#sendMessenger(channel, contact, message)
+      case 'whatsapp_meta':
+        return this.#sendWhatsAppMeta(channel, contact, message)
+      default:
+        throw new Error(`Outbound not supported for channel type "${channel.type}"`)
     }
+  }
 
+  static async #resolveReplyProviderId(message: Message): Promise<string | undefined> {
+    if (!message.replyToId) return undefined
+    const replied = await Message.find(message.replyToId)
+    return replied?.providerMessageId ?? undefined
+  }
+
+  static async #sendWaha(
+    channel: Channel,
+    contact: Contact,
+    message: Message,
+    replyTo?: string
+  ): Promise<string> {
     const engine = (channel.wahaEngine as WahaEngine) ?? 'gows'
     const session = channel.wahaSessionName!
-    const chatId = contact.externalId
-
-    let replyTo: string | undefined
-    if (message.replyToId) {
-      const replied = await Message.find(message.replyToId)
-      replyTo = replied?.providerMessageId ?? undefined
-    }
-
     const media = message.media as { url?: string } | null
+
     if (message.contentType === 'text' || !media?.url) {
-      const res = await wahaClient.sendText(engine, session, chatId, message.body ?? '', replyTo)
+      const res = await wahaClient.sendText(
+        engine,
+        session,
+        contact.externalId,
+        message.body ?? '',
+        replyTo
+      )
       return extractProviderId(res)
     }
-
     const mediaType = (
       ['image', 'video', 'audio'].includes(message.contentType) ? message.contentType : 'document'
     ) as 'image' | 'video' | 'audio' | 'document'
-    const res = await wahaClient.sendMedia(engine, session, chatId, {
+    const res = await wahaClient.sendMedia(engine, session, contact.externalId, {
       type: mediaType,
       url: media.url,
       caption: message.body ?? undefined,
     })
     return extractProviderId(res)
+  }
+
+  static async #sendTelegram(
+    channel: Channel,
+    contact: Contact,
+    message: Message,
+    replyProviderId?: string
+  ): Promise<string> {
+    const token = channel.getCredential('botToken')
+    if (!token) throw new Error('Telegram bot token missing')
+    const chatId = contact.externalId
+    const replyMessageId = replyProviderId ? Number(replyProviderId.split(':').pop()) : undefined
+    const media = message.media as { url?: string } | null
+
+    if (message.contentType === 'image' && media?.url) {
+      const res = await telegramClient.sendPhoto(
+        token,
+        chatId,
+        media.url,
+        message.body ?? undefined
+      )
+      return TelegramAdapter.compositeId(chatId, res.message_id)
+    }
+    const res = await telegramClient.sendMessage(token, chatId, message.body ?? '', replyMessageId)
+    return TelegramAdapter.compositeId(chatId, res.message_id)
+  }
+
+  static async #sendMessenger(
+    channel: Channel,
+    contact: Contact,
+    message: Message
+  ): Promise<string> {
+    const token = channel.getCredential('pageAccessToken')
+    if (!token) throw new Error('Meta page access token missing')
+    const media = message.media as { url?: string } | null
+
+    if (media?.url) {
+      const type = (
+        ['image', 'video', 'audio'].includes(message.contentType) ? message.contentType : 'file'
+      ) as 'image' | 'video' | 'audio' | 'file'
+      return metaClient.sendMessengerAttachment(token, contact.externalId, type, media.url)
+    }
+    return metaClient.sendMessengerText(token, contact.externalId, message.body ?? '')
+  }
+
+  static async #sendWhatsAppMeta(
+    channel: Channel,
+    contact: Contact,
+    message: Message
+  ): Promise<string> {
+    const token = channel.getCredential('accessToken')
+    if (!token || !channel.externalId) throw new Error('WhatsApp Business credentials missing')
+
+    if (message.contentType === 'template') {
+      const tpl = (message.media as { template?: { name: string; languageCode?: string } } | null)
+        ?.template
+      if (!tpl?.name) throw new Error('Template payload missing')
+      return metaClient.sendWhatsAppTemplate(token, channel.externalId, contact.externalId, {
+        name: tpl.name,
+        languageCode: tpl.languageCode ?? 'en',
+      })
+    }
+
+    return metaClient.sendWhatsAppText(
+      token,
+      channel.externalId,
+      contact.externalId,
+      message.body ?? ''
+    )
   }
 
   static async #broadcastStatus(message: Message) {

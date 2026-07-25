@@ -91,37 +91,41 @@
 
 ---
 
-## Fase 3 — Meta & Telegram
+## Fase 3 — Meta & Telegram ✅ SELESAI (2026-07-25)
 
 **Tujuan:** channel lain online dengan pipeline yang sama.
 
-- [ ] Meta adapter (WhatsApp Business, Messenger, Instagram) — Graph API + webhook + HMAC.
-- [ ] Handling **24-hour service window** + Message Template.
-- [ ] Telegram adapter (Bot API, webhook mode).
-- [ ] Rate limiting per channel (token bucket Redis).
-- [ ] Enkripsi credentials channel (token).
-- [ ] Webhook management UI (setup URL, verify token, status).
+- [x] **Refactor multi-channel**: `MessageIngestService` (core dedup/persist/broadcast bersama) + `InboundRouter` (dispatch by provider) — pipeline jadi provider-agnostic.
+- [x] Meta adapter (WhatsApp Business `changes.value` + Messenger/Instagram `messaging`) + `MetaClient` (Graph API) + `MetaInbound`.
+- [x] Meta webhook **app-level** (`GET /webhooks/meta` verify + `POST` X-Hub-Signature-256 HMAC), channel di-resolve dari page id / phone_number_id.
+- [x] Telegram adapter + `TelegramClient` (setWebhook/sendMessage/sendPhoto/getFile) + webhook per-channel (verify X-Telegram-Bot-Api-Secret-Token).
+- [x] Outbound extend: dispatcher kirim via WAHA/Telegram/Messenger/Instagram/WA-Business (composite id Telegram, reply threading).
+- [x] **24-hour service window** enforcement (tolak free-form di luar window untuk channel Meta) + **Message Template** (WA Business).
+- [x] Rate limiting per channel (token-bucket Redis) — dari Fase 2, berlaku semua provider.
+- [x] Enkripsi credentials channel (endpoint `PUT /app/channels/:id/configure` → `setCredential` encrypted; Telegram auto `setWebhook`).
+- [x] **media-worker** (mirror Meta/Telegram media → MinIO via `minio` client, presigned URL) — yang ditunda dari Fase 2.
+- [ ] Webhook management UI — **ditunda ke Fase 8** (bagian admin panel; API sudah lengkap).
 
-**Exit criteria:** keempat tipe channel bisa kirim/terima; window & template terkelola; semua webhook terverifikasi.
+**Exit criteria:** ✅ keempat tipe channel punya adapter inbound+outbound + webhook terverifikasi (HMAC/secret); ✅ window & template terkelola; ✅ media mirror jalan; ✅ CI hijau (lint 0 · typecheck 0 · **33 test passed**, termasuk adapter Meta/Telegram). Verifikasi kirim/terima riil butuh kredensial provider (Meta app + page/WABA token, Telegram bot token) dari user.
 
 ---
 
-## Fase 4 — Chat Portal Web UI
+## Fase 4 — Chat Portal Web UI ✅ SELESAI (2026-07-25)
 
 **Tujuan:** UI percakapan lengkap mirip WhatsApp Web.
 
-- [ ] Layout chat portal (sidebar list + room + panel info).
-- [ ] Conversation list: filter (channel/label/agent/date/search), badge unread, status, pinned.
-- [ ] Room: bubble auto-detect format (text/media/link-preview/location/template), avatar fallback, timestamp.
-- [ ] Input: emoji, "/" quick-reply picker, media (image/video/doc/camera/location), audio recorder.
-- [ ] Menu per-pesan: reply, forward, delete, edit (own), pin/unpin.
-- [ ] Pinned message (room) & pinned conversation (sidebar).
-- [ ] Auto-assign (round-robin/percentage/least-busy) + manual re-assign/unassign.
-- [ ] Mark complete/uncomplete, archive/unarchive, label conversation.
-- [ ] Typing & presence indicator (Centrifugo).
-- [ ] Long-press context menu (delete, unassign, block, mark, label, archive).
+- [x] Layout chat portal responsive (desktop 3-pane: icon rail + list + room; mobile: nav rail → hamburger Sheet, single-view list↔room dgn tombol back). Full-height, dark/light.
+- [x] Conversation list: search + filter (all/unread/mine/unassigned), badge unread + total, channel icon, avatar initials, re-sort by last message.
+- [x] Room: bubble auto-detect (text/image/video/audio/document/link), status ticks (sent/delivered/read), avatar fallback, timestamp, auto-scroll.
+- [x] Input: emoji picker, "/" quick-reply hint, attach button, kirim (Enter), optimistic + realtime.
+- [x] Header actions: assign to me / unassign / mark completed / reopen (dropdown).
+- [x] **Realtime (Centrifugo)**: connection + subscription token, subscribe inbox + conversation channel, pesan masuk & status live tanpa reload — **terverifikasi di browser**.
+- [x] Composables `useApi` (fetch + XSRF) & `useRealtime` + Pinia `chat` store.
+- [ ] Fitur lanjutan (per-message reply/forward/delete/edit/pin, pinned list, auto-assign strategy, archive, label, typing/presence, long-press context menu) — **ditunda ke Fase 4.5/6** (butuh backend quick-reply/label dari Fase 6 + tambahan endpoint).
 
-**Exit criteria:** agent bisa handle percakapan penuh dari UI, realtime, multi-channel, mirip WhatsApp Web.
+**Exit criteria:** ✅ agent bisa handle percakapan dari UI (list→room→kirim), realtime multi-channel, mirip WhatsApp Web, responsive desktop+mobile — **terverifikasi live di browser** (kirim pesan muncul realtime + list re-sort); ✅ CI hijau (lint 0 · typecheck 0 · 33 test passed).
+
+> **Fixes ditemukan saat verifikasi:** Lucid preload limit gotcha → `groupLimit`; TenantScoped mixin qualified→unqualified `tenant_id` (kompat groupLimit); `MessageOutbox` table name (`message_outbox` singular); `inertia.always(null)` → `undefined`; demo users pre-verified.
 
 ---
 

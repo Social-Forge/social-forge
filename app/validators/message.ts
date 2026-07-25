@@ -6,4 +6,11 @@ export const sendMessageValidator = vine.create({
   body: vine.string().trim().maxLength(4096).nullable().optional(),
   mediaUrl: vine.string().url().nullable().optional(),
   replyToId: vine.string().uuid().nullable().optional(),
+  // WhatsApp Business template (required outside the 24h window).
+  template: vine
+    .object({
+      name: vine.string().trim(),
+      languageCode: vine.string().trim().optional(),
+    })
+    .optional(),
 })

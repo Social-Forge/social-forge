@@ -1,7 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+import env from '#start/env'
 import UserTransformer from '#transformers/user_transformer'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
+import i18nManager from '@adonisjs/i18n/services/main'
 
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
   share(ctx: HttpContext) {
@@ -32,6 +34,12 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
         success,
       }),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
+      tenantId: ctx.inertia.always(auth?.user?.tenantId ?? undefined),
+      centrifugoUrl: ctx.inertia.always(
+        env.get('CENTRIFUGO_WS_URL', 'ws://localhost:8000/connection/websocket')
+      ),
+      locale: ctx.inertia.always(ctx.i18n.locale),
+      translations: ctx.inertia.always(i18nManager.getTranslationsFor(ctx.i18n.locale)),
     }
   }
 

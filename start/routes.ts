@@ -27,6 +27,13 @@ const MessagesController = () => import('#controllers/app/messages_controller')
 // Provider webhooks (public — verified by per-channel secret, not middleware).
 const WebhooksController = () => import('#controllers/webhooks_controller')
 router.post('/webhooks/waha/:channelId', [WebhooksController, 'waha']).as('webhooks.waha')
+// Meta uses one app-level webhook URL (GET verify + POST events).
+router.get('/webhooks/meta', [WebhooksController, 'metaVerify']).as('webhooks.meta.verify')
+router.post('/webhooks/meta', [WebhooksController, 'meta']).as('webhooks.meta')
+// Telegram: one webhook URL per bot/channel.
+router
+  .post('/webhooks/telegram/:channelId', [WebhooksController, 'telegram'])
+  .as('webhooks.telegram')
 
 router
   .group(() => {
@@ -92,6 +99,9 @@ router
     router.post('channels', [ChannelsController, 'store']).as('app.channels.store')
     router.put('channels/:id', [ChannelsController, 'update']).as('app.channels.update')
     router.delete('channels/:id', [ChannelsController, 'destroy']).as('app.channels.destroy')
+    router
+      .put('channels/:id/configure', [ChannelsController, 'configure'])
+      .as('app.channels.configure')
     router.post('channels/:id/connect', [ChannelsController, 'connect']).as('app.channels.connect')
     router.get('channels/:id/qr', [ChannelsController, 'qr']).as('app.channels.qr')
     router.get('channels/:id/status', [ChannelsController, 'status']).as('app.channels.status')
@@ -113,6 +123,21 @@ router
     router
       .post('conversations/:id/messages', [MessagesController, 'store'])
       .as('app.conversations.messages.store')
+    router
+      .post('conversations/:id/read', [ConversationsController, 'markRead'])
+      .as('app.conversations.read')
+    router
+      .post('conversations/:id/assign', [ConversationsController, 'assign'])
+      .as('app.conversations.assign')
+    router
+      .post('conversations/:id/unassign', [ConversationsController, 'unassign'])
+      .as('app.conversations.unassign')
+    router
+      .post('conversations/:id/complete', [ConversationsController, 'complete'])
+      .as('app.conversations.complete')
+    router
+      .post('conversations/:id/reopen', [ConversationsController, 'reopen'])
+      .as('app.conversations.reopen')
   })
   .prefix('app')
   .use([middleware.auth(), middleware.verified(), middleware.tenant()])

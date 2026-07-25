@@ -6,6 +6,7 @@ import { AlertCircleIcon, CheckCircle2Icon } from '@lucide/vue'
 
 const page = usePage<Data.SharedProps>()
 
+const { t } = useTrans()
 const flashStore = useFlashStore()
 
 const flash = computed(() => page.props?.flash)
@@ -16,18 +17,21 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <MetaHead title="Forgot Password" description="Enter your password." />
+  <MetaHead
+    :title="t('auth.forgot_password')"
+    :description="t('auth.forgot_password_description')"
+  />
   <Auth
     type="forgot"
-    title="Forgot Password"
-    description="Enter your email to reset your password."
+    :title="t('auth.forgot_password')"
+    :description="t('auth.forgot_password_description')"
   >
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing, errors }" :action="{ url: '/forgot-password', method: 'post' }">
         <FieldGroup>
           <Alert v-if="flash?.success" class="bg-primary/20 text-primary">
             <CheckCircle2Icon />
-            <AlertTitle>Success!</AlertTitle>
+            <AlertTitle>{{ t('alert.success') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.success }}
             </AlertDescription>
@@ -35,14 +39,14 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 
           <Alert v-if="flash?.error" variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Failed!</AlertTitle>
+            <AlertTitle>{{ t('alert.failed') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.error }}
             </AlertDescription>
           </Alert>
 
           <Field>
-            <FieldLabel for="email">Email</FieldLabel>
+            <FieldLabel for="email">{{ t('field.email') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:mail-outline"
@@ -65,7 +69,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           <Field>
             <Button type="submit" size="lg" :disabled="processing" class="text-sm">
               <Spinner v-if="processing" />
-              {{ processing ? 'Sending...' : 'Send Reset Link' }}
+              {{ processing ? t('auth.sending') : t('auth.button_resest_link') }}
             </Button>
           </Field>
 
@@ -78,7 +82,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
                 :disabled="processing"
                 class="text-sm w-full"
               >
-                Back to Login
+                {{ t('auth.button_back_to_login') }}
               </Button>
             </Link>
           </Field>

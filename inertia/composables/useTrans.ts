@@ -1,16 +1,55 @@
+// useTrans.ts
 import { usePage, router } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+
+interface LocalItem {
+  locale: string
+  name: string
+  icon: string
+}
 
 export function useTrans() {
   const page = usePage()
 
+  const languageItems = ref<LocalItem[]>([
+    {
+      locale: 'en',
+      name: 'English',
+      icon: 'flag:us-4x3',
+    },
+    {
+      locale: 'id',
+      name: 'Bahasa Indonesia',
+      icon: 'flag:id-4x3',
+    },
+  ])
+
   const currentLocale = computed(() => {
-    // page.props.locale can be accessed from the shared props
     return (page.props.locale as string) || 'en'
   })
 
+  const selectedLocale = ref<LocalItem | undefined>(
+    languageItems.value.find((item) => item.locale === currentLocale.value)
+  )
+
+  watch(
+    currentLocale,
+    (newLocale) => {
+      const found = languageItems.value.find((item) => item.locale === newLocale)
+      if (found) {
+        selectedLocale.value = found
+      }
+    },
+    { immediate: true }
+  )
+
+  const currentIcon = computed(() => {
+    return selectedLocale.value?.icon || 'lucide:languages'
+  })
+
   const t = (key: string, replacements?: Record<string, string | number>) => {
-    const translations = (page.props.translations as Record<string, string>) || {}
+    const translations = (page.props.translations as Record<string, any>) || {}
+
     let translation = translations[key]
     if (translation === undefined) {
       translation = translations[`messages.${key}`] || key
@@ -25,7 +64,6 @@ export function useTrans() {
   }
 
   const changeLocale = (locale: string) => {
-    // Trigger locale change by hitting the current URL with the lang query param
     router.visit(`${window.location.pathname}?lang=${locale}`, {
       preserveState: false,
       preserveScroll: true,
@@ -33,8 +71,11 @@ export function useTrans() {
   }
 
   return {
-    t,
     currentLocale,
+    languageItems,
+    selectedLocale,
+    currentIcon,
+    t,
     changeLocale,
   }
 }

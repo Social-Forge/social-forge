@@ -20,6 +20,7 @@ import ouiIcons from '@iconify-json/oui/icons.json'
 import materialIconThemeIcons from '@iconify-json/material-icon-theme/icons.json'
 import selfHostedIcons from '@iconify-json/selfhst/icons.json'
 import logosIcons from '@iconify-json/logos/icons.json'
+import flagIcons from '@iconify-json/flag/icons.json'
 
 let registered = false
 
@@ -49,6 +50,7 @@ function registerCollections() {
   addCollection(materialIconThemeIcons as IconifyJSON)
   addCollection(selfHostedIcons as IconifyJSON)
   addCollection(logosIcons as IconifyJSON)
+  addCollection(flagIcons as IconifyJSON)
   registered = true
 }
 

@@ -8,6 +8,7 @@ defineProps<{ token: string; email: string }>()
 
 const page = usePage<Data.SharedProps>()
 
+const { t } = useTrans()
 const flashStore = useFlashStore()
 
 const flash = computed(() => page.props?.flash)
@@ -21,28 +22,28 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 
 <template>
   <MetaHead
-    title="Reset password"
-    description="Enter your new password below and start connecting."
+    :title="t('auth.reset_password')"
+    :description="t('auth.reset_password_description')"
     robot="noindex, nofollow"
   />
   <Auth
     type="reset"
-    title="Reset password"
-    description="Enter your new password below and start connecting."
+    :title="t('auth.reset_password')"
+    :description="t('auth.reset_password_description')"
   >
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing, errors }" :action="{ url: '/reset-password', method: 'post' }">
         <FieldGroup>
           <Alert v-if="flash?.error" variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Failed!</AlertTitle>
+            <AlertTitle>{{ t('alert.failed') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.error }}
             </AlertDescription>
           </Alert>
 
           <Field>
-            <FieldLabel for="password">New password</FieldLabel>
+            <FieldLabel for="password">{{ t('field.password') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:lock-outline"
@@ -76,7 +77,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           </Field>
 
           <Field>
-            <FieldLabel for="passwordConfirmation">Confirm new password</FieldLabel>
+            <FieldLabel for="passwordConfirmation">{{ t('field.confirm_password') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:lock-outline"
@@ -116,7 +117,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           <Field>
             <Button type="submit" size="lg" :disabled="processing" class="text-sm">
               <Spinner v-if="processing" />
-              {{ processing ? 'Resetting...' : 'Reset password' }}
+              {{ processing ? t('auth.resetting_password') : t('auth.button_resest_link') }}
             </Button>
           </Field>
         </FieldGroup>

@@ -67,10 +67,21 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   // Centrifugo
   CENTRIFUGO_URL: Env.schema.string.optional(),
+  // Public websocket URL the browser connects to (e.g. wss://ws.domain in prod)
+  CENTRIFUGO_WS_URL: Env.schema.string.optional(),
   CENTRIFUGO_TOKEN_SECRET: Env.schema.string(),
   CENTRIFUGO_API_KEY: Env.schema.string(),
   CENTRIFUGO_ADMIN_PASSWORD: Env.schema.string(),
   CENTRIFUGO_ADMIN_SECRET: Env.schema.string(),
+
+  // Meta (Messenger / Instagram / WhatsApp Business — Graph API)
+  META_APP_ID: Env.schema.string.optional(),
+  META_APP_SECRET: Env.schema.string.optional(),
+  META_WEBHOOK_VERIFY_TOKEN: Env.schema.string.optional(),
+  META_GRAPH_API_VERSION: Env.schema.string.optional(),
+
+  // Telegram (Bot API)
+  TELEGRAM_WEBHOOK_SECRET: Env.schema.string.optional(),
 
   // WAHA (WhatsApp) — per-engine base URL + API key
   // Public URL WAHA uses to reach our webhook (e.g. http://host.docker.internal:3333 in dev)

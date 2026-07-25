@@ -13,3 +13,15 @@ export const updateChannelValidator = vine.create({
   name: vine.string().trim().minLength(2).maxLength(80).optional(),
   divisionId: vine.string().uuid().nullable().optional(),
 })
+
+/**
+ * Provider credentials for Meta/Telegram channels. Values are stored encrypted.
+ * Keys are provider-specific:
+ *   - telegram:        botToken
+ *   - messenger / IG:  pageAccessToken
+ *   - whatsapp_meta:   accessToken (+ externalId = phone_number_id)
+ */
+export const configureChannelValidator = vine.create({
+  credentials: vine.record(vine.string()),
+  externalId: vine.string().trim().nullable().optional(),
+})

@@ -5,6 +5,7 @@ import { AlertCircleIcon, CheckCircle2Icon } from '@lucide/vue'
 
 const page = usePage<Data.SharedProps>()
 
+const { t } = useTrans()
 const flashStore = useFlashStore()
 
 const flash = computed(() => page.props?.flash)
@@ -16,21 +17,21 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 
 <template>
   <MetaHead
-    title="Verify email"
-    description="We sent you a verification link. Open it to activate your account. The link expires in 24 hours."
+    :title="t('auth.verify_email')"
+    :description="t('auth.verify_email_description')"
     robot="noindex, nofollow"
   />
   <Auth
     type="verify"
-    title="Verify email"
-    description="We sent you a verification link. Open it to activate your account. The link expires in 24 hours."
+    :title="t('auth.verify_email')"
+    :description="t('auth.verify_email_description')"
   >
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing }" :action="{ url: '/verify-email/resend', method: 'post' }">
         <FieldGroup>
           <Alert v-if="flash?.success" class="bg-primary/20 text-primary">
             <CheckCircle2Icon />
-            <AlertTitle>Success!</AlertTitle>
+            <AlertTitle>{{ t('alert.success') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.success }}
             </AlertDescription>
@@ -38,7 +39,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 
           <Alert v-if="flash?.error" variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Failed!</AlertTitle>
+            <AlertTitle>{{ t('alert.failed') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.error }}
             </AlertDescription>
@@ -53,7 +54,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
               :disabled="processing"
             >
               <Spinner v-if="processing" />
-              {{ processing ? 'Sending...' : 'Resend verification email' }}
+              {{ processing ? t('auth.sending') : t('auth.resend_verification_email') }}
             </Button>
           </Field>
         </FieldGroup>
@@ -63,7 +64,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
         <FieldGroup>
           <Field>
             <Button type="submit" variant="outline" size="lg" class="w-full text-sm">
-              Log out and use another account
+              {{ t('auth.log_out_and_use_another_account') }}
             </Button>
           </Field>
         </FieldGroup>

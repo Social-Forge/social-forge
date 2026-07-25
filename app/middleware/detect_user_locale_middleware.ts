@@ -26,8 +26,30 @@ export default class DetectUserLocaleMiddleware {
    * Feel free to use different mechanism for finding user language.
    */
   protected getRequestLocale(ctx: HttpContext) {
+    const supported = ['en', 'id']
+    const queryLang = ctx.request.input('lang')
+    if (queryLang && supported.includes(queryLang)) {
+      if (ctx.session) {
+        ctx.session.put('locale', queryLang)
+      }
+      ctx.response.cookie('locale', queryLang, { maxAge: '1 year' })
+      return queryLang
+    }
+
+    if (ctx.session) {
+      const sessionLang = ctx.session.get('locale')
+      if (sessionLang && supported.includes(sessionLang)) {
+        return sessionLang
+      }
+    }
+
+    const cookieLang = ctx.request.cookie('locale')
+    if (cookieLang && supported.includes(cookieLang)) {
+      return cookieLang
+    }
+
     const userLanguages = ctx.request.languages()
-    return i18nManager.getSupportedLocaleFor(userLanguages)
+    return i18nManager.getSupportedLocaleFor(userLanguages) || i18nManager.defaultLocale
   }
 
   async handle(ctx: HttpContext, next: NextFn) {

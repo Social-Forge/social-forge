@@ -6,6 +6,7 @@ import { AlertCircleIcon } from '@lucide/vue'
 
 const page = usePage<Data.SharedProps>()
 
+const { t } = useTrans()
 const flashStore = useFlashStore()
 
 const flash = computed(() => page.props?.flash)
@@ -18,21 +19,21 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <MetaHead title="Signup" description="Enter your details below and start connecting." />
-  <Auth type="signup" title="Signup" description="Enter your details below and start connecting.">
+  <MetaHead :title="t('auth.button_signup')" :description="t('auth.signup_description')" />
+  <Auth type="signup" :title="t('auth.button_signup')" :description="t('auth.signup_description')">
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing, errors }" route="new_account.store">
         <FieldGroup>
           <Alert v-if="flash?.error" variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Signup failed!</AlertTitle>
+            <AlertTitle>{{ t('alert.failed') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.error }}
             </AlertDescription>
           </Alert>
 
           <Field>
-            <FieldLabel for="tenantName">Business name</FieldLabel>
+            <FieldLabel for="tenantName">{{ t('field.business_name') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:storefront-outline"
@@ -53,7 +54,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           </Field>
 
           <Field>
-            <FieldLabel for="fullName">Full name</FieldLabel>
+            <FieldLabel for="fullName">{{ t('field.full_name') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:account-circle"
@@ -74,7 +75,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           </Field>
 
           <Field>
-            <FieldLabel for="email">Email</FieldLabel>
+            <FieldLabel for="email">{{ t('field.email') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:mail-outline"
@@ -95,7 +96,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           </Field>
 
           <Field>
-            <FieldLabel for="password">Password</FieldLabel>
+            <FieldLabel for="password">{{ t('field.password') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:lock-outline"
@@ -129,7 +130,7 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           </Field>
 
           <Field>
-            <FieldLabel for="confirmPassword">Confirm password</FieldLabel>
+            <FieldLabel for="confirmPassword">{{ t('field.confirm_password') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:lock-outline"
@@ -167,11 +168,11 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           <Field>
             <Button type="submit" size="lg" :disabled="processing" class="text-sm">
               <Spinner v-if="processing" />
-              {{ processing ? 'Signing up...' : 'Sign up' }}
+              {{ processing ? t('auth.signing_up') : t('auth.button_signup') }}
             </Button>
           </Field>
 
-          <FieldSeparator>Or Continue with</FieldSeparator>
+          <FieldSeparator>{{ t('auth.or_continue_with') }}</FieldSeparator>
           <Field class="grid gap-4 sm:grid-cols-3">
             <!-- Full-page navigation (not Inertia) — OAuth redirects off-site. -->
             <a href="/oauth/google/redirect" class="w-full">

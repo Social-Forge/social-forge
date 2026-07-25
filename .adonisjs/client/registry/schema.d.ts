@@ -43,6 +43,54 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/health_controller').default['index']>>>
     }
   }
+  'webhooks.waha': {
+    methods: ["POST"]
+    pattern: '/webhooks/waha/:channelId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { channelId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['waha']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['waha']>>>
+    }
+  }
+  'webhooks.meta.verify': {
+    methods: ["GET","HEAD"]
+    pattern: '/webhooks/meta'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['metaVerify']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['metaVerify']>>>
+    }
+  }
+  'webhooks.meta': {
+    methods: ["POST"]
+    pattern: '/webhooks/meta'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['meta']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['meta']>>>
+    }
+  }
+  'webhooks.telegram': {
+    methods: ["POST"]
+    pattern: '/webhooks/telegram/:channelId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { channelId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['telegram']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['telegram']>>>
+    }
+  }
   'new_account.create': {
     methods: ["GET","HEAD"]
     pattern: '/signup'
@@ -141,7 +189,7 @@ export interface Registry {
   }
   'oauth.redirect': {
     methods: ["GET","HEAD"]
-    pattern: '/:provider/redirect'
+    pattern: '/oauth/:provider/redirect'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -153,7 +201,7 @@ export interface Registry {
   }
   'oauth.callback': {
     methods: ["GET","HEAD"]
-    pattern: '/:provider/callback'
+    pattern: '/oauth/:provider/callback'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -329,6 +377,234 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['destroy']>>>
+    }
+  }
+  'app.channels.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/channels'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['index']>>>
+    }
+  }
+  'app.channels.store': {
+    methods: ["POST"]
+    pattern: '/app/channels'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/channel').createChannelValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/channel').createChannelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.channels.update': {
+    methods: ["PUT"]
+    pattern: '/app/channels/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/channel').updateChannelValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/channel').updateChannelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.channels.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/channels/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['destroy']>>>
+    }
+  }
+  'app.channels.configure': {
+    methods: ["PUT"]
+    pattern: '/app/channels/:id/configure'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/channel').configureChannelValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/channel').configureChannelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['configure']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['configure']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.channels.connect': {
+    methods: ["POST"]
+    pattern: '/app/channels/:id/connect'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['connect']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['connect']>>>
+    }
+  }
+  'app.channels.qr': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/channels/:id/qr'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['qr']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['qr']>>>
+    }
+  }
+  'app.channels.status': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/channels/:id/status'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['status']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['status']>>>
+    }
+  }
+  'app.channels.disconnect': {
+    methods: ["POST"]
+    pattern: '/app/channels/:id/disconnect'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['disconnect']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['disconnect']>>>
+    }
+  }
+  'app.realtime.token': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/realtime/token'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/realtime_controller').default['token']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/realtime_controller').default['token']>>>
+    }
+  }
+  'app.realtime.subscribe': {
+    methods: ["POST"]
+    pattern: '/app/realtime/subscribe'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/realtime_controller').default['subscribe']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/realtime_controller').default['subscribe']>>>
+    }
+  }
+  'app.conversations.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/conversations'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['index']>>>
+    }
+  }
+  'app.conversations.messages': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/conversations/:id/messages'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['messages']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['messages']>>>
+    }
+  }
+  'app.conversations.messages.store': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/messages'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/message').sendMessageValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/message').sendMessageValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/messages_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/messages_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.conversations.read': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/read'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['markRead']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['markRead']>>>
+    }
+  }
+  'app.conversations.assign': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/assign'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['assign']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['assign']>>>
+    }
+  }
+  'app.conversations.unassign': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/unassign'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['unassign']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['unassign']>>>
+    }
+  }
+  'app.conversations.complete': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/complete'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['complete']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['complete']>>>
+    }
+  }
+  'app.conversations.reopen': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/reopen'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['reopen']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['reopen']>>>
     }
   }
 }

@@ -6,11 +6,12 @@ import Contact from '#models/contact'
 import Conversation from '#models/conversation'
 import Message from '#models/message'
 import TenantContext from '#services/tenant_context'
-import InboundNormalizer from '#services/messaging/inbound_normalizer'
-import type { InboundJob } from '#services/messaging/inbound_normalizer'
+import InboundRouter from '#services/messaging/inbound/inbound_router'
+import type { InboundJob } from '#services/messaging/types'
 
 function messageJob(channel: Channel, providerId: string, body: string): InboundJob {
   return {
+    provider: 'waha',
     channelId: channel.id,
     tenantId: channel.tenantId,
     event: 'message',
@@ -55,7 +56,7 @@ test.group('Inbound normalizer', (group) => {
 
   test('persists an inbound message with contact + conversation', async ({ assert }) => {
     const channel = await seedChannel()
-    await InboundNormalizer.process(messageJob(channel, 'pmid-1', 'Halo kak'))
+    await InboundRouter.process(messageJob(channel, 'pmid-1', 'Halo kak'))
 
     await TenantContext.run(channel.tenantId, async () => {
       const messages = await Message.all()
@@ -76,8 +77,8 @@ test.group('Inbound normalizer', (group) => {
 
   test('is idempotent — duplicate provider id does not double-insert', async ({ assert }) => {
     const channel = await seedChannel()
-    await InboundNormalizer.process(messageJob(channel, 'pmid-dup', 'once'))
-    await InboundNormalizer.process(messageJob(channel, 'pmid-dup', 'once'))
+    await InboundRouter.process(messageJob(channel, 'pmid-dup', 'once'))
+    await InboundRouter.process(messageJob(channel, 'pmid-dup', 'once'))
 
     await TenantContext.run(channel.tenantId, async () => {
       const messages = await Message.query().where('provider_message_id', 'pmid-dup')

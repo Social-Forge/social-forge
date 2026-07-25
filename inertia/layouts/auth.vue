@@ -6,6 +6,8 @@ const props = defineProps<{
   title?: string
   description?: string
 }>()
+
+const { t } = useTrans()
 </script>
 
 <template>
@@ -18,23 +20,28 @@ const props = defineProps<{
       </Link>
       <div v-if="type === 'login' || type === 'signup'" class="flex items-center gap-2">
         <div class="text-sm font-sans">
-          {{ type === 'login' ? "Don't have an account yet?" : 'Already have an account?' }}
+          {{ type === 'login' ? t('auth.dont_have_account') : t('auth.already_have_account') }}
         </div>
-        <Link :href="type === 'login' ? '/signup' : '/login'">
+        <Link v-if="type === 'login'" href="/signup">
           <Button type="button" class="text-sm font-sans px-6" size="lg">
-            {{ type === 'login' ? 'Signup' : 'Login' }}
+            {{ t('auth.button_signup') }}
+          </Button>
+        </Link>
+        <Link v-else-if="type === 'signup'" href="/login">
+          <Button type="button" class="text-sm font-sans px-6" size="lg">
+            {{ t('auth.button_login') }}
           </Button>
         </Link>
       </div>
       <div v-else class="flex items-center gap-2">
         <Link href="/login">
           <Button type="button" variant="outline" class="text-sm font-sans px-6" size="lg">
-            Login
+            {{ t('auth.button_login') }}
           </Button>
         </Link>
         <Link href="/signup">
           <Button type="button" variant="default" class="text-sm font-sans px-6" size="lg">
-            Signup
+            {{ t('auth.button_signup') }}
           </Button>
         </Link>
       </div>
@@ -49,7 +56,10 @@ const props = defineProps<{
       </div>
       <slot />
     </div>
-    <div class="fixed bottom-6 right-6">
+    <div class="fixed bottom-16 right-6 space-y-2">
+      <LanguageSwitcher />
+    </div>
+    <div class="fixed bottom-6 right-6 space-y-2">
       <ThemeToggle />
     </div>
   </div>

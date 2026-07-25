@@ -1,12 +1,18 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { randomUUID } from 'node:crypto'
 import string from '@adonisjs/core/helpers/string'
+import env from '#start/env'
 import Channel from '#models/channel'
 import Tenant from '#models/tenant'
 import ChannelPolicy from '#policies/channel_policy'
 import EntitlementService, { ChannelLimitReachedException } from '#services/entitlement_service'
 import WahaSessionService from '#services/waha/waha_session_service'
-import { createChannelValidator, updateChannelValidator } from '#validators/channel'
+import telegramClient from '#services/telegram/telegram_client'
+import {
+  createChannelValidator,
+  updateChannelValidator,
+  configureChannelValidator,
+} from '#validators/channel'
 
 export default class ChannelsController {
   async index({ bouncer, response }: HttpContext) {
@@ -62,6 +68,50 @@ export default class ChannelsController {
     }
     await channel.delete()
     return response.noContent()
+  }
+
+  /**
+   * Store provider credentials (encrypted) for Meta/Telegram channels. For
+   * Telegram this also registers the bot webhook; Meta channels rely on the
+   * app-level webhook so storing a valid token marks them connected.
+   */
+  async configure({ bouncer, params, request, response }: HttpContext) {
+    const channel = await Channel.findOrFail(params.id)
+    await bouncer.with(ChannelPolicy).authorize('update', channel)
+
+    const { credentials, externalId } = await request.validateUsing(configureChannelValidator)
+    for (const [key, value] of Object.entries(credentials)) {
+      channel.setCredential(key, value)
+    }
+    if (externalId) channel.externalId = externalId
+
+    if (channel.type === 'telegram') {
+      const token = channel.getCredential('botToken')
+      if (!token) {
+        return response.badRequest({ message: 'botToken is required for Telegram channels.' })
+      }
+      const base = env.get('WAHA_WEBHOOK_BASE_URL', env.get('APP_URL', 'http://localhost:3333'))
+      try {
+        await telegramClient.setWebhook(
+          token,
+          `${base}/webhooks/telegram/${channel.id}`,
+          channel.webhookSecret!
+        )
+        const me = await telegramClient.getMe(token)
+        channel.externalId = String((me as any)?.id ?? channel.externalId ?? '')
+        channel.status = 'connected'
+      } catch (error) {
+        channel.status = 'failed'
+        await channel.save()
+        return response.badGateway({ message: (error as Error).message })
+      }
+    } else {
+      // Meta channels: a stored, valid token = connected (webhook is app-level).
+      channel.status = 'connected'
+    }
+
+    await channel.save()
+    return response.ok({ status: channel.status, externalId: channel.externalId })
   }
 
   // --- WAHA session actions -------------------------------------------------

@@ -7,6 +7,13 @@ export interface ApiDefinition {
   }
   home: typeof routes['home']
   health: typeof routes['health']
+  webhooks: {
+    waha: typeof routes['webhooks.waha']
+    meta: typeof routes['webhooks.meta'] & {
+      verify: typeof routes['webhooks.meta.verify']
+    }
+    telegram: typeof routes['webhooks.telegram']
+  }
   newAccount: {
     create: typeof routes['new_account.create']
     store: typeof routes['new_account.store']
@@ -47,6 +54,32 @@ export interface ApiDefinition {
       store: typeof routes['app.team.store']
       update: typeof routes['app.team.update']
       destroy: typeof routes['app.team.destroy']
+    }
+    channels: {
+      index: typeof routes['app.channels.index']
+      store: typeof routes['app.channels.store']
+      update: typeof routes['app.channels.update']
+      destroy: typeof routes['app.channels.destroy']
+      configure: typeof routes['app.channels.configure']
+      connect: typeof routes['app.channels.connect']
+      qr: typeof routes['app.channels.qr']
+      status: typeof routes['app.channels.status']
+      disconnect: typeof routes['app.channels.disconnect']
+    }
+    realtime: {
+      token: typeof routes['app.realtime.token']
+      subscribe: typeof routes['app.realtime.subscribe']
+    }
+    conversations: {
+      index: typeof routes['app.conversations.index']
+      messages: typeof routes['app.conversations.messages'] & {
+        store: typeof routes['app.conversations.messages.store']
+      }
+      read: typeof routes['app.conversations.read']
+      assign: typeof routes['app.conversations.assign']
+      unassign: typeof routes['app.conversations.unassign']
+      complete: typeof routes['app.conversations.complete']
+      reopen: typeof routes['app.conversations.reopen']
     }
   }
 }

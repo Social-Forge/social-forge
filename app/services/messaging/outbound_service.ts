@@ -14,6 +14,7 @@ export type SendMessageInput = {
   body?: string | null
   mediaUrl?: string | null
   replyToId?: string | null
+  template?: { name: string; languageCode?: string } | null
 }
 
 /**
@@ -28,8 +29,12 @@ export default class OutboundService {
     conversation: Conversation,
     input: SendMessageInput
   ): Promise<Message> {
-    const contentType = input.contentType ?? 'text'
-    const media = input.mediaUrl ? { url: input.mediaUrl } : null
+    const contentType = input.template ? 'template' : (input.contentType ?? 'text')
+    const media = input.template
+      ? { template: input.template }
+      : input.mediaUrl
+        ? { url: input.mediaUrl }
+        : null
 
     const message = await db.transaction(async (trx) => {
       const created = await Message.create(

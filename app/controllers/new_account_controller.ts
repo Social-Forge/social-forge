@@ -14,6 +14,6 @@ export default class NewAccountController {
     const { owner } = await TenantService.register(payload)
 
     await auth.use('web').login(owner)
-    response.redirect().toRoute('home')
+    response.redirect().toRoute('app.chats.index')
   }
 }

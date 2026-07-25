@@ -8,6 +8,9 @@ import Message from '#models/message'
  * tenants, so scoping is applied explicitly when needed instead.
  */
 export default class MessageOutbox extends MessageOutboxSchema {
+  // The table is singular (`message_outbox`); override Lucid's plural inference.
+  static table = 'message_outbox'
+
   @belongsTo(() => Message)
   declare message: BelongsTo<typeof Message>
 }

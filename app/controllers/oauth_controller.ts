@@ -53,7 +53,7 @@ export default class OAuthController {
 
       if (existingLink) {
         await auth.use('web').login(existingLink.user)
-        return response.redirect().toRoute('home')
+        return response.redirect().toRoute('app.chats.index')
       }
 
       // A verified email is required to create or link a local account.
@@ -103,7 +103,7 @@ export default class OAuthController {
 
       await auth.use('web').login(user)
       session.flash('success', `Signed in with ${provider}.`)
-      return response.redirect().toRoute('home')
+      return response.redirect().toRoute('app.chats.index')
     } catch {
       session.flash('error', `Failed to sign in with ${provider}.`)
       return response.redirect('/login')

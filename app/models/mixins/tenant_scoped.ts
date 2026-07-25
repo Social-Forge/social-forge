@@ -18,21 +18,24 @@ export function TenantScoped<Model extends NormalizeConstructor<typeof BaseModel
   superclass: Model
 ) {
   class TenantScopedModel extends superclass {
+    // Uses an unqualified `tenant_id` (not `table.tenant_id`) so it stays
+    // compatible with Lucid's groupLimit(), which wraps the query in a subquery
+    // aliased away from the model's table. Our tenant-scoped reads don't join
+    // other tenant tables, so there's no ambiguity.
     @beforeFind()
     @beforeFetch()
     static scopeToTenant(query: AnyQuery) {
       if (!TenantContext.isScoped) return
-      query.where(`${query.model.table}.tenant_id`, TenantContext.current()!)
+      query.where('tenant_id', TenantContext.current()!)
     }
 
     @beforePaginate()
     static scopeToTenantPaginate(queries: [AnyQuery, AnyQuery]) {
       if (!TenantContext.isScoped) return
       const [countQuery, query] = queries
-      const column = `${query.model.table}.tenant_id`
       const tenantId = TenantContext.current()!
-      countQuery.where(column, tenantId)
-      query.where(column, tenantId)
+      countQuery.where('tenant_id', tenantId)
+      query.where('tenant_id', tenantId)
     }
   }
 

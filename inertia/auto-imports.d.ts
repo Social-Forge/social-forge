@@ -6,6 +6,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const ApiError: typeof import('./composables/useApi').ApiError
   const EffectScope: typeof import('vue').EffectScope
   const Icon: typeof import('./lib/iconify-offline').Icon
   const IsoLanguages: typeof import('./utils/iso').IsoLanguages
@@ -13,8 +14,10 @@ declare global {
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const addCollection: typeof import('./lib/iconify-offline').addCollection
   const addIcon: typeof import('./lib/iconify-offline').addIcon
+  const api: typeof import('./composables/useApi').api
   const asyncComputed: typeof import('@vueuse/core').asyncComputed
   const autoResetRef: typeof import('@vueuse/core').autoResetRef
+  const chatNavItems: typeof import('./lib/chat-nav-items').chatNavItems
   const cn: typeof import('./lib/utils').cn
   const computed: typeof import('vue').computed
   const computedAsync: typeof import('@vueuse/core').computedAsync
@@ -145,6 +148,7 @@ declare global {
   const useActiveElement: typeof import('@vueuse/core').useActiveElement
   const useAlert: typeof import('./composables/useAlert').useAlert
   const useAnimate: typeof import('@vueuse/core').useAnimate
+  const useApi: typeof import('./composables/useApi').useApi
   const useArrayDifference: typeof import('@vueuse/core').useArrayDifference
   const useArrayEvery: typeof import('@vueuse/core').useArrayEvery
   const useArrayFilter: typeof import('@vueuse/core').useArrayFilter
@@ -170,6 +174,7 @@ declare global {
   const useBrowserLocation: typeof import('@vueuse/core').useBrowserLocation
   const useCached: typeof import('@vueuse/core').useCached
   const useCeil: typeof import('@vueuse/math').useCeil
+  const useChatStore: typeof import('./stores/chat').useChatStore
   const useClamp: typeof import('@vueuse/math').useClamp
   const useClipboard: typeof import('@vueuse/core').useClipboard
   const useClipboardItems: typeof import('@vueuse/core').useClipboardItems
@@ -274,6 +279,7 @@ declare global {
   const usePrevious: typeof import('@vueuse/core').usePrevious
   const useProjection: typeof import('@vueuse/math').useProjection
   const useRafFn: typeof import('@vueuse/core').useRafFn
+  const useRealtime: typeof import('./composables/useRealtime').useRealtime
   const useRefHistory: typeof import('@vueuse/core').useRefHistory
   const useResizeObserver: typeof import('@vueuse/core').useResizeObserver
   const useRound: typeof import('@vueuse/math').useRound
@@ -360,8 +366,17 @@ declare global {
   export type { AlertType, AlertOptions } from './composables/useAlert'
   import('./composables/useAlert')
   // @ts-ignore
+  export type { ApiError } from './composables/useApi'
+  import('./composables/useApi')
+  // @ts-ignore
+  export type { ChatContact, ChatChannel, ChatMessage, Conversation, ChatFilter } from './stores/chat'
+  import('./stores/chat')
+  // @ts-ignore
   export type { DateRange } from './utils/time'
   import('./utils/time')
+  // @ts-ignore
+  export type { ChatNavItem } from './lib/chat-nav-items'
+  import('./lib/chat-nav-items')
 }
 
 // for vue template auto import
@@ -369,6 +384,7 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
+    readonly ApiError: UnwrapRef<typeof import('./composables/useApi')['ApiError']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly Icon: UnwrapRef<typeof import('./lib/iconify-offline')['Icon']>
     readonly IsoLanguages: UnwrapRef<typeof import('./utils/iso')['IsoLanguages']>
@@ -376,8 +392,10 @@ declare module 'vue' {
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
     readonly addCollection: UnwrapRef<typeof import('./lib/iconify-offline')['addCollection']>
     readonly addIcon: UnwrapRef<typeof import('./lib/iconify-offline')['addIcon']>
+    readonly api: UnwrapRef<typeof import('./composables/useApi')['api']>
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>
+    readonly chatNavItems: UnwrapRef<typeof import('./lib/chat-nav-items')['chatNavItems']>
     readonly cn: UnwrapRef<typeof import('./lib/utils')['cn']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly computedAsync: UnwrapRef<typeof import('@vueuse/core')['computedAsync']>
@@ -508,6 +526,7 @@ declare module 'vue' {
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
     readonly useAlert: UnwrapRef<typeof import('./composables/useAlert')['useAlert']>
     readonly useAnimate: UnwrapRef<typeof import('@vueuse/core')['useAnimate']>
+    readonly useApi: UnwrapRef<typeof import('./composables/useApi')['useApi']>
     readonly useArrayDifference: UnwrapRef<typeof import('@vueuse/core')['useArrayDifference']>
     readonly useArrayEvery: UnwrapRef<typeof import('@vueuse/core')['useArrayEvery']>
     readonly useArrayFilter: UnwrapRef<typeof import('@vueuse/core')['useArrayFilter']>
@@ -533,6 +552,7 @@ declare module 'vue' {
     readonly useBrowserLocation: UnwrapRef<typeof import('@vueuse/core')['useBrowserLocation']>
     readonly useCached: UnwrapRef<typeof import('@vueuse/core')['useCached']>
     readonly useCeil: UnwrapRef<typeof import('@vueuse/math')['useCeil']>
+    readonly useChatStore: UnwrapRef<typeof import('./stores/chat')['useChatStore']>
     readonly useClamp: UnwrapRef<typeof import('@vueuse/math')['useClamp']>
     readonly useClipboard: UnwrapRef<typeof import('@vueuse/core')['useClipboard']>
     readonly useClipboardItems: UnwrapRef<typeof import('@vueuse/core')['useClipboardItems']>
@@ -637,6 +657,7 @@ declare module 'vue' {
     readonly usePrevious: UnwrapRef<typeof import('@vueuse/core')['usePrevious']>
     readonly useProjection: UnwrapRef<typeof import('@vueuse/math')['useProjection']>
     readonly useRafFn: UnwrapRef<typeof import('@vueuse/core')['useRafFn']>
+    readonly useRealtime: UnwrapRef<typeof import('./composables/useRealtime')['useRealtime']>
     readonly useRefHistory: UnwrapRef<typeof import('@vueuse/core')['useRefHistory']>
     readonly useResizeObserver: UnwrapRef<typeof import('@vueuse/core')['useResizeObserver']>
     readonly useRound: UnwrapRef<typeof import('@vueuse/math')['useRound']>

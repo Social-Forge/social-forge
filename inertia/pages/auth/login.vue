@@ -6,6 +6,7 @@ import { AlertCircleIcon } from '@lucide/vue'
 
 const page = usePage<Data.SharedProps>()
 
+const { t } = useTrans()
 const flashStore = useFlashStore()
 
 const flash = computed(() => page.props?.flash)
@@ -17,21 +18,21 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 </script>
 
 <template>
-  <MetaHead title="Login" description="Enter your account and start connecting." />
-  <Auth type="login" title="Login" description="Enter your account and start connecting.">
+  <MetaHead :title="t('auth.button_login')" :description="t('auth.login_description')" />
+  <Auth type="login" :title="t('auth.button_login')" :description="t('auth.login_description')">
     <div class="flex flex-col gap-6">
       <Form v-slot="{ processing, errors }" route="session.store">
         <FieldGroup>
           <Alert v-if="flash?.error" variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Login failed!</AlertTitle>
+            <AlertTitle>{{ t('alert.failed') }}</AlertTitle>
             <AlertDescription>
               {{ flash?.error }}
             </AlertDescription>
           </Alert>
 
           <Field>
-            <FieldLabel for="email">Email</FieldLabel>
+            <FieldLabel for="email">{{ t('field.email') }}</FieldLabel>
             <div class="relative">
               <Icon
                 icon="material-symbols:mail-outline"
@@ -53,12 +54,12 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
 
           <Field>
             <div class="flex items-center">
-              <FieldLabel for="password"> Password </FieldLabel>
+              <FieldLabel for="password">{{ t('field.password') }}</FieldLabel>
               <Link
                 href="/forgot-password"
                 class="ml-auto text-xs underline-offset-4 hover:underline"
               >
-                Forgot your password?
+                {{ t('auth.forgot_password') }}?
               </Link>
             </div>
             <div class="relative">
@@ -96,10 +97,11 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
           <Field>
             <Button type="submit" size="lg" :disabled="processing" class="text-sm">
               <Spinner v-if="processing" />
-              {{ processing ? 'Logging in...' : 'Login' }}
+              {{ processing ? t('auth.login_in') : t('auth.button_login') }}
             </Button>
           </Field>
 
+          <FieldSeparator>{{ t('auth.or_continue_with') }}</FieldSeparator>
           <Field class="grid gap-4 sm:grid-cols-3">
             <!-- Full-page navigation (not Inertia) — OAuth redirects off-site. -->
             <a href="/oauth/google/redirect" class="w-full">

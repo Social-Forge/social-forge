@@ -14,13 +14,13 @@ export default class WorkerInbound extends BaseCommand {
 
   async run() {
     const { default: queueConsumer } = await import('#services/messaging/queue_consumer')
-    const { default: InboundNormalizer } = await import('#services/messaging/inbound_normalizer')
+    const { default: InboundRouter } = await import('#services/messaging/inbound/inbound_router')
     const { default: rabbitmq } = await import('#services/messaging/rabbitmq')
     const { EXCHANGES, QUEUES } = await import('#services/messaging/topology')
 
-    await queueConsumer.start<import('#services/messaging/inbound_normalizer').InboundJob>(
+    await queueConsumer.start<import('#services/messaging/types').InboundJob>(
       { exchange: EXCHANGES.inbound, queue: QUEUES.inboundNormalize, prefetch: 20 },
-      (payload) => InboundNormalizer.process(payload)
+      (payload) => InboundRouter.process(payload)
     )
 
     this.logger.info('inbound-normalizer worker running (Ctrl+C to stop)')
