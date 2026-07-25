@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
-import { Head, usePage } from '@inertiajs/vue3'
 import { Form, Link } from '@adonisjs/inertia/vue'
 import { Icon } from '@iconify/vue'
 import { AlertCircleIcon, CheckCircle2Icon } from '@lucide/vue'
-import { useFlashStore } from '~/stores/flash'
 
 const page = usePage<Data.SharedProps>()
 

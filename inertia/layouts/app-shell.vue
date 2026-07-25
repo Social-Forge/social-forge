@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
-import { usePage } from '@inertiajs/vue3'
 
 const props = defineProps<{
   title?: string

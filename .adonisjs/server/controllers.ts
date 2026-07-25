@@ -5,10 +5,18 @@
 
 export const controllers = {
   app: {
+    Channels: () => import('#controllers/app/channels_controller'),
     Chats: () => import('#controllers/app/chats_controller'),
+    Conversations: () => import('#controllers/app/conversations_controller'),
+    Divisions: () => import('#controllers/app/divisions_controller'),
+    Messages: () => import('#controllers/app/messages_controller'),
+    Realtime: () => import('#controllers/app/realtime_controller'),
+    Team: () => import('#controllers/app/team_controller'),
   },
   Auth: () => import('#controllers/auth_controller'),
   Health: () => import('#controllers/health_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
+  Oauth: () => import('#controllers/oauth_controller'),
   Session: () => import('#controllers/session_controller'),
+  Webhooks: () => import('#controllers/webhooks_controller'),
 }

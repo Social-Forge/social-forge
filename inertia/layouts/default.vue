@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
-import { usePage } from '@inertiajs/vue3'
 import { toast, Toaster } from 'vue-sonner'
 import type { Data } from '@generated/data'
-import { useAuthStore } from '~/stores/auth'
-import { useFlashStore } from '~/stores/flash'
 
 const page = usePage<Data.SharedProps>()
 const auth = useAuthStore()

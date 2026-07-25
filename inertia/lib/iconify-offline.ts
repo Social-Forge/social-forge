@@ -19,6 +19,7 @@ import streamlineColorIcons from '@iconify-json/streamline-color/icons.json'
 import ouiIcons from '@iconify-json/oui/icons.json'
 import materialIconThemeIcons from '@iconify-json/material-icon-theme/icons.json'
 import selfHostedIcons from '@iconify-json/selfhst/icons.json'
+import logosIcons from '@iconify-json/logos/icons.json'
 
 let registered = false
 
@@ -47,6 +48,7 @@ function registerCollections() {
   addCollection(ouiIcons as IconifyJSON)
   addCollection(materialIconThemeIcons as IconifyJSON)
   addCollection(selfHostedIcons as IconifyJSON)
+  addCollection(logosIcons as IconifyJSON)
   registered = true
 }
 

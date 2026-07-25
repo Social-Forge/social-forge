@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
-import { Head, usePage } from '@inertiajs/vue3'
 import { Form } from '@adonisjs/inertia/vue'
 import { Icon } from '@iconify/vue'
 import { AlertCircleIcon } from '@lucide/vue'
-import { useFlashStore } from '~/stores/flash'
 
 defineProps<{ token: string; email: string }>()
 

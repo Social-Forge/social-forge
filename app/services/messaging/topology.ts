@@ -37,3 +37,12 @@ export const TOPIC_EXCHANGES: ExchangeName[] = [
   EXCHANGES.search,
   EXCHANGES.notifications,
 ]
+
+/** Durable work queues consumed by the worker processes. */
+export const QUEUES = {
+  inboundNormalize: 'inbound.normalize',
+  outboundDispatch: 'outbound.dispatch',
+  mediaMirror: 'media.mirror',
+} as const
+
+export type QueueName = (typeof QUEUES)[keyof typeof QUEUES]

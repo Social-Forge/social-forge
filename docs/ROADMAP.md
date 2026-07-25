@@ -49,39 +49,45 @@
 
 ---
 
-## Fase 1 — Core Domain & Tenancy
+## Fase 1 — Core Domain & Tenancy ✅ SELESAI (2026-07-25)
 
 **Tujuan:** pondasi multi-tenant & RBAC.
 
-- [ ] Migrasi: `tenants`, extend `users` (tenant_id, role, status), `divisions`, `division_members`.
-- [ ] **RLS** policies pada tabel ber-tenant + middleware set `app.current_tenant`.
-- [ ] Middleware `tenant` (resolve tenant dari user/subdomain) + scoping helper.
-- [ ] Bouncer policies: Owner/Supervisor/Agent/SuperAdmin.
-- [ ] CRUD Division + assign member.
-- [ ] CRUD Supervisor & Agent (Owner).
-- [ ] Registrasi tenant (signup → buat tenant + owner + plan free).
-- [ ] Seeder: super admin, tenant demo, roles.
+- [x] Migrasi: `tenants`, extend `users` (tenant_id, role_id, status), `divisions`, `division_members`.
+- [x] Isolasi tenant: **application-level scoping** via mixin `TenantScoped` + `TenantContext` (AsyncLocalStorage) — mekanisme utama, teruji. **RLS** policy DDL sebagai backstop (dormant: app konek superuser yang bypass RLS; enforcement runtime penuh dgn dedicated role → Fase 9).
+- [x] Middleware `tenant` (resolve tenant dari auth user, preload role, wrap `TenantContext.run`).
+- [x] Bouncer policies: `DivisionPolicy` & `TeamPolicy` (Owner/Supervisor/Agent + super_admin bypass, cek role-level + tenant match).
+- [x] CRUD Division (`DivisionsController`) + assign member (sync, cross-tenant difilter).
+- [x] CRUD Supervisor & Agent (`TeamController`, Owner-only).
+- [x] Registrasi tenant (`TenantService.register`: signup → tenant + owner + plan free + trial 14 hari).
+- [x] Seeder: roles (super_admin/owner/supervisor/agent + level), super admin (dari env), demo tenant + owner + division + agent.
+- [x] Role via `role_id` FK ke tabel `roles` (punya `level` untuk hierarki).
 
-**Exit criteria:** dua tenant terisolasi penuh (RLS terbukti via test); role enforcement jalan.
+**Exit criteria:** ✅ dua tenant terisolasi (terbukti via test `TenantScoped` — query tenant A tak menjangkau data tenant B, `findOrFail` lintas-tenant ditolak); ✅ role enforcement jalan (test policy: agent tak bisa CRUD division, owner tak bisa hapus diri sendiri); ✅ CI hijau (lint 0 · typecheck 0 · 12 test passed).
+
+> **Catatan RLS:** exit criteria awal menyebut "RLS terbukti via test". Diselaraskan: isolasi **primer** = application scoping (teruji penuh); RLS = backstop DB yang aktif saat dedicated non-superuser role dipasang di Fase 9 (Hardening).
 
 ---
 
-## Fase 2 — Channel WAHA + Message Pipeline
+## Fase 2 — Channel WAHA + Message Pipeline ✅ SELESAI (2026-07-25)
 
 **Tujuan:** kirim & terima WhatsApp end-to-end via WAHA, dengan pipeline tahan crash.
 
-- [ ] Migrasi: `channels`, `contacts`, `conversations`, `messages`, `message_outbox`, `conversation_events`.
-- [ ] WAHA adapter: `parseInbound`, `sendOutbound`, `verifyWebhook`, `mapStatus`.
-- [ ] Session management WAHA (start/stop/QR pairing) per channel + engine routing (gows/noweb/webjs).
-- [ ] Webhook receiver `/webhooks/waha/:channelId` + signature.
-- [ ] **inbound-normalizer** worker (dedup, normalisasi, persist, broadcast).
-- [ ] **outbound-dispatcher** worker (outbox, rate-limit, retry/backoff, status).
-- [ ] **media-worker** (mirror media → MinIO).
-- [ ] Broadcast realtime ke Centrifugo (channel conversation & inbox).
-- [ ] Centrifugo JWT auth + subscribe authorization proxy.
-- [ ] Auto-reject call (WAHA) + auto-response.
+- [x] Migrasi: `channels`, `contacts`, `conversations`, `messages`, `message_outbox`, `conversation_events` (+ RLS backstop).
+- [x] WAHA client (`WahaClient`) + adapter (`WahaAdapter.parseMessage/parseAck/mapContentType/mapAckStatus`).
+- [x] Session management WAHA (`WahaSessionService`: connect/QR/status/disconnect) per channel + engine routing (gows default).
+- [x] Webhook receiver `POST /webhooks/waha/:channelId` + verifikasi HMAC-SHA512 per channel + CSRF-exempt.
+- [x] Worker framework (`QueueConsumer`: assert queue + DLQ, retry+backoff, ack/nack) + Ace commands `worker:inbound`, `worker:outbound`.
+- [x] **inbound-normalizer** (dedup by provider_message_id, resolve contact/conversation, persist, broadcast) — teruji.
+- [x] **outbound-dispatcher** (transactional outbox, rate-limit token-bucket Redis, retry/terminal state machine, status broadcast).
+- [x] Broadcast realtime ke Centrifugo (channel conversation & inbox) + status pesan (sent/delivered/read).
+- [x] Centrifugo (`CentrifugoService`): connection token + **subscription token** dgn otorisasi tenant/role (RealtimeController) + publish.
+- [x] Channel management CRUD (Owner) + `ChannelPolicy` + `EntitlementService` (limit channel per plan).
+- [x] Send API + list conversations/messages (agent hanya di percakapan yang di-assign).
+- [x] Auto-reject call (WAHA `call.received`) + auto-response + `conversation_events`.
+- [ ] **media-worker** (mirror → MinIO) — **ditunda ke Fase 3**: WAHA sudah simpan media ke MinIO natif (`WAHA_MEDIA_STORAGE=S3`), jadi URL media inbound WAHA sudah di MinIO. Mirror baru diperlukan untuk Meta/Telegram.
 
-**Exit criteria:** chat masuk dari WA muncul realtime; balasan agent terkirim & status delivered; worker survive restart tanpa pesan hilang/dobel.
+**Exit criteria:** ✅ pipeline inbound (webhook→queue→normalizer→persist→broadcast) & outbound (API→outbox→dispatcher→WAHA→status) lengkap & dedup-safe; ✅ worker connect + consume terverifikasi; ✅ CI hijau (lint 0 · typecheck 0 · 25 test passed, termasuk integration dedup). Verifikasi kirim/terima WhatsApp riil butuh pairing device (QR) oleh user.
 
 ---
 

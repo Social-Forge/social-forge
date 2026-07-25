@@ -139,6 +139,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth_controller').default['updatePassword']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'oauth.redirect': {
+    methods: ["GET","HEAD"]
+    pattern: '/:provider/redirect'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { provider: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/oauth_controller').default['redirect']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/oauth_controller').default['redirect']>>>
+    }
+  }
+  'oauth.callback': {
+    methods: ["GET","HEAD"]
+    pattern: '/:provider/callback'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { provider: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/oauth_controller').default['callback']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/oauth_controller').default['callback']>>>
+    }
+  }
   'session.destroy': {
     methods: ["POST"]
     pattern: '/logout'
@@ -197,6 +221,114 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/chats_controller').default['index']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/chats_controller').default['index']>>>
+    }
+  }
+  'app.divisions.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/divisions'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['index']>>>
+    }
+  }
+  'app.divisions.store': {
+    methods: ["POST"]
+    pattern: '/app/divisions'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/division').createDivisionValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/division').createDivisionValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.divisions.update': {
+    methods: ["PUT"]
+    pattern: '/app/divisions/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/division').updateDivisionValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/division').updateDivisionValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.divisions.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/divisions/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['destroy']>>>
+    }
+  }
+  'app.divisions.members': {
+    methods: ["POST"]
+    pattern: '/app/divisions/:id/members'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/division').assignMembersValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/division').assignMembersValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['assignMembers']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/divisions_controller').default['assignMembers']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.team.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/team'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['index']>>>
+    }
+  }
+  'app.team.store': {
+    methods: ["POST"]
+    pattern: '/app/team'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/team').createTeamMemberValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/team').createTeamMemberValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.team.update': {
+    methods: ["PUT"]
+    pattern: '/app/team/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/team').updateTeamMemberValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/team').updateTeamMemberValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.team.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/team/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['destroy']>>>
     }
   }
 }

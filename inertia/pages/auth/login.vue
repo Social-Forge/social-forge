@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import type { Data } from '@generated/data'
-import { Head, usePage } from '@inertiajs/vue3'
 import { Form, Link } from '@adonisjs/inertia/vue'
 import { Icon } from '@iconify/vue'
 import { AlertCircleIcon } from '@lucide/vue'
-import { useFlashStore } from '~/stores/flash'
 
 const page = usePage<Data.SharedProps>()
 
@@ -102,16 +100,26 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
             </Button>
           </Field>
 
-          <FieldSeparator>Or</FieldSeparator>
-          <Field class="grid gap-4 sm:grid-cols-2">
-            <Button variant="outline" type="button" size="lg" class="text-sm">
-              <Icon icon="material-icon-theme:google" />
-              Continue with Google
-            </Button>
-            <Button variant="outline" type="button" size="lg" class="text-sm">
-              <Icon icon="mdi:github" />
-              Continue with GitHub
-            </Button>
+          <Field class="grid gap-4 sm:grid-cols-3">
+            <!-- Full-page navigation (not Inertia) — OAuth redirects off-site. -->
+            <a href="/oauth/google/redirect" class="w-full">
+              <Button variant="outline" type="button" size="lg" class="text-sm w-full">
+                <Icon icon="material-icon-theme:google" />
+                Google
+              </Button>
+            </a>
+            <a href="/oauth/github/redirect" class="w-full">
+              <Button variant="outline" type="button" size="lg" class="text-sm w-full">
+                <Icon icon="mdi:github" />
+                GitHub
+              </Button>
+            </a>
+            <a href="/oauth/facebook/redirect" class="w-full">
+              <Button variant="outline" type="button" size="lg" class="text-sm w-full">
+                <Icon icon="logos:facebook" />
+                Facebook
+              </Button>
+            </a>
           </Field>
         </FieldGroup>
       </Form>

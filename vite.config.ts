@@ -7,8 +7,16 @@ import tailwindcss from '@tailwindcss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 
+// In the test environment AdonisJS forces the Vite dev server to boot, but our
+// unit/functional tests never render Inertia pages. Vite's background dependency
+// pre-bundling then races the fast test teardown and logs a noisy (harmless)
+// "server is being restarted or closed" error. Disabling dependency discovery
+// under NODE_ENV=test removes the race; browser tests still optimize on demand.
+const isTest = process.env.NODE_ENV === 'test'
+
 export default defineConfig({
   publicDir: 'public',
+  optimizeDeps: isTest ? { noDiscovery: true, include: [] } : {},
   plugins: [
     AutoImport({
       include: [/\.[tj]sx?$/, /\.vue$/, /\.vue\?vue/, /\.ts$/],
@@ -23,7 +31,13 @@ export default defineConfig({
         { '@inertiajs/vue3': ['usePage', 'useForm', 'router'] },
       ],
       dts: 'inertia/auto-imports.d.ts',
-      dirs: ['src/composables', 'src/types', 'src/stores', 'src/utils', 'src/lib'],
+      dirs: [
+        'inertia/composables',
+        'inertia/types',
+        'inertia/stores',
+        'inertia/utils',
+        'inertia/lib',
+      ],
       vueTemplate: true,
     }),
     Components({

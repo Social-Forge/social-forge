@@ -72,6 +72,16 @@ export default await Env.create(new URL('../', import.meta.url), {
   CENTRIFUGO_ADMIN_PASSWORD: Env.schema.string(),
   CENTRIFUGO_ADMIN_SECRET: Env.schema.string(),
 
+  // WAHA (WhatsApp) — per-engine base URL + API key
+  // Public URL WAHA uses to reach our webhook (e.g. http://host.docker.internal:3333 in dev)
+  WAHA_WEBHOOK_BASE_URL: Env.schema.string.optional(),
+  WAHA_WEBJS_URL: Env.schema.string.optional(),
+  WAHA_WEBJS_API_KEY: Env.schema.string.optional(),
+  WAHA_NOWEB_URL: Env.schema.string.optional(),
+  WAHA_NOWEB_API_KEY: Env.schema.string.optional(),
+  WAHA_GOWS_URL: Env.schema.string.optional(),
+  WAHA_GOWS_API_KEY: Env.schema.string.optional(),
+
   // Typesense (search)
   TYPESENSE_API_KEY: Env.schema.string.optional(),
   TYPESENSE_HOST: Env.schema.string.optional(),
@@ -82,4 +92,15 @@ export default await Env.create(new URL('../', import.meta.url), {
   ENABLE_REGISTRATION: Env.schema.boolean.optional(),
   DEFAULT_ADMIN_EMAIL: Env.schema.string.optional(),
   DEFAULT_ADMIN_PASSWORD: Env.schema.string.optional(),
+
+  // Social OAuth
+  GOOGLE_CLIENT_ID: Env.schema.string(),
+  GOOGLE_CLIENT_SECRET: Env.schema.string(),
+  GOOGLE_CALLBACK_URL: Env.schema.string.optional(),
+  GITHUB_CLIENT_ID: Env.schema.string(),
+  GITHUB_CLIENT_SECRET: Env.schema.string(),
+  GITHUB_CALLBACK_URL: Env.schema.string.optional(),
+  FACEBOOK_CLIENT_ID: Env.schema.string(),
+  FACEBOOK_CLIENT_SECRET: Env.schema.string(),
+  FACEBOOK_CALLBACK_URL: Env.schema.string.optional(),
 })

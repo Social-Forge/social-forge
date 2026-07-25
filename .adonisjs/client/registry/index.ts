@@ -72,6 +72,18 @@ const routes = {
     tokens: [{"old":"/reset-password","type":0,"val":"reset-password","end":""}],
     types: placeholder as Registry['password.update']['types'],
   },
+  'oauth.redirect': {
+    methods: ["GET","HEAD"],
+    pattern: '/:provider/redirect',
+    tokens: [{"old":"/:provider/redirect","type":1,"val":"provider","end":""},{"old":"/:provider/redirect","type":0,"val":"redirect","end":""}],
+    types: placeholder as Registry['oauth.redirect']['types'],
+  },
+  'oauth.callback': {
+    methods: ["GET","HEAD"],
+    pattern: '/:provider/callback',
+    tokens: [{"old":"/:provider/callback","type":1,"val":"provider","end":""},{"old":"/:provider/callback","type":0,"val":"callback","end":""}],
+    types: placeholder as Registry['oauth.callback']['types'],
+  },
   'session.destroy': {
     methods: ["POST"],
     pattern: '/logout',
@@ -101,6 +113,60 @@ const routes = {
     pattern: '/app/chats',
     tokens: [{"old":"/app/chats","type":0,"val":"app","end":""},{"old":"/app/chats","type":0,"val":"chats","end":""}],
     types: placeholder as Registry['app.chats.index']['types'],
+  },
+  'app.divisions.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/divisions',
+    tokens: [{"old":"/app/divisions","type":0,"val":"app","end":""},{"old":"/app/divisions","type":0,"val":"divisions","end":""}],
+    types: placeholder as Registry['app.divisions.index']['types'],
+  },
+  'app.divisions.store': {
+    methods: ["POST"],
+    pattern: '/app/divisions',
+    tokens: [{"old":"/app/divisions","type":0,"val":"app","end":""},{"old":"/app/divisions","type":0,"val":"divisions","end":""}],
+    types: placeholder as Registry['app.divisions.store']['types'],
+  },
+  'app.divisions.update': {
+    methods: ["PUT"],
+    pattern: '/app/divisions/:id',
+    tokens: [{"old":"/app/divisions/:id","type":0,"val":"app","end":""},{"old":"/app/divisions/:id","type":0,"val":"divisions","end":""},{"old":"/app/divisions/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.divisions.update']['types'],
+  },
+  'app.divisions.destroy': {
+    methods: ["DELETE"],
+    pattern: '/app/divisions/:id',
+    tokens: [{"old":"/app/divisions/:id","type":0,"val":"app","end":""},{"old":"/app/divisions/:id","type":0,"val":"divisions","end":""},{"old":"/app/divisions/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.divisions.destroy']['types'],
+  },
+  'app.divisions.members': {
+    methods: ["POST"],
+    pattern: '/app/divisions/:id/members',
+    tokens: [{"old":"/app/divisions/:id/members","type":0,"val":"app","end":""},{"old":"/app/divisions/:id/members","type":0,"val":"divisions","end":""},{"old":"/app/divisions/:id/members","type":1,"val":"id","end":""},{"old":"/app/divisions/:id/members","type":0,"val":"members","end":""}],
+    types: placeholder as Registry['app.divisions.members']['types'],
+  },
+  'app.team.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/team',
+    tokens: [{"old":"/app/team","type":0,"val":"app","end":""},{"old":"/app/team","type":0,"val":"team","end":""}],
+    types: placeholder as Registry['app.team.index']['types'],
+  },
+  'app.team.store': {
+    methods: ["POST"],
+    pattern: '/app/team',
+    tokens: [{"old":"/app/team","type":0,"val":"app","end":""},{"old":"/app/team","type":0,"val":"team","end":""}],
+    types: placeholder as Registry['app.team.store']['types'],
+  },
+  'app.team.update': {
+    methods: ["PUT"],
+    pattern: '/app/team/:id',
+    tokens: [{"old":"/app/team/:id","type":0,"val":"app","end":""},{"old":"/app/team/:id","type":0,"val":"team","end":""},{"old":"/app/team/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.team.update']['types'],
+  },
+  'app.team.destroy': {
+    methods: ["DELETE"],
+    pattern: '/app/team/:id',
+    tokens: [{"old":"/app/team/:id","type":0,"val":"app","end":""},{"old":"/app/team/:id","type":0,"val":"team","end":""},{"old":"/app/team/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.team.destroy']['types'],
   },
 } as const satisfies Record<string, AdonisEndpoint>
 

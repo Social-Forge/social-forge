@@ -22,6 +22,10 @@ export interface ApiDefinition {
     reset: typeof routes['password.reset']
     update: typeof routes['password.update']
   }
+  oauth: {
+    redirect: typeof routes['oauth.redirect']
+    callback: typeof routes['oauth.callback']
+  }
   email: {
     notice: typeof routes['email.notice']
     resend: typeof routes['email.resend']
@@ -30,6 +34,19 @@ export interface ApiDefinition {
   app: {
     chats: {
       index: typeof routes['app.chats.index']
+    }
+    divisions: {
+      index: typeof routes['app.divisions.index']
+      store: typeof routes['app.divisions.store']
+      update: typeof routes['app.divisions.update']
+      destroy: typeof routes['app.divisions.destroy']
+      members: typeof routes['app.divisions.members']
+    }
+    team: {
+      index: typeof routes['app.team.index']
+      store: typeof routes['app.team.store']
+      update: typeof routes['app.team.update']
+      destroy: typeof routes['app.team.destroy']
     }
   }
 }

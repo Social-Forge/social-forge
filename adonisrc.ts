@@ -68,6 +68,7 @@ export default defineConfig({
     () => import('@adonisjs/bouncer/bouncer_provider'),
     () => import('@adonisjs/redis/redis_provider'),
     () => import('@julr/adonisjs-prometheus/prometheus_provider'),
+    () => import('@adonisjs/ally/ally_provider'),
   ],
 
   /*
