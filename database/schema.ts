@@ -94,6 +94,39 @@ export class AiCreditLedgerSchema extends BaseModel {
   declare tenantId: string
 }
 
+export class AiKnowledgeSchema extends BaseModel {
+  static $columns = [
+    'aiAgentId',
+    'content',
+    'createdAt',
+    'embedding',
+    'id',
+    'tenantId',
+    'title',
+    'tokenCount',
+    'updatedAt',
+  ] as const
+  $columns = AiKnowledgeSchema.$columns
+  @column()
+  declare aiAgentId: string
+  @column()
+  declare content: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare embedding: any | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare tenantId: string
+  @column()
+  declare title: string
+  @column()
+  declare tokenCount: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class ChannelSchema extends BaseModel {
   static $columns = [
     'aiAgentId',

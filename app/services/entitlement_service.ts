@@ -16,6 +16,7 @@ const PLAN_CHANNEL_LIMITS: Record<string, ChannelLimits> = {
     messenger: 1,
     instagram: 1,
     telegram: 1,
+    webchat: 1,
   },
   pro: {
     whatsapp_waha: 1,
@@ -23,6 +24,7 @@ const PLAN_CHANNEL_LIMITS: Record<string, ChannelLimits> = {
     messenger: 10,
     instagram: 10,
     telegram: 10,
+    webchat: 5,
   },
 }
 

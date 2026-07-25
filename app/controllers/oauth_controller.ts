@@ -109,4 +109,38 @@ export default class OAuthController {
       return response.redirect('/login')
     }
   }
+
+  async unlink({ auth, params, session, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+    const providerName = params.provider as OAuthProviderName
+
+    try {
+      const socialAccounts = await OauthProvider.query().where('user_id', user.id)
+
+      const hasLocalPassword = user.password && user.password.length > 0
+
+      if (!hasLocalPassword && socialAccounts.length <= 1) {
+        session.flash(
+          'error',
+          `Cannot unlink ${providerName}. You must set a local password or connect another social account first to prevent account lockout.`
+        )
+        return response.redirect().back()
+      }
+
+      const accountToDelete = socialAccounts.find((acc) => acc.providerName === providerName)
+
+      if (!accountToDelete) {
+        session.flash('error', `No linked ${providerName} account found.`)
+        return response.redirect().back()
+      }
+
+      await accountToDelete.delete()
+
+      session.flash('success', `Successfully unlinked your ${providerName} account.`)
+      return response.redirect().back()
+    } catch (error) {
+      session.flash('error', 'An error occurred while unlinking the account.')
+      return response.redirect().back()
+    }
+  }
 }

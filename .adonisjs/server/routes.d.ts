@@ -12,6 +12,9 @@ export type ScannedRoutes = {
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
     'webhooks.meta': { paramsTuple?: []; params?: {} }
     'webhooks.telegram': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webchat.session': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webchat.send': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webchat.poll': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
@@ -45,6 +48,18 @@ export type ScannedRoutes = {
     'app.channels.qr': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.disconnect': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.index': { paramsTuple?: []; params?: {} }
+    'app.ai.agents.store': { paramsTuple?: []; params?: {} }
+    'app.ai.agents.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.models': { paramsTuple?: []; params?: {} }
+    'app.ai.credits': { paramsTuple?: []; params?: {} }
+    'app.ai.knowledge.index': { paramsTuple?: []; params?: {} }
+    'app.ai.knowledge.store': { paramsTuple?: []; params?: {} }
+    'app.ai.knowledge.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.knowledge.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.channels.webchat.embed': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.realtime.subscribe': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
@@ -62,6 +77,7 @@ export type ScannedRoutes = {
     'home': { paramsTuple?: []; params?: {} }
     'health': { paramsTuple?: []; params?: {} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
+    'webchat.poll': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'password.forgot': { paramsTuple?: []; params?: {} }
@@ -76,6 +92,12 @@ export type ScannedRoutes = {
     'app.channels.index': { paramsTuple?: []; params?: {} }
     'app.channels.qr': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.index': { paramsTuple?: []; params?: {} }
+    'app.ai.agents.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.models': { paramsTuple?: []; params?: {} }
+    'app.ai.credits': { paramsTuple?: []; params?: {} }
+    'app.ai.knowledge.index': { paramsTuple?: []; params?: {} }
+    'app.channels.webchat.embed': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
     'app.conversations.messages': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -86,6 +108,7 @@ export type ScannedRoutes = {
     'home': { paramsTuple?: []; params?: {} }
     'health': { paramsTuple?: []; params?: {} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
+    'webchat.poll': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'password.forgot': { paramsTuple?: []; params?: {} }
@@ -100,6 +123,12 @@ export type ScannedRoutes = {
     'app.channels.index': { paramsTuple?: []; params?: {} }
     'app.channels.qr': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.index': { paramsTuple?: []; params?: {} }
+    'app.ai.agents.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.models': { paramsTuple?: []; params?: {} }
+    'app.ai.credits': { paramsTuple?: []; params?: {} }
+    'app.ai.knowledge.index': { paramsTuple?: []; params?: {} }
+    'app.channels.webchat.embed': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
     'app.conversations.messages': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -108,6 +137,8 @@ export type ScannedRoutes = {
     'webhooks.waha': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'webhooks.meta': { paramsTuple?: []; params?: {} }
     'webhooks.telegram': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webchat.session': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webchat.send': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'password.email': { paramsTuple?: []; params?: {} }
@@ -120,6 +151,8 @@ export type ScannedRoutes = {
     'app.channels.store': { paramsTuple?: []; params?: {} }
     'app.channels.connect': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.disconnect': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.store': { paramsTuple?: []; params?: {} }
+    'app.ai.knowledge.store': { paramsTuple?: []; params?: {} }
     'app.realtime.subscribe': { paramsTuple?: []; params?: {} }
     'app.conversations.messages.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.conversations.read': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -133,11 +166,15 @@ export type ScannedRoutes = {
     'app.team.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.configure': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.knowledge.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
     'app.divisions.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.team.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.agents.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.knowledge.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

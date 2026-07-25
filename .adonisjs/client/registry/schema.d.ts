@@ -103,6 +103,42 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['telegram']>>>
     }
   }
+  'webchat.session': {
+    methods: ["POST"]
+    pattern: '/webchat/:channelId/session'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { channelId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webchat_controller').default['session']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webchat_controller').default['session']>>>
+    }
+  }
+  'webchat.send': {
+    methods: ["POST"]
+    pattern: '/webchat/:channelId/messages'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { channelId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webchat_controller').default['send']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webchat_controller').default['send']>>>
+    }
+  }
+  'webchat.poll': {
+    methods: ["GET","HEAD"]
+    pattern: '/webchat/:channelId/messages'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { channelId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webchat_controller').default['poll']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webchat_controller').default['poll']>>>
+    }
+  }
   'new_account.create': {
     methods: ["GET","HEAD"]
     pattern: '/signup'
@@ -497,6 +533,150 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['disconnect']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['disconnect']>>>
+    }
+  }
+  'app.ai.agents.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/agents'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['index']>>>
+    }
+  }
+  'app.ai.agents.store': {
+    methods: ["POST"]
+    pattern: '/app/ai/agents'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_agent').createAiAgentValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_agent').createAiAgentValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.agents.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/agents/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['show']>>>
+    }
+  }
+  'app.ai.agents.update': {
+    methods: ["PUT"]
+    pattern: '/app/ai/agents/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_agent').updateAiAgentValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_agent').updateAiAgentValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.agents.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/ai/agents/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['destroy']>>>
+    }
+  }
+  'app.ai.models': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/models'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['models']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['models']>>>
+    }
+  }
+  'app.ai.credits': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/credits'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['credits']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['credits']>>>
+    }
+  }
+  'app.ai.knowledge.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/knowledge'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['index']>>>
+    }
+  }
+  'app.ai.knowledge.store': {
+    methods: ["POST"]
+    pattern: '/app/ai/knowledge'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_knowledge').createKnowledgeValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_knowledge').createKnowledgeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.knowledge.update': {
+    methods: ["PUT"]
+    pattern: '/app/ai/knowledge/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_knowledge').updateKnowledgeValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_knowledge').updateKnowledgeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.knowledge.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/ai/knowledge/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_knowledge_controller').default['destroy']>>>
+    }
+  }
+  'app.channels.webchat.embed': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/channels/:id/webchat-embed'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['webchatEmbed']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['webchatEmbed']>>>
     }
   }
   'app.realtime.token': {

@@ -146,11 +146,18 @@
 
 > **Catatan implementasi:** `AiCreditLedger` butuh `static table = 'ai_credit_ledger'` (Lucid pluralize → `ai_credit_ledgers`), sama pola `message_outbox`. `creditsFor` pakai epsilon `-1e-9` sebelum `Math.ceil` agar noise floating-point (`0.03*1000 = 30.0000000004`) tidak over-charge 1 credit.
 
-### Fase 5.5 — Webchat & RAG (menyusul)
+### Fase 5.5 — Webchat & RAG ✅ SELESAI (2026-07-25)
 
-- [ ] Channel type `webchat` + floating bubble widget + embed `<script>` generator (linkchat).
-- [ ] Knowledge base + embedding (OpenAI) + retrieval → jawaban ter-grounding.
-- [ ] Suggest-reply panel untuk agent (streaming).
+- [x] Channel type **`webchat`** + entitlement (free 1 / pro 5) + dispatcher no-op (delivery = realtime broadcast, synthetic `webchat:<uuid>` id) + status `connected` saat create.
+- [x] **Widget embeddable** ([public/webchat.js](../public/webchat.js)) — floating bubble self-contained (tanpa dependensi), poll-based (3s), form-urlencoded biar CORS "simple" (no preflight), visitorId di localStorage. Generator snippet `GET channels/:id/webchat-embed`.
+- [x] **API publik webchat** (CSRF-exempt, no-auth, isolasi via channel→tenant): `POST /webchat/:id/session` (create/resume contact+conversation), `POST /webchat/:id/messages` (ingest via `MessageIngestService` → dedup/persist/broadcast/**AI reply**), `GET /webchat/:id/messages` (poll). Middleware `webchatCors` (ACAO `*`, no-credentials) + rate-limit per-visitor.
+- [x] **Knowledge base + RAG**: `ai_knowledge` (embedding jsonb, RLS) + CRUD (Owner, embed-on-save via OpenAI) + `RagService` (cosine app-side, top-k, score floor 0.2) — di-inject ke system prompt di `AiReplyService` (berlaku semua channel, no-op bila OpenAI tak dikonfigurasi).
+- [x] **Handoff**: bot stand-down otomatis begitu conversation di-assign agent manusia (dari Fase 5).
+- [ ] Suggest-reply panel untuk agent (streaming) — **ditunda** (adapter `stream()` sudah siap; butuh UI panel).
+
+**Exit criteria:** ✅ webchat embeddable di website eksternal (bubble + poll), pesan visitor masuk pipeline yang sama (realtime ke agent + auto-reply AI), RAG meng-ground jawaban dari knowledge base; ✅ CI hijau (lint 0 · typecheck 0 · **53 test passed**, +RAG cosine ranking, webchat ingest→conversation+AI enqueue, resume session). Widget realtime pakai polling (bukan Centrifugo) demi zero-dependency di site eksternal; RAG butuh `OPENAI_API_KEY` (Claude tak punya embeddings).
+
+> **Catatan implementasi:** `ai_knowledge.embedding` (array float) butuh `@column` `prepare/consume` JSON — node-pg memformat array JS sebagai Postgres array literal (`{…}`) yang ditolak kolom jsonb (objek malah auto-`JSON.stringify`). `AiKnowledge` juga `static table = 'ai_knowledge'`.
 
 ---
 

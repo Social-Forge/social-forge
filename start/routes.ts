@@ -14,8 +14,9 @@ import { authThrottle } from '#start/limiter'
 
 router.on('/').renderInertia('home', {}).as('home')
 
-const HealthController = () => import('#controllers/health_controller')
-router.get('/health', [HealthController, 'index']).as('health')
+router.get('/health', [controllers.Health, 'index']).as('health')
+router.get('/sitemap.xml', [controllers.Sitemaps, 'handle']).as('sitemap.xml')
+router.get('/robots.txt', [controllers.Robots, 'handle']).as('robots.txt')
 
 const DivisionsController = () => import('#controllers/app/divisions_controller')
 const TeamController = () => import('#controllers/app/team_controller')
@@ -24,6 +25,8 @@ const RealtimeController = () => import('#controllers/app/realtime_controller')
 const ConversationsController = () => import('#controllers/app/conversations_controller')
 const MessagesController = () => import('#controllers/app/messages_controller')
 const AiAgentsController = () => import('#controllers/app/ai_agents_controller')
+const AiKnowledgeController = () => import('#controllers/app/ai_knowledge_controller')
+const WebchatController = () => import('#controllers/webchat_controller')
 
 // Provider webhooks (public — verified by per-channel secret, not middleware).
 const WebhooksController = () => import('#controllers/webhooks_controller')
@@ -35,6 +38,16 @@ router.post('/webhooks/meta', [WebhooksController, 'meta']).as('webhooks.meta')
 router
   .post('/webhooks/telegram/:channelId', [WebhooksController, 'telegram'])
   .as('webhooks.telegram')
+
+// Public webchat widget API (embedded on external sites — permissive CORS,
+// CSRF-exempt, no auth; isolation via the channel's tenant).
+router
+  .group(() => {
+    router.post('/webchat/:channelId/session', [WebchatController, 'session'])
+    router.post('/webchat/:channelId/messages', [WebchatController, 'send'])
+    router.get('/webchat/:channelId/messages', [WebchatController, 'poll'])
+  })
+  .use(middleware.webchatCors())
 
 router
   .group(() => {
@@ -118,6 +131,19 @@ router
     router.delete('ai/agents/:id', [AiAgentsController, 'destroy']).as('app.ai.agents.destroy')
     router.get('ai/models', [AiAgentsController, 'models']).as('app.ai.models')
     router.get('ai/credits', [AiAgentsController, 'credits']).as('app.ai.credits')
+
+    // AI knowledge base (RAG)
+    router.get('ai/knowledge', [AiKnowledgeController, 'index']).as('app.ai.knowledge.index')
+    router.post('ai/knowledge', [AiKnowledgeController, 'store']).as('app.ai.knowledge.store')
+    router.put('ai/knowledge/:id', [AiKnowledgeController, 'update']).as('app.ai.knowledge.update')
+    router
+      .delete('ai/knowledge/:id', [AiKnowledgeController, 'destroy'])
+      .as('app.ai.knowledge.destroy')
+
+    // Webchat embed snippet (owner)
+    router
+      .get('channels/:id/webchat-embed', [ChannelsController, 'webchatEmbed'])
+      .as('app.channels.webchat.embed')
 
     // Realtime (Centrifugo) tokens
     router.get('realtime/token', [RealtimeController, 'token']).as('app.realtime.token')

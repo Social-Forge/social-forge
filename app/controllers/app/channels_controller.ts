@@ -37,12 +37,13 @@ export default class ChannelsController {
     }
 
     const isWaha = payload.type === 'whatsapp_waha'
+    // Webchat needs no external connection — it's live as soon as it's embedded.
     const channel = await Channel.create({
       tenantId: tenant.id,
       divisionId: payload.divisionId ?? null,
       type: payload.type,
       name: payload.name,
-      status: 'disconnected',
+      status: payload.type === 'webchat' ? 'connected' : 'disconnected',
       wahaEngine: isWaha ? (payload.wahaEngine ?? 'gows') : null,
       wahaSessionName: isWaha ? `sf${randomUUID().replace(/-/g, '')}` : null,
       webhookSecret: string.random(32),
@@ -121,6 +122,18 @@ export default class ChannelsController {
 
     await channel.save()
     return response.ok({ status: channel.status, externalId: channel.externalId })
+  }
+
+  /** Embed snippet + widget URL for a webchat channel (linkchat). */
+  async webchatEmbed({ bouncer, params, request, response }: HttpContext) {
+    const channel = await Channel.findOrFail(params.id)
+    await bouncer.with(ChannelPolicy).authorize('view', channel)
+    if (channel.type !== 'webchat') {
+      return response.badRequest({ message: 'Only webchat channels have an embed snippet.' })
+    }
+    const host = env.get('APP_URL', `${request.protocol()}://${request.host()}`)
+    const snippet = `<script src="${host}/webchat.js" data-sf-channel="${channel.id}" data-sf-host="${host}" defer></script>`
+    return response.ok({ channelId: channel.id, scriptUrl: `${host}/webchat.js`, snippet })
   }
 
   // --- WAHA session actions -------------------------------------------------

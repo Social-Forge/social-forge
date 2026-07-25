@@ -97,6 +97,11 @@ export default class OutboundDispatcher {
         return this.#sendMessenger(channel, contact, message)
       case 'whatsapp_meta':
         return this.#sendWhatsAppMeta(channel, contact, message)
+      case 'webchat':
+        // No external provider — the visitor widget receives the message via the
+        // realtime broadcast already emitted at send time / on poll. Just assign
+        // a synthetic id and mark it delivered.
+        return `webchat:${randomUUID()}`
       default:
         throw new Error(`Outbound not supported for channel type "${channel.type}"`)
     }

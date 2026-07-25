@@ -6,6 +6,7 @@ import Message from '#models/message'
 import TenantContext from '#services/tenant_context'
 import aiRegistry from '#services/ai/registry'
 import AiCreditService from '#services/ai/ai_credit_service'
+import RagService from '#services/ai/rag_service'
 import OutboundService from '#services/messaging/outbound_service'
 import { isWithinWorkingHours } from '#services/ai/working_hours'
 import type { AiMessage } from '#services/ai/types'
@@ -63,12 +64,22 @@ export default class AiReplyService {
 
       const context = this.#toContext(history.reverse())
       // Only reply when the newest turn is from the customer.
-      if (context.at(-1)?.role !== 'user') return
+      const lastUser = context.at(-1)
+      if (lastUser?.role !== 'user') return
+
+      // Ground the reply in the agent's knowledge base (webchat RAG). No-op when
+      // no embeddings provider is configured or nothing relevant is found.
+      const chunks = await RagService.retrieve(agent.id, lastUser.content)
+      const system = chunks.length
+        ? `${agent.systemPrompt}\n\n# Knowledge base\nUse the following information to answer when relevant. If it doesn't cover the question, say so honestly.\n\n${chunks
+            .map((c) => `## ${c.title}\n${c.content}`)
+            .join('\n\n')}`
+        : agent.systemPrompt
 
       const provider = aiRegistry.get(agent.providerId)
       const result = await provider.chat(context, {
         model: agent.model,
-        system: agent.systemPrompt,
+        system,
         maxTokens: agent.maxTokens,
         // Claude ignores temperature; OpenAI honors it.
         ...(agent.temperature !== null ? { temperature: agent.temperature } : {}),

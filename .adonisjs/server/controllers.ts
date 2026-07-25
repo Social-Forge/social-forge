@@ -6,6 +6,7 @@
 export const controllers = {
   app: {
     AiAgents: () => import('#controllers/app/ai_agents_controller'),
+    AiKnowledge: () => import('#controllers/app/ai_knowledge_controller'),
     Channels: () => import('#controllers/app/channels_controller'),
     Chats: () => import('#controllers/app/chats_controller'),
     Conversations: () => import('#controllers/app/conversations_controller'),
@@ -18,6 +19,9 @@ export const controllers = {
   Health: () => import('#controllers/health_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
   Oauth: () => import('#controllers/oauth_controller'),
+  Robots: () => import('#controllers/robots_controller'),
   Session: () => import('#controllers/session_controller'),
+  Sitemaps: () => import('#controllers/sitemaps_controller'),
+  Webchat: () => import('#controllers/webchat_controller'),
   Webhooks: () => import('#controllers/webhooks_controller'),
 }

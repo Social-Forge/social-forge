@@ -19,6 +19,11 @@ export interface ApiDefinition {
     }
     telegram: typeof routes['webhooks.telegram']
   }
+  webchat: {
+    session: typeof routes['webchat.session']
+    send: typeof routes['webchat.send']
+    poll: typeof routes['webchat.poll']
+  }
   newAccount: {
     create: typeof routes['new_account.create']
     store: typeof routes['new_account.store']
@@ -70,6 +75,26 @@ export interface ApiDefinition {
       qr: typeof routes['app.channels.qr']
       status: typeof routes['app.channels.status']
       disconnect: typeof routes['app.channels.disconnect']
+      webchat: {
+        embed: typeof routes['app.channels.webchat.embed']
+      }
+    }
+    ai: {
+      agents: {
+        index: typeof routes['app.ai.agents.index']
+        store: typeof routes['app.ai.agents.store']
+        show: typeof routes['app.ai.agents.show']
+        update: typeof routes['app.ai.agents.update']
+        destroy: typeof routes['app.ai.agents.destroy']
+      }
+      models: typeof routes['app.ai.models']
+      credits: typeof routes['app.ai.credits']
+      knowledge: {
+        index: typeof routes['app.ai.knowledge.index']
+        store: typeof routes['app.ai.knowledge.store']
+        update: typeof routes['app.ai.knowledge.update']
+        destroy: typeof routes['app.ai.knowledge.destroy']
+      }
     }
     realtime: {
       token: typeof routes['app.realtime.token']
