@@ -180,33 +180,42 @@
 
 ---
 
-## Fase 7 — Billing & Komersil
+## Fase 7 — Billing & Komersil ✅ SELESAI (backend, 2026-07-25)
 
 **Tujuan:** siap dijual.
 
-- [ ] `plans`, `subscriptions`, `subscription_addons`, `entitlements`, `invoices`, `payment_events`.
-- [ ] Entitlement engine + enforcement di semua titik (channel/agent/AI/quick-reply).
-- [ ] Payment gateway abstraction + **Xendit** adapter (invoice, webhook, verify).
-- [ ] Checkout flow + invoice page realtime (Centrifugo webhook status).
-- [ ] **billing/scheduler worker**: expiry, downgrade, reset kuota, reminder.
-- [ ] Add-on purchase (slot & AI credits).
-- [ ] (Menyusul) Midtrans & PayPal adapter.
+- [x] Migrasi `plans` (katalog global, `features` jsonb), `subscriptions`, `subscription_addons`, `invoices`, `payment_events` + RLS (kecuali `plans`) + seed plans free/pro. _Entitlements di-derive dari `plans.features` + addons (bukan tabel terpisah)._
+- [x] **Entitlement engine data-driven**: `EntitlementService.featuresFor/channelLimitFor` baca `plans.features` + `channel_slot` addons (non-expired); fallback ke katalog statis bila plan belum di-seed. Enforcement di `assertCanCreateChannel`.
+- [x] **Payment gateway abstraction** (`PaymentGateway`) + **Xendit adapter** (HTTP: createInvoice Basic-auth, verify `x-callback-token`, parse status PAID/EXPIRED). `config/billing.ts` (harga addon + TTL + period).
+- [x] **Checkout flow** (`BillingService.checkout` → invoice pending + `checkout_url` Xendit) untuk upgrade plan / channel_slot / ai_credits. **Invoice page realtime**: webhook broadcast ke channel `billing:tenant.{tid}.invoice.{iid}` + endpoint show mint subscription token.
+- [x] **Webhook** `POST /webhooks/xendit` (verify token, CSRF-exempt, dedup via `payment_events.external_id`) → paid → aktivasi (plan pro + period end, grant AI credits, addon apply) + broadcast.
+- [x] **billing:run command** (scheduler): expire subscription lewat `current_period_end` → downgrade free, expire invoice pending kadaluarsa. _Reminder ditunda._
+- [x] **Add-on purchase**: channel slot (nambah limit) & AI credits (top-up ledger) via checkout+webhook.
+- [x] Free subscription (trialing) dibuat otomatis saat register (resilient bila plans belum di-seed).
+- [ ] Checkout/pricing/invoice **UI** + Midtrans & PayPal adapter — **ditunda ke Fase 8** (env sudah disiapkan).
 
-**Exit criteria:** tenant bisa upgrade ke Pro & beli add-on via Xendit; entitlement aktif otomatis pasca-bayar; expiry berjalan.
+**Exit criteria:** ✅ tenant bisa upgrade ke Pro & beli add-on via Xendit (invoice + checkout URL), entitlement aktif otomatis pasca-bayar (webhook idempotent → plan/credits/addon), expiry+downgrade berjalan via `billing:run`; ✅ CI hijau (lint 0 · typecheck 0 · **69 test passed**, +entitlement plan/addon/fallback, checkout invoice, activation subscription/credits + idempotency, webhook parse). Pembayaran riil butuh `XENDIT_SECRET_KEY`/`XENDIT_WEBHOOK_TOKEN` + UI checkout (Fase 8).
+
+> **Catatan implementasi:** `entitlements` tidak dibuat sebagai tabel — di-derive dari `plans.features` + `subscription_addons` (lebih fleksibel, satu sumber). `channelLimit(plan,type)` sync lama tetap sebagai fallback katalog (dipakai test lama); enforcement nyata pakai `channelLimitFor(tenant,type)` async. Aktivasi invoice **idempotent** (guard `status==='paid'`) + webhook dedup via `payment_events.external_id` — aman untuk redelivery Xendit.
 
 ---
 
-## Fase 8 — Landing Page & Admin Polish
+## Fase 8 — Landing Page & Admin Polish 🔶 SEBAGIAN (landing + billing UI, 2026-07-25)
 
 **Tujuan:** wajah publik & panel admin.
 
-- [ ] Landing: Home, About, Contact, Privacy, Terms, Blog, Help Center, Career, Roadmap, Documentation.
-- [ ] i18n EN + ID (landing + app).
-- [ ] Admin panel (tenant): dashboard, settings, channel, division, member, billing.
-- [ ] Super Admin panel (platform): kelola tenant, plan, billing global, metrics.
-- [ ] Auto-response & working hours UI.
+- [x] **Landing home** ([home.vue](../inertia/pages/home.vue)): hero + badge, 6 feature cards, pricing 2-tier (Free/Pro), CTA band, footer 4-kolom (link ke About/Contact/Privacy/Terms/Blog/Docs/Help/Career/Roadmap) — semua via `useTrans` `t()`, theme-aware, responsive. Header sticky + `LanguageSwitcher` + `ThemeToggle` + login/signup / open-app.
+- [x] **i18n EN + ID** dwibahasa: infra sudah ada (`useTrans` baca `page.props.translations` + `?lang=` switch); ditambah ~60 key `landing.*` + `billing.*` di `resources/lang/{en,id}/messages.json`.
+- [x] **Billing UI** ([app/billing/index.vue](../inertia/pages/app/billing/index.vue), route `/app/billing`): current plan + status + saldo AI credits, plans grid + tombol upgrade (checkout → redirect `checkout_url`), beli AI credits, daftar invoice + "pay now" — wiring endpoint Fase 7. Menutup gap UI Fase 7.
+- [x] **Settings hub** ([app/settings/index.vue](../inertia/pages/app/settings/index.vue), route `/app/settings`): kartu link ke Billing/Chats/Contacts.
+- [ ] Konten legal/info pages (About, Contact, Privacy, Terms, Blog, Help, Career, Docs) — halaman ada tapi masih stub; **isi konten ditunda**.
+- [ ] Admin panel management screens (channel/division/member/AI agent/knowledge/contacts/labels/quick-reply **forms**) — API lengkap; **UI form ditunda** (incremental).
+- [ ] **Super Admin panel** (platform: kelola tenant, plan, billing global, metrics) — **ditunda**.
+- [ ] Auto-response & working hours UI — **ditunda** (backend `ai_agents.working_hours` sudah ada).
 
-**Exit criteria:** landing lengkap dwibahasa; admin & super-admin operasional.
+**Exit criteria (sebagian):** ✅ landing publik dwibahasa (EN/ID) dengan pricing + feature + footer, language switcher jalan; ✅ billing UI operasional (upgrade/checkout/invoice/top-up credits) menutup gap Fase 7; ✅ CI hijau (lint 0 · typecheck 0 (tsc + **vue-tsc**) · 69 test passed). Super-admin panel + form CRUD management + konten legal = **incremental lanjutan** (bukan blocker fungsional; backend semua sudah siap).
+
+> **Catatan implementasi:** page Inertia baru butuh entry di `.adonisjs/server/pages.d.ts` (typegen — di-regen otomatis saat `serve`/`build`) agar `renderInertia('app/billing/index', {})` lolos vue-tsc. Landing pakai `<a href>` biasa (full-reload) untuk nav marketing; halaman app self-contained (tak pakai `app-shell` yang butuh `AppSidebar`).
 
 ---
 

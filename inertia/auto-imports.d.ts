@@ -7,10 +7,14 @@
 export {}
 declare global {
   const ApiError: typeof import('./composables/useApi').ApiError
+  const Deferred: typeof import('@inertiajs/vue3').Deferred
   const EffectScope: typeof import('vue').EffectScope
+  const Head: typeof import('@inertiajs/vue3').Head
   const Icon: typeof import('./lib/iconify-offline').Icon
+  const InfiniteScroll: typeof import('@inertiajs/vue3').InfiniteScroll
   const IsoLanguages: typeof import('./utils/iso').IsoLanguages
   const TimezoneList: typeof import('./utils/iso').TimezoneList
+  const WhenVisible: typeof import('@inertiajs/vue3').WhenVisible
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const addCollection: typeof import('./lib/iconify-offline').addCollection
   const addIcon: typeof import('./lib/iconify-offline').addIcon
@@ -226,6 +230,7 @@ declare global {
   const useGeolocation: typeof import('@vueuse/core').useGeolocation
   const useGlobalAlert: typeof import('./composables/useAlert').useGlobalAlert
   const useHead: typeof import('@vueuse/head').useHead
+  const useHttp: typeof import('@inertiajs/vue3').useHttp
   const useI18n: typeof import('vue-i18n').useI18n
   const useId: typeof import('vue').useId
   const useIdle: typeof import('@vueuse/core').useIdle
@@ -268,6 +273,7 @@ declare global {
   const usePointer: typeof import('@vueuse/core').usePointer
   const usePointerLock: typeof import('@vueuse/core').usePointerLock
   const usePointerSwipe: typeof import('@vueuse/core').usePointerSwipe
+  const usePoll: typeof import('@inertiajs/vue3').usePoll
   const usePolling: typeof import('./composables/usePolling').usePolling
   const usePrecision: typeof import('@vueuse/math').usePrecision
   const usePreferredColorScheme: typeof import('@vueuse/core').usePreferredColorScheme
@@ -276,11 +282,13 @@ declare global {
   const usePreferredLanguages: typeof import('@vueuse/core').usePreferredLanguages
   const usePreferredReducedMotion: typeof import('@vueuse/core').usePreferredReducedMotion
   const usePreferredReducedTransparency: typeof import('@vueuse/core').usePreferredReducedTransparency
+  const usePrefetch: typeof import('@inertiajs/vue3').usePrefetch
   const usePrevious: typeof import('@vueuse/core').usePrevious
   const useProjection: typeof import('@vueuse/math').useProjection
   const useRafFn: typeof import('@vueuse/core').useRafFn
   const useRealtime: typeof import('./composables/useRealtime').useRealtime
   const useRefHistory: typeof import('@vueuse/core').useRefHistory
+  const useRemember: typeof import('@inertiajs/vue3').useRemember
   const useResizeObserver: typeof import('@vueuse/core').useResizeObserver
   const useRound: typeof import('@vueuse/math').useRound
   const useRoute: typeof import('vue-router').useRoute
@@ -385,10 +393,14 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly ApiError: UnwrapRef<typeof import('./composables/useApi')['ApiError']>
+    readonly Deferred: UnwrapRef<typeof import('@inertiajs/vue3')['Deferred']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly Head: UnwrapRef<typeof import('@inertiajs/vue3')['Head']>
     readonly Icon: UnwrapRef<typeof import('./lib/iconify-offline')['Icon']>
+    readonly InfiniteScroll: UnwrapRef<typeof import('@inertiajs/vue3')['InfiniteScroll']>
     readonly IsoLanguages: UnwrapRef<typeof import('./utils/iso')['IsoLanguages']>
     readonly TimezoneList: UnwrapRef<typeof import('./utils/iso')['TimezoneList']>
+    readonly WhenVisible: UnwrapRef<typeof import('@inertiajs/vue3')['WhenVisible']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
     readonly addCollection: UnwrapRef<typeof import('./lib/iconify-offline')['addCollection']>
     readonly addIcon: UnwrapRef<typeof import('./lib/iconify-offline')['addIcon']>
@@ -604,6 +616,7 @@ declare module 'vue' {
     readonly useGeolocation: UnwrapRef<typeof import('@vueuse/core')['useGeolocation']>
     readonly useGlobalAlert: UnwrapRef<typeof import('./composables/useAlert')['useGlobalAlert']>
     readonly useHead: UnwrapRef<typeof import('@vueuse/head')['useHead']>
+    readonly useHttp: UnwrapRef<typeof import('@inertiajs/vue3')['useHttp']>
     readonly useI18n: UnwrapRef<typeof import('vue-i18n')['useI18n']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useIdle: UnwrapRef<typeof import('@vueuse/core')['useIdle']>
@@ -646,6 +659,7 @@ declare module 'vue' {
     readonly usePointer: UnwrapRef<typeof import('@vueuse/core')['usePointer']>
     readonly usePointerLock: UnwrapRef<typeof import('@vueuse/core')['usePointerLock']>
     readonly usePointerSwipe: UnwrapRef<typeof import('@vueuse/core')['usePointerSwipe']>
+    readonly usePoll: UnwrapRef<typeof import('@inertiajs/vue3')['usePoll']>
     readonly usePolling: UnwrapRef<typeof import('./composables/usePolling')['usePolling']>
     readonly usePrecision: UnwrapRef<typeof import('@vueuse/math')['usePrecision']>
     readonly usePreferredColorScheme: UnwrapRef<typeof import('@vueuse/core')['usePreferredColorScheme']>
@@ -654,11 +668,13 @@ declare module 'vue' {
     readonly usePreferredLanguages: UnwrapRef<typeof import('@vueuse/core')['usePreferredLanguages']>
     readonly usePreferredReducedMotion: UnwrapRef<typeof import('@vueuse/core')['usePreferredReducedMotion']>
     readonly usePreferredReducedTransparency: UnwrapRef<typeof import('@vueuse/core')['usePreferredReducedTransparency']>
+    readonly usePrefetch: UnwrapRef<typeof import('@inertiajs/vue3')['usePrefetch']>
     readonly usePrevious: UnwrapRef<typeof import('@vueuse/core')['usePrevious']>
     readonly useProjection: UnwrapRef<typeof import('@vueuse/math')['useProjection']>
     readonly useRafFn: UnwrapRef<typeof import('@vueuse/core')['useRafFn']>
     readonly useRealtime: UnwrapRef<typeof import('./composables/useRealtime')['useRealtime']>
     readonly useRefHistory: UnwrapRef<typeof import('@vueuse/core')['useRefHistory']>
+    readonly useRemember: UnwrapRef<typeof import('@inertiajs/vue3')['useRemember']>
     readonly useResizeObserver: UnwrapRef<typeof import('@vueuse/core')['useResizeObserver']>
     readonly useRound: UnwrapRef<typeof import('@vueuse/math')['useRound']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>

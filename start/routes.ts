@@ -31,6 +31,8 @@ const SearchController = () => import('#controllers/app/search_controller')
 const ContactsController = () => import('#controllers/app/contacts_controller')
 const LabelsController = () => import('#controllers/app/labels_controller')
 const QuickRepliesController = () => import('#controllers/app/quick_replies_controller')
+const BillingController = () => import('#controllers/app/billing_controller')
+const BillingWebhooksController = () => import('#controllers/billing_webhooks_controller')
 
 // Provider webhooks (public — verified by per-channel secret, not middleware).
 const WebhooksController = () => import('#controllers/webhooks_controller')
@@ -42,6 +44,9 @@ router.post('/webhooks/meta', [WebhooksController, 'meta']).as('webhooks.meta')
 router
   .post('/webhooks/telegram/:channelId', [WebhooksController, 'telegram'])
   .as('webhooks.telegram')
+
+// Payment gateway webhook (public — verified by callback token, CSRF-exempt).
+router.post('/webhooks/xendit', [BillingWebhooksController, 'xendit']).as('webhooks.xendit')
 
 // Public webchat widget API (embedded on external sites — permissive CORS,
 // CSRF-exempt, no auth; isolation via the channel's tenant).
@@ -148,6 +153,21 @@ router
     router
       .get('channels/:id/webchat-embed', [ChannelsController, 'webchatEmbed'])
       .as('app.channels.webchat.embed')
+
+    // Settings hub (Inertia)
+    router.on('settings').renderInertia('app/settings/index', {}).as('app.settings.page')
+
+    // Billing page (Inertia) + JSON API (Owner manages, Supervisor+ views)
+    router.on('billing').renderInertia('app/billing/index', {}).as('app.billing.page')
+    router.get('billing/plans', [BillingController, 'plans']).as('app.billing.plans')
+    router
+      .get('billing/subscription', [BillingController, 'subscription'])
+      .as('app.billing.subscription')
+    router.post('billing/checkout', [BillingController, 'checkout']).as('app.billing.checkout')
+    router.get('billing/invoices', [BillingController, 'invoices']).as('app.billing.invoices')
+    router
+      .get('billing/invoices/:id', [BillingController, 'showInvoice'])
+      .as('app.billing.invoices.show')
 
     // Search (Typesense)
     router.get('search', [SearchController, 'index']).as('app.search')

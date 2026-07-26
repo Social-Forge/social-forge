@@ -328,6 +328,57 @@ export class DivisionSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class InvoiceSchema extends BaseModel {
+  static $columns = [
+    'amount',
+    'checkoutUrl',
+    'createdAt',
+    'currency',
+    'description',
+    'expiresAt',
+    'id',
+    'number',
+    'paidAt',
+    'provider',
+    'providerInvoiceId',
+    'purpose',
+    'status',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = InvoiceSchema.$columns
+  @column()
+  declare amount: number
+  @column()
+  declare checkoutUrl: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare currency: string
+  @column()
+  declare description: string
+  @column.dateTime()
+  declare expiresAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare number: string
+  @column.dateTime()
+  declare paidAt: DateTime | null
+  @column()
+  declare provider: string
+  @column()
+  declare providerInvoiceId: string | null
+  @column()
+  declare purpose: any
+  @column()
+  declare status: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class LabelSchema extends BaseModel {
   static $columns = ['color', 'createdAt', 'id', 'name', 'tenantId', 'updatedAt'] as const
   $columns = LabelSchema.$columns
@@ -468,6 +519,75 @@ export class OauthProviderSchema extends BaseModel {
   declare userId: string
 }
 
+export class PaymentEventSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'eventType',
+    'externalId',
+    'id',
+    'invoiceId',
+    'payload',
+    'provider',
+    'tenantId',
+  ] as const
+  $columns = PaymentEventSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare eventType: string
+  @column()
+  declare externalId: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare invoiceId: string | null
+  @column()
+  declare payload: any
+  @column()
+  declare provider: string
+  @column()
+  declare tenantId: string
+}
+
+export class PlanSchema extends BaseModel {
+  static $columns = [
+    'code',
+    'createdAt',
+    'currency',
+    'features',
+    'id',
+    'interval',
+    'isActive',
+    'name',
+    'price',
+    'sort',
+    'updatedAt',
+  ] as const
+  $columns = PlanSchema.$columns
+  @column()
+  declare code: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare currency: string
+  @column()
+  declare features: any
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare interval: string
+  @column()
+  declare isActive: boolean
+  @column()
+  declare name: string
+  @column()
+  declare price: number
+  @column()
+  declare sort: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class QuickReplySchema extends BaseModel {
   static $columns = [
     'body',
@@ -511,6 +631,69 @@ export class RoleSchema extends BaseModel {
   declare level: number | null
   @column()
   declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SubscriptionAddonSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'expiresAt',
+    'id',
+    'meta',
+    'quantity',
+    'tenantId',
+    'type',
+    'updatedAt',
+  ] as const
+  $columns = SubscriptionAddonSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare meta: any
+  @column()
+  declare quantity: number
+  @column()
+  declare tenantId: string
+  @column()
+  declare type: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SubscriptionSchema extends BaseModel {
+  static $columns = [
+    'cancelAtPeriodEnd',
+    'createdAt',
+    'currentPeriodEnd',
+    'currentPeriodStart',
+    'id',
+    'planId',
+    'status',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = SubscriptionSchema.$columns
+  @column()
+  declare cancelAtPeriodEnd: boolean
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare currentPeriodEnd: DateTime | null
+  @column.dateTime()
+  declare currentPeriodStart: DateTime | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare planId: string
+  @column()
+  declare status: string
+  @column()
+  declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

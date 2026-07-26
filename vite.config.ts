@@ -28,7 +28,21 @@ export default defineConfig({
         'vue-router',
         'vue-i18n',
         '@vueuse/math',
-        { '@inertiajs/vue3': ['usePage', 'useForm', 'router'] },
+        {
+          '@inertiajs/vue3': [
+            'usePage',
+            'Head',
+            'Deferred',
+            'useForm',
+            'router',
+            'InfiniteScroll',
+            'useHttp',
+            'usePoll',
+            'usePrefetch',
+            'useRemember',
+            'WhenVisible',
+          ],
+        },
       ],
       dts: 'inertia/auto-imports.d.ts',
       dirs: [

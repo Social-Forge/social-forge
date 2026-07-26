@@ -56,11 +56,7 @@ const groups = enMessages.groups.map((g: any) => ({
 const emojiData = ref<Emoji[]>([])
 
 const initEmojis = async () => {
-  try {
-    emojiData.value = await import(`emojibase-data/${props.locale}/compact.json`)
-  } catch {
-    emojiData.value = enEmojis as Emoji[]
-  }
+  emojiData.value = enEmojis as Emoji[]
   isLoaded.value = true
 }
 

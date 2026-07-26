@@ -4,6 +4,8 @@ import type { TransactionClientContract } from '@adonisjs/lucid/types/database'
 import Tenant from '#models/tenant'
 import User from '#models/user'
 import Role, { ROLES } from '#models/role'
+import Plan from '#models/plan'
+import Subscription from '#models/subscription'
 import EntitlementService from '#services/entitlement_service'
 
 const TRIAL_DAYS = 14
@@ -71,6 +73,21 @@ export default class TenantService {
         },
         { client: trx }
       )
+
+      // Attach a trialing free subscription when the plan catalog is seeded.
+      const freePlan = await Plan.findBy('code', 'free', { client: trx })
+      if (freePlan) {
+        await Subscription.create(
+          {
+            tenantId: tenant.id,
+            planId: freePlan.id,
+            status: 'trialing',
+            currentPeriodStart: DateTime.now(),
+            currentPeriodEnd: DateTime.now().plus({ days: TRIAL_DAYS }),
+          },
+          { client: trx }
+        )
+      }
 
       return { tenant, owner }
     })

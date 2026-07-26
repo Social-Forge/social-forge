@@ -100,6 +100,20 @@ export default await Env.create(new URL('../', import.meta.url), {
   TYPESENSE_PORT: Env.schema.number.optional(),
   TYPESENSE_PROTOCOL: Env.schema.enum.optional(['http', 'https'] as const),
 
+  // Billing — Xendit (Phase 7)
+  XENDIT_SECRET_KEY: Env.schema.string.optional(),
+  XENDIT_PUBLIC_KEY: Env.schema.string.optional(),
+  XENDIT_WEBHOOK_TOKEN: Env.schema.string.optional(),
+  XENDIT_API_URL: Env.schema.string.optional(),
+  MIDTRANS_MERCHANT_ID: Env.schema.string.optional(),
+  MIDTRANS_SERVER_KEY: Env.schema.string.optional(),
+  MIDTRANS_CLIENT_KEY: Env.schema.string.optional(),
+  MIDTRANS_IS_PRODUCTION: Env.schema.boolean.optional(),
+  PAYPAL_CLIENT_ID: Env.schema.string.optional(),
+  PAYPAL_CLIENT_SECRET: Env.schema.string.optional(),
+  PAYPAL_WEBHOOK_ID: Env.schema.string.optional(),
+  PAYPAL_MODE: Env.schema.enum.optional(['sandbox', 'production'] as const),
+
   // AI providers (Phase 5) — bundled auto-reply / webchat bot
   AI_DEFAULT_PROVIDER: Env.schema.enum.optional(['claude', 'openai'] as const),
   AI_DEFAULT_MODEL: Env.schema.string.optional(),

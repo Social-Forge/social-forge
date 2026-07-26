@@ -54,6 +54,11 @@ class CentrifugoService {
     return `chat:tenant.${tenantId}.agent.${userId}`
   }
 
+  /** Invoice status updates for the checkout/invoice page. */
+  billingInvoiceChannel(tenantId: string, invoiceId: string) {
+    return `billing:tenant.${tenantId}.invoice.${invoiceId}`
+  }
+
   // --- tokens ---------------------------------------------------------------
   connectionToken(userId: string): string {
     const now = Math.floor(Date.now() / 1000)
