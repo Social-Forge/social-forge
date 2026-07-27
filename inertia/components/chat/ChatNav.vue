@@ -36,6 +36,9 @@ function logout() {
     </Link>
     <div class="mt-auto space-y-2">
       <ThemeToggle />
+      <div class="flex items-center justify-center">
+        <LanguageSwitcher />
+      </div>
       <button
         class="text-muted-foreground hover:bg-muted flex size-11 items-center justify-center rounded-xl"
         title="Logout"

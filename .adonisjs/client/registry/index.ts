@@ -42,6 +42,66 @@ const routes = {
     tokens: [{"old":"/robots.txt","type":0,"val":"robots.txt","end":""}],
     types: placeholder as Registry['robots.txt']['types'],
   },
+  'about': {
+    methods: ["GET","HEAD"],
+    pattern: '/about',
+    tokens: [{"old":"/about","type":0,"val":"about","end":""}],
+    types: placeholder as Registry['about']['types'],
+  },
+  'contact': {
+    methods: ["GET","HEAD"],
+    pattern: '/contact',
+    tokens: [{"old":"/contact","type":0,"val":"contact","end":""}],
+    types: placeholder as Registry['contact']['types'],
+  },
+  'pricing': {
+    methods: ["GET","HEAD"],
+    pattern: '/pricing',
+    tokens: [{"old":"/pricing","type":0,"val":"pricing","end":""}],
+    types: placeholder as Registry['pricing']['types'],
+  },
+  'privacy': {
+    methods: ["GET","HEAD"],
+    pattern: '/privacy',
+    tokens: [{"old":"/privacy","type":0,"val":"privacy","end":""}],
+    types: placeholder as Registry['privacy']['types'],
+  },
+  'terms': {
+    methods: ["GET","HEAD"],
+    pattern: '/terms',
+    tokens: [{"old":"/terms","type":0,"val":"terms","end":""}],
+    types: placeholder as Registry['terms']['types'],
+  },
+  'help': {
+    methods: ["GET","HEAD"],
+    pattern: '/help',
+    tokens: [{"old":"/help","type":0,"val":"help","end":""}],
+    types: placeholder as Registry['help']['types'],
+  },
+  'docs': {
+    methods: ["GET","HEAD"],
+    pattern: '/docs',
+    tokens: [{"old":"/docs","type":0,"val":"docs","end":""}],
+    types: placeholder as Registry['docs']['types'],
+  },
+  'career': {
+    methods: ["GET","HEAD"],
+    pattern: '/career',
+    tokens: [{"old":"/career","type":0,"val":"career","end":""}],
+    types: placeholder as Registry['career']['types'],
+  },
+  'blog': {
+    methods: ["GET","HEAD"],
+    pattern: '/blog',
+    tokens: [{"old":"/blog","type":0,"val":"blog","end":""}],
+    types: placeholder as Registry['blog']['types'],
+  },
+  'roadmap': {
+    methods: ["GET","HEAD"],
+    pattern: '/roadmap',
+    tokens: [{"old":"/roadmap","type":0,"val":"roadmap","end":""}],
+    types: placeholder as Registry['roadmap']['types'],
+  },
   'webhooks.waha': {
     methods: ["POST"],
     pattern: '/webhooks/waha/:channelId',
@@ -65,6 +125,12 @@ const routes = {
     pattern: '/webhooks/telegram/:channelId',
     tokens: [{"old":"/webhooks/telegram/:channelId","type":0,"val":"webhooks","end":""},{"old":"/webhooks/telegram/:channelId","type":0,"val":"telegram","end":""},{"old":"/webhooks/telegram/:channelId","type":1,"val":"channelId","end":""}],
     types: placeholder as Registry['webhooks.telegram']['types'],
+  },
+  'webhooks.xendit': {
+    methods: ["POST"],
+    pattern: '/webhooks/xendit',
+    tokens: [{"old":"/webhooks/xendit","type":0,"val":"webhooks","end":""},{"old":"/webhooks/xendit","type":0,"val":"xendit","end":""}],
+    types: placeholder as Registry['webhooks.xendit']['types'],
   },
   'webchat.session': {
     methods: ["POST"],
@@ -228,10 +294,16 @@ const routes = {
     tokens: [{"old":"/app/team/:id","type":0,"val":"app","end":""},{"old":"/app/team/:id","type":0,"val":"team","end":""},{"old":"/app/team/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['app.team.destroy']['types'],
   },
-  'app.channels.index': {
+  'app.channels.page': {
     methods: ["GET","HEAD"],
     pattern: '/app/channels',
     tokens: [{"old":"/app/channels","type":0,"val":"app","end":""},{"old":"/app/channels","type":0,"val":"channels","end":""}],
+    types: placeholder as Registry['app.channels.page']['types'],
+  },
+  'app.channels.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/channels/list',
+    tokens: [{"old":"/app/channels/list","type":0,"val":"app","end":""},{"old":"/app/channels/list","type":0,"val":"channels","end":""},{"old":"/app/channels/list","type":0,"val":"list","end":""}],
     types: placeholder as Registry['app.channels.index']['types'],
   },
   'app.channels.store': {
@@ -282,6 +354,12 @@ const routes = {
     tokens: [{"old":"/app/channels/:id/disconnect","type":0,"val":"app","end":""},{"old":"/app/channels/:id/disconnect","type":0,"val":"channels","end":""},{"old":"/app/channels/:id/disconnect","type":1,"val":"id","end":""},{"old":"/app/channels/:id/disconnect","type":0,"val":"disconnect","end":""}],
     types: placeholder as Registry['app.channels.disconnect']['types'],
   },
+  'app.ai.page': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/ai',
+    tokens: [{"old":"/app/ai","type":0,"val":"app","end":""},{"old":"/app/ai","type":0,"val":"ai","end":""}],
+    types: placeholder as Registry['app.ai.page']['types'],
+  },
   'app.ai.agents.index': {
     methods: ["GET","HEAD"],
     pattern: '/app/ai/agents',
@@ -324,6 +402,48 @@ const routes = {
     tokens: [{"old":"/app/ai/credits","type":0,"val":"app","end":""},{"old":"/app/ai/credits","type":0,"val":"ai","end":""},{"old":"/app/ai/credits","type":0,"val":"credits","end":""}],
     types: placeholder as Registry['app.ai.credits']['types'],
   },
+  'app.ai.playbooks.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/ai/playbooks',
+    tokens: [{"old":"/app/ai/playbooks","type":0,"val":"app","end":""},{"old":"/app/ai/playbooks","type":0,"val":"ai","end":""},{"old":"/app/ai/playbooks","type":0,"val":"playbooks","end":""}],
+    types: placeholder as Registry['app.ai.playbooks.index']['types'],
+  },
+  'app.ai.playbooks.store': {
+    methods: ["POST"],
+    pattern: '/app/ai/playbooks',
+    tokens: [{"old":"/app/ai/playbooks","type":0,"val":"app","end":""},{"old":"/app/ai/playbooks","type":0,"val":"ai","end":""},{"old":"/app/ai/playbooks","type":0,"val":"playbooks","end":""}],
+    types: placeholder as Registry['app.ai.playbooks.store']['types'],
+  },
+  'app.ai.playbooks.update': {
+    methods: ["PUT"],
+    pattern: '/app/ai/playbooks/:id',
+    tokens: [{"old":"/app/ai/playbooks/:id","type":0,"val":"app","end":""},{"old":"/app/ai/playbooks/:id","type":0,"val":"ai","end":""},{"old":"/app/ai/playbooks/:id","type":0,"val":"playbooks","end":""},{"old":"/app/ai/playbooks/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.ai.playbooks.update']['types'],
+  },
+  'app.ai.playbooks.destroy': {
+    methods: ["DELETE"],
+    pattern: '/app/ai/playbooks/:id',
+    tokens: [{"old":"/app/ai/playbooks/:id","type":0,"val":"app","end":""},{"old":"/app/ai/playbooks/:id","type":0,"val":"ai","end":""},{"old":"/app/ai/playbooks/:id","type":0,"val":"playbooks","end":""},{"old":"/app/ai/playbooks/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.ai.playbooks.destroy']['types'],
+  },
+  'app.ai.assets.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/ai/assets',
+    tokens: [{"old":"/app/ai/assets","type":0,"val":"app","end":""},{"old":"/app/ai/assets","type":0,"val":"ai","end":""},{"old":"/app/ai/assets","type":0,"val":"assets","end":""}],
+    types: placeholder as Registry['app.ai.assets.index']['types'],
+  },
+  'app.ai.assets.store': {
+    methods: ["POST"],
+    pattern: '/app/ai/assets',
+    tokens: [{"old":"/app/ai/assets","type":0,"val":"app","end":""},{"old":"/app/ai/assets","type":0,"val":"ai","end":""},{"old":"/app/ai/assets","type":0,"val":"assets","end":""}],
+    types: placeholder as Registry['app.ai.assets.store']['types'],
+  },
+  'app.ai.assets.destroy': {
+    methods: ["DELETE"],
+    pattern: '/app/ai/assets/:id',
+    tokens: [{"old":"/app/ai/assets/:id","type":0,"val":"app","end":""},{"old":"/app/ai/assets/:id","type":0,"val":"ai","end":""},{"old":"/app/ai/assets/:id","type":0,"val":"assets","end":""},{"old":"/app/ai/assets/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.ai.assets.destroy']['types'],
+  },
   'app.ai.knowledge.index': {
     methods: ["GET","HEAD"],
     pattern: '/app/ai/knowledge',
@@ -354,16 +474,76 @@ const routes = {
     tokens: [{"old":"/app/channels/:id/webchat-embed","type":0,"val":"app","end":""},{"old":"/app/channels/:id/webchat-embed","type":0,"val":"channels","end":""},{"old":"/app/channels/:id/webchat-embed","type":1,"val":"id","end":""},{"old":"/app/channels/:id/webchat-embed","type":0,"val":"webchat-embed","end":""}],
     types: placeholder as Registry['app.channels.webchat.embed']['types'],
   },
+  'app.settings.page': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/settings',
+    tokens: [{"old":"/app/settings","type":0,"val":"app","end":""},{"old":"/app/settings","type":0,"val":"settings","end":""}],
+    types: placeholder as Registry['app.settings.page']['types'],
+  },
+  'app.billing.page': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/billing',
+    tokens: [{"old":"/app/billing","type":0,"val":"app","end":""},{"old":"/app/billing","type":0,"val":"billing","end":""}],
+    types: placeholder as Registry['app.billing.page']['types'],
+  },
+  'app.billing.plans': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/billing/plans',
+    tokens: [{"old":"/app/billing/plans","type":0,"val":"app","end":""},{"old":"/app/billing/plans","type":0,"val":"billing","end":""},{"old":"/app/billing/plans","type":0,"val":"plans","end":""}],
+    types: placeholder as Registry['app.billing.plans']['types'],
+  },
+  'app.billing.subscription': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/billing/subscription',
+    tokens: [{"old":"/app/billing/subscription","type":0,"val":"app","end":""},{"old":"/app/billing/subscription","type":0,"val":"billing","end":""},{"old":"/app/billing/subscription","type":0,"val":"subscription","end":""}],
+    types: placeholder as Registry['app.billing.subscription']['types'],
+  },
+  'app.billing.checkout': {
+    methods: ["POST"],
+    pattern: '/app/billing/checkout',
+    tokens: [{"old":"/app/billing/checkout","type":0,"val":"app","end":""},{"old":"/app/billing/checkout","type":0,"val":"billing","end":""},{"old":"/app/billing/checkout","type":0,"val":"checkout","end":""}],
+    types: placeholder as Registry['app.billing.checkout']['types'],
+  },
+  'app.billing.invoices': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/billing/invoices',
+    tokens: [{"old":"/app/billing/invoices","type":0,"val":"app","end":""},{"old":"/app/billing/invoices","type":0,"val":"billing","end":""},{"old":"/app/billing/invoices","type":0,"val":"invoices","end":""}],
+    types: placeholder as Registry['app.billing.invoices']['types'],
+  },
+  'app.billing.invoices.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/billing/invoices/:id',
+    tokens: [{"old":"/app/billing/invoices/:id","type":0,"val":"app","end":""},{"old":"/app/billing/invoices/:id","type":0,"val":"billing","end":""},{"old":"/app/billing/invoices/:id","type":0,"val":"invoices","end":""},{"old":"/app/billing/invoices/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['app.billing.invoices.show']['types'],
+  },
   'app.search': {
     methods: ["GET","HEAD"],
     pattern: '/app/search',
     tokens: [{"old":"/app/search","type":0,"val":"app","end":""},{"old":"/app/search","type":0,"val":"search","end":""}],
     types: placeholder as Registry['app.search']['types'],
   },
-  'app.contacts.index': {
+  'app.contacts.page': {
     methods: ["GET","HEAD"],
     pattern: '/app/contacts',
     tokens: [{"old":"/app/contacts","type":0,"val":"app","end":""},{"old":"/app/contacts","type":0,"val":"contacts","end":""}],
+    types: placeholder as Registry['app.contacts.page']['types'],
+  },
+  'app.catalog.page': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/catalog',
+    tokens: [{"old":"/app/catalog","type":0,"val":"app","end":""},{"old":"/app/catalog","type":0,"val":"catalog","end":""}],
+    types: placeholder as Registry['app.catalog.page']['types'],
+  },
+  'app.organization.page': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/organization',
+    tokens: [{"old":"/app/organization","type":0,"val":"app","end":""},{"old":"/app/organization","type":0,"val":"organization","end":""}],
+    types: placeholder as Registry['app.organization.page']['types'],
+  },
+  'app.contacts.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/app/contacts/list',
+    tokens: [{"old":"/app/contacts/list","type":0,"val":"app","end":""},{"old":"/app/contacts/list","type":0,"val":"contacts","end":""},{"old":"/app/contacts/list","type":0,"val":"list","end":""}],
     types: placeholder as Registry['app.contacts.index']['types'],
   },
   'app.contacts.export': {
@@ -521,6 +701,36 @@ const routes = {
     pattern: '/app/conversations/:id/reopen',
     tokens: [{"old":"/app/conversations/:id/reopen","type":0,"val":"app","end":""},{"old":"/app/conversations/:id/reopen","type":0,"val":"conversations","end":""},{"old":"/app/conversations/:id/reopen","type":1,"val":"id","end":""},{"old":"/app/conversations/:id/reopen","type":0,"val":"reopen","end":""}],
     types: placeholder as Registry['app.conversations.reopen']['types'],
+  },
+  'super.page': {
+    methods: ["GET","HEAD"],
+    pattern: '/super',
+    tokens: [{"old":"/super","type":0,"val":"super","end":""}],
+    types: placeholder as Registry['super.page']['types'],
+  },
+  'super.metrics': {
+    methods: ["GET","HEAD"],
+    pattern: '/super/metrics',
+    tokens: [{"old":"/super/metrics","type":0,"val":"super","end":""},{"old":"/super/metrics","type":0,"val":"metrics","end":""}],
+    types: placeholder as Registry['super.metrics']['types'],
+  },
+  'super.tenants': {
+    methods: ["GET","HEAD"],
+    pattern: '/super/tenants',
+    tokens: [{"old":"/super/tenants","type":0,"val":"super","end":""},{"old":"/super/tenants","type":0,"val":"tenants","end":""}],
+    types: placeholder as Registry['super.tenants']['types'],
+  },
+  'super.plans': {
+    methods: ["GET","HEAD"],
+    pattern: '/super/plans',
+    tokens: [{"old":"/super/plans","type":0,"val":"super","end":""},{"old":"/super/plans","type":0,"val":"plans","end":""}],
+    types: placeholder as Registry['super.plans']['types'],
+  },
+  'super.tenants.update': {
+    methods: ["PUT"],
+    pattern: '/super/tenants/:id',
+    tokens: [{"old":"/super/tenants/:id","type":0,"val":"super","end":""},{"old":"/super/tenants/:id","type":0,"val":"tenants","end":""},{"old":"/super/tenants/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['super.tenants.update']['types'],
   },
 } as const satisfies Record<string, AdonisEndpoint>
 

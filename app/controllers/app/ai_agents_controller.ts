@@ -29,6 +29,9 @@ export default class AiAgentsController {
       maxTokens: payload.maxTokens ?? 1024,
       autoReplyEnabled: payload.autoReplyEnabled ?? true,
       workingHours: payload.workingHours ?? null,
+      persona: payload.persona ?? null,
+      safety: payload.safety ?? null,
+      guardrails: payload.guardrails ?? null,
       isActive: payload.isActive ?? true,
     })
 
@@ -54,6 +57,9 @@ export default class AiAgentsController {
     if (payload.maxTokens !== undefined) agent.maxTokens = payload.maxTokens
     if (payload.autoReplyEnabled !== undefined) agent.autoReplyEnabled = payload.autoReplyEnabled
     if (payload.workingHours !== undefined) agent.workingHours = payload.workingHours
+    if (payload.persona !== undefined) agent.persona = payload.persona
+    if (payload.safety !== undefined) agent.safety = payload.safety
+    if (payload.guardrails !== undefined) agent.guardrails = payload.guardrails
     if (payload.isActive !== undefined) agent.isActive = payload.isActive
 
     await agent.save()

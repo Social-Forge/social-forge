@@ -1,14 +1,19 @@
 import logger from '@adonisjs/core/services/logger'
 import Channel from '#models/channel'
 import AiAgent from '#models/ai_agent'
+import AiPlaybook from '#models/ai_playbook'
+import AiAsset from '#models/ai_asset'
 import Conversation from '#models/conversation'
 import Message from '#models/message'
 import TenantContext from '#services/tenant_context'
 import aiRegistry from '#services/ai/registry'
 import AiCreditService from '#services/ai/ai_credit_service'
 import RagService from '#services/ai/rag_service'
+import PromptBuilder from '#services/ai/prompt_builder'
+import MinioService from '#services/storage/minio_service'
 import OutboundService from '#services/messaging/outbound_service'
 import { isWithinWorkingHours } from '#services/ai/working_hours'
+import type { MessageContentType } from '#services/messaging/constants'
 import type { AiMessage } from '#services/ai/types'
 
 /** How many recent messages to feed the model as conversation context. */
@@ -67,14 +72,26 @@ export default class AiReplyService {
       const lastUser = context.at(-1)
       if (lastUser?.role !== 'user') return
 
-      // Ground the reply in the agent's knowledge base (webchat RAG). No-op when
-      // no embeddings provider is configured or nothing relevant is found.
+      // Safety: sensitive topic → hand off to a human (don't auto-answer).
+      if (
+        PromptBuilder.touchesAvoidTopic(agent, lastUser.content) &&
+        (agent.safetyConfig.onSensitive ?? 'handoff') === 'handoff'
+      ) {
+        if (agent.safetyConfig.escalationMessage) {
+          await OutboundService.sendAi(conversation, agent.safetyConfig.escalationMessage)
+        }
+        logger.info({ conversationId: conversation.id }, 'AI handoff — sensitive topic')
+        return
+      }
+
+      // Match training playbooks by keyword on the customer's message.
+      const playbooks = await AiPlaybook.query().where('ai_agent_id', agent.id)
+      const matched = PromptBuilder.matchPlaybooks(playbooks, lastUser.content)
+
+      // Ground the reply in the agent's knowledge base (RAG). No-op when no
+      // embeddings provider is configured or nothing relevant is found.
       const chunks = await RagService.retrieve(agent.id, lastUser.content)
-      const system = chunks.length
-        ? `${agent.systemPrompt}\n\n# Knowledge base\nUse the following information to answer when relevant. If it doesn't cover the question, say so honestly.\n\n${chunks
-            .map((c) => `## ${c.title}\n${c.content}`)
-            .join('\n\n')}`
-        : agent.systemPrompt
+      const system = PromptBuilder.build(agent, matched, chunks)
 
       const provider = aiRegistry.get(agent.providerId)
       const result = await provider.chat(context, {
@@ -98,7 +115,31 @@ export default class AiReplyService {
         conversationId: conversation.id,
         messageId: message.id,
       })
+
+      // Send the highest-priority matched playbook's assets (product photos,
+      // testimonials, videos) as follow-up media messages.
+      if (matched.length && matched[0].assetIdList.length) {
+        await this.#sendAssets(conversation, matched[0].assetIdList)
+      }
     })
+  }
+
+  /** Resolve assets to fresh presigned URLs and send them as media replies. */
+  static async #sendAssets(conversation: Conversation, assetIds: string[]) {
+    const assets = await AiAsset.query().whereIn('id', assetIds)
+    for (const asset of assets) {
+      try {
+        const url = await MinioService.presignedGetUrl(asset.storageKey)
+        const contentType: MessageContentType =
+          asset.type === 'video' ? 'video' : asset.type === 'document' ? 'document' : 'image'
+        await OutboundService.sendAi(conversation, asset.description ?? null, {
+          contentType,
+          mediaUrl: url,
+        })
+      } catch (error) {
+        logger.error({ err: error, assetId: asset.id }, 'failed to send AI asset')
+      }
+    }
   }
 
   /**

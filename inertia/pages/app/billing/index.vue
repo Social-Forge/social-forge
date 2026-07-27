@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { Link } from '@adonisjs/inertia/vue'
 import { Icon } from '@iconify/vue'
 import { api } from '~/composables/useApi'
 
@@ -77,9 +78,9 @@ onMounted(load)
   <div class="bg-background text-foreground min-h-screen">
     <header class="bg-background/80 sticky top-0 z-30 border-b backdrop-blur">
       <div class="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4">
-        <a href="/app/chats" class="text-muted-foreground hover:text-foreground">
+        <Link href="/app/chats" class="text-muted-foreground hover:text-foreground">
           <Icon icon="lucide:arrow-left" class="size-5" />
-        </a>
+        </Link>
         <h1 class="font-semibold">{{ t('billing.title') }}</h1>
         <div class="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
@@ -180,9 +181,12 @@ onMounted(load)
                   {{ inv.status }}
                 </div>
               </div>
+              <!-- External Xendit checkout URL — must be a real anchor, not an Inertia Link. -->
               <a
                 v-if="inv.status === 'pending' && inv.checkoutUrl"
                 :href="inv.checkoutUrl"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs font-semibold"
               >
                 {{ t('billing.pay_now') }}

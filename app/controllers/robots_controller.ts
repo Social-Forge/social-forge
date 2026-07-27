@@ -8,7 +8,7 @@ export default class RobotsController {
     let robotsContent = `User-agent: *\n`
 
     robotsContent += `Disallow: /app/\n`
-    robotsContent += `Disallow: /dashboard/\n`
+    robotsContent += `Disallow: /super/\n`
     robotsContent += `Disallow: /api/\n`
     robotsContent += `Disallow: /reset-password\n`
     robotsContent += `Disallow: /verify-email\n`

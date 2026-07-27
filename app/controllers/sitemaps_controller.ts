@@ -10,6 +10,14 @@ export default class SitemapsController {
       { url: '/features', changefreq: 'weekly', priority: '0.8' },
       { url: '/pricing', changefreq: 'weekly', priority: '0.8' },
       { url: '/blog', changefreq: 'daily', priority: '0.7' },
+      { url: '/terms', changefreq: 'weekly', priority: '0.7' },
+      { url: '/privacy', changefreq: 'weekly', priority: '0.7' },
+      { url: '/contact', changefreq: 'weekly', priority: '0.7' },
+      { url: '/about', changefreq: 'weekly', priority: '0.7' },
+      { url: '/docs', changefreq: 'weekly', priority: '0.7' },
+      { url: '/help', changefreq: 'weekly', priority: '0.7' },
+      { url: '/roadmap', changefreq: 'weekly', priority: '0.7' },
+      { url: '/career', changefreq: 'weekly', priority: '0.7' },
     ]
 
     // const blogs = await Blog.query().select('slug', 'updated_at').orderBy('created_at', 'desc')

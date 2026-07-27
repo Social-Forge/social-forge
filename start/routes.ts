@@ -18,6 +18,18 @@ router.get('/health', [controllers.Health, 'index']).as('health')
 router.get('/sitemap.xml', [controllers.Sitemaps, 'handle']).as('sitemap.xml')
 router.get('/robots.txt', [controllers.Robots, 'handle']).as('robots.txt')
 
+// Public marketing / legal / info pages.
+router.on('/about').renderInertia('about', {}).as('about')
+router.on('/contact').renderInertia('contact', {}).as('contact')
+router.on('/pricing').renderInertia('pricing', {}).as('pricing')
+router.on('/privacy').renderInertia('privacy', {}).as('privacy')
+router.on('/terms').renderInertia('terms', {}).as('terms')
+router.on('/help').renderInertia('help', {}).as('help')
+router.on('/docs').renderInertia('docs', {}).as('docs')
+router.on('/career').renderInertia('career', {}).as('career')
+router.on('/blog').renderInertia('blog', {}).as('blog')
+router.on('/roadmap').renderInertia('roadmap', {}).as('roadmap')
+
 const DivisionsController = () => import('#controllers/app/divisions_controller')
 const TeamController = () => import('#controllers/app/team_controller')
 const ChannelsController = () => import('#controllers/app/channels_controller')
@@ -26,6 +38,8 @@ const ConversationsController = () => import('#controllers/app/conversations_con
 const MessagesController = () => import('#controllers/app/messages_controller')
 const AiAgentsController = () => import('#controllers/app/ai_agents_controller')
 const AiKnowledgeController = () => import('#controllers/app/ai_knowledge_controller')
+const AiPlaybooksController = () => import('#controllers/app/ai_playbooks_controller')
+const AiAssetsController = () => import('#controllers/app/ai_assets_controller')
 const WebchatController = () => import('#controllers/webchat_controller')
 const SearchController = () => import('#controllers/app/search_controller')
 const ContactsController = () => import('#controllers/app/contacts_controller')
@@ -33,6 +47,7 @@ const LabelsController = () => import('#controllers/app/labels_controller')
 const QuickRepliesController = () => import('#controllers/app/quick_replies_controller')
 const BillingController = () => import('#controllers/app/billing_controller')
 const BillingWebhooksController = () => import('#controllers/billing_webhooks_controller')
+const SuperAdminController = () => import('#controllers/super_admin_controller')
 
 // Provider webhooks (public — verified by per-channel secret, not middleware).
 const WebhooksController = () => import('#controllers/webhooks_controller')
@@ -117,8 +132,11 @@ router
     router.put('team/:id', [TeamController, 'update']).as('app.team.update')
     router.delete('team/:id', [TeamController, 'destroy']).as('app.team.destroy')
 
+    // Channel management page (Inertia) — data via `channels/list` below.
+    router.on('channels').renderInertia('app/channels/index', {}).as('app.channels.page')
+
     // Channel management (Owner writes) + WAHA session actions
-    router.get('channels', [ChannelsController, 'index']).as('app.channels.index')
+    router.get('channels/list', [ChannelsController, 'index']).as('app.channels.index')
     router.post('channels', [ChannelsController, 'store']).as('app.channels.store')
     router.put('channels/:id', [ChannelsController, 'update']).as('app.channels.update')
     router.delete('channels/:id', [ChannelsController, 'destroy']).as('app.channels.destroy')
@@ -132,6 +150,9 @@ router
       .post('channels/:id/disconnect', [ChannelsController, 'disconnect'])
       .as('app.channels.disconnect')
 
+    // AI management page (Inertia)
+    router.on('ai').renderInertia('app/ai/index', {}).as('app.ai.page')
+
     // AI agents + credits
     router.get('ai/agents', [AiAgentsController, 'index']).as('app.ai.agents.index')
     router.post('ai/agents', [AiAgentsController, 'store']).as('app.ai.agents.store')
@@ -140,6 +161,19 @@ router
     router.delete('ai/agents/:id', [AiAgentsController, 'destroy']).as('app.ai.agents.destroy')
     router.get('ai/models', [AiAgentsController, 'models']).as('app.ai.models')
     router.get('ai/credits', [AiAgentsController, 'credits']).as('app.ai.credits')
+
+    // AI playbooks (keyword-triggered training rules)
+    router.get('ai/playbooks', [AiPlaybooksController, 'index']).as('app.ai.playbooks.index')
+    router.post('ai/playbooks', [AiPlaybooksController, 'store']).as('app.ai.playbooks.store')
+    router.put('ai/playbooks/:id', [AiPlaybooksController, 'update']).as('app.ai.playbooks.update')
+    router
+      .delete('ai/playbooks/:id', [AiPlaybooksController, 'destroy'])
+      .as('app.ai.playbooks.destroy')
+
+    // AI assets (media library the agent can send)
+    router.get('ai/assets', [AiAssetsController, 'index']).as('app.ai.assets.index')
+    router.post('ai/assets', [AiAssetsController, 'store']).as('app.ai.assets.store')
+    router.delete('ai/assets/:id', [AiAssetsController, 'destroy']).as('app.ai.assets.destroy')
 
     // AI knowledge base (RAG)
     router.get('ai/knowledge', [AiKnowledgeController, 'index']).as('app.ai.knowledge.index')
@@ -172,8 +206,16 @@ router
     // Search (Typesense)
     router.get('search', [SearchController, 'index']).as('app.search')
 
+    // Management pages (Inertia) — JSON lists live under distinct paths.
+    router.on('contacts').renderInertia('app/contacts/index', {}).as('app.contacts.page')
+    router.on('catalog').renderInertia('app/catalog/index', {}).as('app.catalog.page')
+    router
+      .on('organization')
+      .renderInertia('app/organization/index', {})
+      .as('app.organization.page')
+
     // Contacts management
-    router.get('contacts', [ContactsController, 'index']).as('app.contacts.index')
+    router.get('contacts/list', [ContactsController, 'index']).as('app.contacts.index')
     router.get('contacts/export', [ContactsController, 'exportCsv']).as('app.contacts.export')
     router.get('contacts/:id', [ContactsController, 'show']).as('app.contacts.show')
     router.put('contacts/:id', [ContactsController, 'update']).as('app.contacts.update')
@@ -235,3 +277,16 @@ router
   })
   .prefix('app')
   .use([middleware.auth(), middleware.verified(), middleware.tenant()])
+
+// Super Admin platform panel (not tenant-scoped — guarded by superAdmin).
+router
+  .group(() => {
+    router.on('super').renderInertia('super/index', {}).as('super.page')
+    router.get('super/metrics', [SuperAdminController, 'metrics']).as('super.metrics')
+    router.get('super/tenants', [SuperAdminController, 'tenants']).as('super.tenants')
+    router.get('super/plans', [SuperAdminController, 'plans']).as('super.plans')
+    router
+      .put('super/tenants/:id', [SuperAdminController, 'updateTenant'])
+      .as('super.tenants.update')
+  })
+  .use([middleware.auth(), middleware.verified(), middleware.superAdmin()])

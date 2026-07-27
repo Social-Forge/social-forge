@@ -5,7 +5,26 @@ import { belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Tenant from '#models/tenant'
 import Channel from '#models/channel'
+import AiPlaybook from '#models/ai_playbook'
+import AiAsset from '#models/ai_asset'
 import type { AiProviderId } from '#services/ai/types'
+
+/** Sales-agent persona / identity (ElevenLabs-style character config). */
+export type AgentPersona = {
+  agentName?: string
+  soul?: string
+  styleTone?: string
+  gender?: 'male' | 'female' | 'neutral'
+  characterStyle?: string
+  greeting?: string
+}
+
+/** Safety configuration for sensitive topics. */
+export type AgentSafety = {
+  avoidTopics?: string[]
+  onSensitive?: 'handoff' | 'disclaimer'
+  escalationMessage?: string
+}
 
 /** Shape of the `working_hours` jsonb config. */
 export type WorkingHours = {
@@ -29,11 +48,29 @@ export default class AiAgent extends compose(AiAgentSchema, TenantScoped) {
   @hasMany(() => Channel)
   declare channels: HasMany<typeof Channel>
 
+  @hasMany(() => AiPlaybook)
+  declare playbooks: HasMany<typeof AiPlaybook>
+
+  @hasMany(() => AiAsset)
+  declare assets: HasMany<typeof AiAsset>
+
   get providerId(): AiProviderId {
     return this.provider as AiProviderId
   }
 
   get workingHoursConfig(): WorkingHours | null {
     return (this.workingHours as WorkingHours | null) ?? null
+  }
+
+  get personaConfig(): AgentPersona {
+    return (this.persona as AgentPersona | null) ?? {}
+  }
+
+  get safetyConfig(): AgentSafety {
+    return (this.safety as AgentSafety | null) ?? {}
+  }
+
+  get guardrailList(): string[] {
+    return (this.guardrails as string[] | null) ?? []
   }
 }

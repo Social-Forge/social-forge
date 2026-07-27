@@ -11,12 +11,15 @@ export class AiAgentSchema extends BaseModel {
   static $columns = [
     'autoReplyEnabled',
     'createdAt',
+    'guardrails',
     'id',
     'isActive',
     'maxTokens',
     'model',
     'name',
+    'persona',
     'provider',
+    'safety',
     'systemPrompt',
     'temperature',
     'tenantId',
@@ -28,6 +31,8 @@ export class AiAgentSchema extends BaseModel {
   declare autoReplyEnabled: boolean
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare guardrails: any | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -39,7 +44,11 @@ export class AiAgentSchema extends BaseModel {
   @column()
   declare name: string
   @column()
+  declare persona: any | null
+  @column()
   declare provider: string
+  @column()
+  declare safety: any | null
   @column()
   declare systemPrompt: string
   @column()
@@ -50,6 +59,45 @@ export class AiAgentSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare workingHours: any | null
+}
+
+export class AiAssetSchema extends BaseModel {
+  static $columns = [
+    'aiAgentId',
+    'createdAt',
+    'description',
+    'id',
+    'mimeType',
+    'name',
+    'size',
+    'storageKey',
+    'tenantId',
+    'type',
+    'updatedAt',
+  ] as const
+  $columns = AiAssetSchema.$columns
+  @column()
+  declare aiAgentId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare mimeType: string | null
+  @column()
+  declare name: string
+  @column()
+  declare size: number | null
+  @column()
+  declare storageKey: string
+  @column()
+  declare tenantId: string
+  @column()
+  declare type: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
 }
 
 export class AiCreditLedgerSchema extends BaseModel {
@@ -123,6 +171,45 @@ export class AiKnowledgeSchema extends BaseModel {
   declare title: string
   @column()
   declare tokenCount: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class AiPlaybookSchema extends BaseModel {
+  static $columns = [
+    'aiAgentId',
+    'assetIds',
+    'createdAt',
+    'id',
+    'instruction',
+    'isActive',
+    'keywords',
+    'name',
+    'priority',
+    'tenantId',
+    'updatedAt',
+  ] as const
+  $columns = AiPlaybookSchema.$columns
+  @column()
+  declare aiAgentId: string
+  @column()
+  declare assetIds: any
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare instruction: string
+  @column()
+  declare isActive: boolean
+  @column()
+  declare keywords: any
+  @column()
+  declare name: string
+  @column()
+  declare priority: number
+  @column()
+  declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

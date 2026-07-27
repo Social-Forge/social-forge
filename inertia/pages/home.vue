@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { usePage } from '@inertiajs/vue3'
+import { Link } from '@adonisjs/inertia/vue'
 
 const { t } = useTrans()
 const page = usePage<any>()
@@ -49,63 +50,68 @@ const footerLinks = {
     <!-- Header -->
     <header class="bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
       <div class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <a href="/" class="flex items-center gap-2 font-semibold">
+        <Link href="/" class="flex items-center gap-2 font-semibold">
           <img src="/logo.png" alt="Social Forge" class="size-7" />
           <span>Social Forge</span>
-        </a>
+        </Link>
         <nav class="text-muted-foreground ml-6 hidden gap-6 text-sm md:flex">
           <a href="#features" class="hover:text-foreground">{{ t('landing.nav_features') }}</a>
           <a href="#pricing" class="hover:text-foreground">{{ t('landing.nav_pricing') }}</a>
-          <a href="/docs" class="hover:text-foreground">{{ t('landing.nav_docs') }}</a>
+          <Link href="/docs" class="hover:text-foreground">{{ t('landing.nav_docs') }}</Link>
         </nav>
         <div class="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
-          <a
+          <Link
             v-if="isAuthed"
             href="/app/chats"
             class="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium"
           >
             {{ t('landing.open_app') }}
-          </a>
+          </Link>
           <template v-else>
-            <a href="/login" class="hover:bg-muted rounded-lg px-3 py-2 text-sm font-medium">
+            <Link href="/login" class="hover:bg-muted rounded-lg px-3 py-2 text-sm font-medium">
               {{ t('auth.button_login') }}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/signup"
               class="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium"
             >
               {{ t('auth.button_signup') }}
-            </a>
+            </Link>
           </template>
         </div>
       </div>
     </header>
 
     <!-- Hero -->
-    <section class="mx-auto max-w-4xl px-4 py-20 text-center md:py-28">
-      <span
-        class="bg-primary/10 text-primary mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium"
-      >
-        <Icon icon="lucide:sparkles" class="size-3.5" /> {{ t('landing.hero_badge') }}
-      </span>
-      <h1 class="text-4xl font-bold tracking-tight text-balance md:text-6xl">
-        {{ t('landing.hero_title') }}
-      </h1>
-      <p class="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg text-pretty">
-        {{ t('landing.hero_subtitle') }}
-      </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <a
-          href="/signup"
-          class="bg-primary text-primary-foreground rounded-lg px-6 py-3 text-sm font-semibold shadow-sm"
+    <section class="bg-linear-to-br from-primary/20 via-primary/10 to-primary/35">
+      <div class="mx-auto max-w-4xl px-4 py-20 text-center md:py-28">
+        <span
+          class="bg-primary/80 dark:bg-primary/60 text-white mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium"
         >
-          {{ t('landing.hero_cta') }}
-        </a>
-        <a href="#pricing" class="hover:bg-muted rounded-lg border px-6 py-3 text-sm font-semibold">
-          {{ t('landing.hero_secondary') }}
-        </a>
+          <Icon icon="lucide:sparkles" class="size-3.5" /> {{ t('landing.hero_badge') }}
+        </span>
+        <h1 class="text-4xl font-bold tracking-tight text-balance md:text-6xl">
+          {{ t('landing.hero_title') }}
+        </h1>
+        <p class="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg text-pretty">
+          {{ t('landing.hero_subtitle') }}
+        </p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/signup"
+            class="bg-primary text-primary-foreground rounded-lg px-6 py-3 text-sm font-semibold shadow-sm"
+          >
+            {{ t('landing.hero_cta') }}
+          </Link>
+          <a
+            href="#pricing"
+            class="hover:bg-muted rounded-lg border px-6 py-3 text-sm font-semibold"
+          >
+            {{ t('landing.hero_secondary') }}
+          </a>
+        </div>
       </div>
     </section>
 
@@ -149,12 +155,12 @@ const footerLinks = {
                 <span>{{ perk }}</span>
               </li>
             </ul>
-            <a
+            <Link
               href="/signup"
               class="hover:bg-muted mt-8 block rounded-lg border py-2.5 text-center text-sm font-semibold"
             >
               {{ t('landing.get_started') }}
-            </a>
+            </Link>
           </div>
           <!-- Pro -->
           <div class="border-primary bg-card relative rounded-2xl border-2 p-8 shadow-lg">
@@ -176,12 +182,12 @@ const footerLinks = {
                 <span>{{ perk }}</span>
               </li>
             </ul>
-            <a
+            <Link
               href="/signup"
               class="bg-primary text-primary-foreground mt-8 block rounded-lg py-2.5 text-center text-sm font-semibold"
             >
               {{ t('landing.choose_pro') }}
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -194,12 +200,12 @@ const footerLinks = {
       >
         <h2 class="text-3xl font-bold">{{ t('landing.cta_title') }}</h2>
         <p class="mt-3 opacity-90">{{ t('landing.cta_desc') }}</p>
-        <a
+        <Link
           href="/signup"
           class="text-primary mt-8 inline-block rounded-lg bg-white px-6 py-3 text-sm font-semibold shadow-sm"
         >
           {{ t('landing.hero_cta') }}
-        </a>
+        </Link>
       </div>
     </section>
 
@@ -219,9 +225,9 @@ const footerLinks = {
           <h4 class="text-sm font-semibold">{{ t(`landing.${group}`) }}</h4>
           <ul class="mt-3 space-y-2 text-sm">
             <li v-for="link in links" :key="link.href">
-              <a :href="link.href" class="text-muted-foreground hover:text-foreground">
+              <Link :href="link.href" class="text-muted-foreground hover:text-foreground">
                 {{ t(`landing.${link.key}`) }}
-              </a>
+              </Link>
             </li>
           </ul>
         </div>

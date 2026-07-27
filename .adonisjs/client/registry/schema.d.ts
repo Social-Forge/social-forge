@@ -79,6 +79,126 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/robots_controller').default['handle']>>>
     }
   }
+  'about': {
+    methods: ["GET","HEAD"]
+    pattern: '/about'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'contact': {
+    methods: ["GET","HEAD"]
+    pattern: '/contact'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'pricing': {
+    methods: ["GET","HEAD"]
+    pattern: '/pricing'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'privacy': {
+    methods: ["GET","HEAD"]
+    pattern: '/privacy'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'terms': {
+    methods: ["GET","HEAD"]
+    pattern: '/terms'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'help': {
+    methods: ["GET","HEAD"]
+    pattern: '/help'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'docs': {
+    methods: ["GET","HEAD"]
+    pattern: '/docs'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'career': {
+    methods: ["GET","HEAD"]
+    pattern: '/career'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'blog': {
+    methods: ["GET","HEAD"]
+    pattern: '/blog'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'roadmap': {
+    methods: ["GET","HEAD"]
+    pattern: '/roadmap'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
   'webhooks.waha': {
     methods: ["POST"]
     pattern: '/webhooks/waha/:channelId'
@@ -125,6 +245,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['telegram']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['telegram']>>>
+    }
+  }
+  'webhooks.xendit': {
+    methods: ["POST"]
+    pattern: '/webhooks/xendit'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/billing_webhooks_controller').default['xendit']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/billing_webhooks_controller').default['xendit']>>>
     }
   }
   'webchat.session': {
@@ -451,9 +583,21 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/team_controller').default['destroy']>>>
     }
   }
-  'app.channels.index': {
+  'app.channels.page': {
     methods: ["GET","HEAD"]
     pattern: '/app/channels'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.channels.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/channels/list'
     types: {
       body: {}
       paramsTuple: []
@@ -559,6 +703,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['disconnect']>>>
     }
   }
+  'app.ai.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
   'app.ai.agents.index': {
     methods: ["GET","HEAD"]
     pattern: '/app/ai/agents'
@@ -643,6 +799,90 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_agents_controller').default['credits']>>>
     }
   }
+  'app.ai.playbooks.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/playbooks'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['index']>>>
+    }
+  }
+  'app.ai.playbooks.store': {
+    methods: ["POST"]
+    pattern: '/app/ai/playbooks'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_advanced').createPlaybookValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_advanced').createPlaybookValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.playbooks.update': {
+    methods: ["PUT"]
+    pattern: '/app/ai/playbooks/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_advanced').updatePlaybookValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_advanced').updatePlaybookValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.playbooks.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/ai/playbooks/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_playbooks_controller').default['destroy']>>>
+    }
+  }
+  'app.ai.assets.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/ai/assets'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_assets_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_assets_controller').default['index']>>>
+    }
+  }
+  'app.ai.assets.store': {
+    methods: ["POST"]
+    pattern: '/app/ai/assets'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/ai_advanced').uploadAssetValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/ai_advanced').uploadAssetValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_assets_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_assets_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.ai.assets.destroy': {
+    methods: ["DELETE"]
+    pattern: '/app/ai/assets/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/ai_assets_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/ai_assets_controller').default['destroy']>>>
+    }
+  }
   'app.ai.knowledge.index': {
     methods: ["GET","HEAD"]
     pattern: '/app/ai/knowledge'
@@ -703,6 +943,90 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/channels_controller').default['webchatEmbed']>>>
     }
   }
+  'app.settings.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/settings'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.billing.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/billing'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.billing.plans': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/billing/plans'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['plans']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['plans']>>>
+    }
+  }
+  'app.billing.subscription': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/billing/subscription'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['subscription']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['subscription']>>>
+    }
+  }
+  'app.billing.checkout': {
+    methods: ["POST"]
+    pattern: '/app/billing/checkout'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/billing').checkoutValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/billing').checkoutValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['checkout']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['checkout']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.billing.invoices': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/billing/invoices'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['invoices']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['invoices']>>>
+    }
+  }
+  'app.billing.invoices.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/billing/invoices/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['showInvoice']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/billing_controller').default['showInvoice']>>>
+    }
+  }
   'app.search': {
     methods: ["GET","HEAD"]
     pattern: '/app/search'
@@ -715,9 +1039,45 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/search_controller').default['index']>>>
     }
   }
-  'app.contacts.index': {
+  'app.contacts.page': {
     methods: ["GET","HEAD"]
     pattern: '/app/contacts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.catalog.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/catalog'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.organization.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/organization'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.contacts.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/contacts/list'
     types: {
       body: {}
       paramsTuple: []
@@ -1037,6 +1397,66 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['reopen']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/conversations_controller').default['reopen']>>>
+    }
+  }
+  'super.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/super'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'super.metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/super/metrics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['metrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['metrics']>>>
+    }
+  }
+  'super.tenants': {
+    methods: ["GET","HEAD"]
+    pattern: '/super/tenants'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['tenants']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['tenants']>>>
+    }
+  }
+  'super.plans': {
+    methods: ["GET","HEAD"]
+    pattern: '/super/plans'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['plans']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['plans']>>>
+    }
+  }
+  'super.tenants.update': {
+    methods: ["PUT"]
+    pattern: '/super/tenants/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/super_admin').updateTenantValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/super_admin').updateTenantValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['updateTenant']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/super_admin_controller').default['updateTenant']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
 }

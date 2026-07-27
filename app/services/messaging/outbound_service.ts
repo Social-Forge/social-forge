@@ -87,8 +87,14 @@ export default class OutboundService {
    * `send()`, but the message is attributed to the bot (senderType 'ai', no
    * user) so it renders distinctly and never blocks on a human sender.
    */
-  static async sendAi(conversation: Conversation, body: string): Promise<Message> {
+  static async sendAi(
+    conversation: Conversation,
+    body: string | null,
+    opts: { contentType?: MessageContentType; mediaUrl?: string | null } = {}
+  ): Promise<Message> {
     const tenantId = conversation.tenantId
+    const contentType = opts.contentType ?? 'text'
+    const media = opts.mediaUrl ? { url: opts.mediaUrl } : null
 
     const message = await db.transaction(async (trx) => {
       const created = await Message.create(
@@ -98,8 +104,9 @@ export default class OutboundService {
           direction: 'out',
           senderType: 'ai',
           senderId: null,
-          contentType: 'text',
+          contentType,
           body,
+          media,
           status: 'pending',
         },
         { client: trx }

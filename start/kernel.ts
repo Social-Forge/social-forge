@@ -37,4 +37,5 @@ export const middleware = router.named({
   verified: () => import('#middleware/verified_email_middleware'),
   tenant: () => import('#middleware/tenant_middleware'),
   webchatCors: () => import('#middleware/webchat_cors_middleware'),
+  superAdmin: () => import('#middleware/super_admin_middleware'),
 })

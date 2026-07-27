@@ -237,6 +237,7 @@ declare module 'vue' {
     Marker: typeof import('./components/ui/marker/Marker.vue')['default']
     MarkerContent: typeof import('./components/ui/marker/MarkerContent.vue')['default']
     MarkerIcon: typeof import('./components/ui/marker/MarkerIcon.vue')['default']
+    MarketingShell: typeof import('./components/MarketingShell.vue')['default']
     Menubar: typeof import('./components/ui/menubar/Menubar.vue')['default']
     MenubarCheckboxItem: typeof import('./components/ui/menubar/MenubarCheckboxItem.vue')['default']
     MenubarContent: typeof import('./components/ui/menubar/MenubarContent.vue')['default']

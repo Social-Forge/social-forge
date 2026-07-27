@@ -42,6 +42,10 @@ watch(
 )
 
 onBeforeUnmount(() => rt.disconnect())
+
+function logout() {
+  router.post('/logout')
+}
 </script>
 
 <template>
@@ -81,6 +85,19 @@ onBeforeUnmount(() => rt.disconnect())
           >
             <Icon :icon="it.icon" class="size-5" /> {{ it.title }}
           </Link>
+          <div class="mt-4 flex items-center justify-center gap-2">
+            <ThemeToggle />
+            <div class="flex items-center justify-center">
+              <LanguageSwitcher />
+            </div>
+            <button
+              class="text-muted-foreground hover:bg-muted flex size-11 items-center justify-center rounded-xl"
+              title="Logout"
+              @click="logout"
+            >
+              <Icon icon="lucide:log-out" class="size-5" />
+            </button>
+          </div>
         </nav>
       </SheetContent>
     </Sheet>

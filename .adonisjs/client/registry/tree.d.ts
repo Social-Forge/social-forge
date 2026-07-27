@@ -18,12 +18,23 @@ export interface ApiDefinition {
   robots: {
     txt: typeof routes['robots.txt']
   }
+  about: typeof routes['about']
+  contact: typeof routes['contact']
+  pricing: typeof routes['pricing']
+  privacy: typeof routes['privacy']
+  terms: typeof routes['terms']
+  help: typeof routes['help']
+  docs: typeof routes['docs']
+  career: typeof routes['career']
+  blog: typeof routes['blog']
+  roadmap: typeof routes['roadmap']
   webhooks: {
     waha: typeof routes['webhooks.waha']
     meta: typeof routes['webhooks.meta'] & {
       verify: typeof routes['webhooks.meta.verify']
     }
     telegram: typeof routes['webhooks.telegram']
+    xendit: typeof routes['webhooks.xendit']
   }
   webchat: {
     session: typeof routes['webchat.session']
@@ -72,6 +83,7 @@ export interface ApiDefinition {
       destroy: typeof routes['app.team.destroy']
     }
     channels: {
+      page: typeof routes['app.channels.page']
       index: typeof routes['app.channels.index']
       store: typeof routes['app.channels.store']
       update: typeof routes['app.channels.update']
@@ -86,6 +98,7 @@ export interface ApiDefinition {
       }
     }
     ai: {
+      page: typeof routes['app.ai.page']
       agents: {
         index: typeof routes['app.ai.agents.index']
         store: typeof routes['app.ai.agents.store']
@@ -95,6 +108,17 @@ export interface ApiDefinition {
       }
       models: typeof routes['app.ai.models']
       credits: typeof routes['app.ai.credits']
+      playbooks: {
+        index: typeof routes['app.ai.playbooks.index']
+        store: typeof routes['app.ai.playbooks.store']
+        update: typeof routes['app.ai.playbooks.update']
+        destroy: typeof routes['app.ai.playbooks.destroy']
+      }
+      assets: {
+        index: typeof routes['app.ai.assets.index']
+        store: typeof routes['app.ai.assets.store']
+        destroy: typeof routes['app.ai.assets.destroy']
+      }
       knowledge: {
         index: typeof routes['app.ai.knowledge.index']
         store: typeof routes['app.ai.knowledge.store']
@@ -102,8 +126,21 @@ export interface ApiDefinition {
         destroy: typeof routes['app.ai.knowledge.destroy']
       }
     }
+    settings: {
+      page: typeof routes['app.settings.page']
+    }
+    billing: {
+      page: typeof routes['app.billing.page']
+      plans: typeof routes['app.billing.plans']
+      subscription: typeof routes['app.billing.subscription']
+      checkout: typeof routes['app.billing.checkout']
+      invoices: typeof routes['app.billing.invoices'] & {
+        show: typeof routes['app.billing.invoices.show']
+      }
+    }
     search: typeof routes['app.search']
     contacts: {
+      page: typeof routes['app.contacts.page']
       index: typeof routes['app.contacts.index']
       export: typeof routes['app.contacts.export']
       show: typeof routes['app.contacts.show']
@@ -111,6 +148,12 @@ export interface ApiDefinition {
       block: typeof routes['app.contacts.block']
       unblock: typeof routes['app.contacts.unblock']
       destroy: typeof routes['app.contacts.destroy']
+    }
+    catalog: {
+      page: typeof routes['app.catalog.page']
+    }
+    organization: {
+      page: typeof routes['app.organization.page']
     }
     labels: {
       index: typeof routes['app.labels.index']
@@ -143,5 +186,13 @@ export interface ApiDefinition {
       token: typeof routes['app.realtime.token']
       subscribe: typeof routes['app.realtime.subscribe']
     }
+  }
+  super: {
+    page: typeof routes['super.page']
+    metrics: typeof routes['super.metrics']
+    tenants: typeof routes['super.tenants'] & {
+      update: typeof routes['super.tenants.update']
+    }
+    plans: typeof routes['super.plans']
   }
 }

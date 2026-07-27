@@ -252,6 +252,9 @@ importers:
       '@iconify-json/selfhst':
         specifier: ^1.2.9
         version: 1.2.9
+      '@iconify-json/skill-icons':
+        specifier: ^1.2.4
+        version: 1.2.4
       '@iconify-json/solar':
         specifier: ^1.2.5
         version: 1.2.5
@@ -1498,6 +1501,9 @@ packages:
 
   '@iconify-json/selfhst@1.2.9':
     resolution: {integrity: sha512-lB+zZIm6h5C/C9+rotMuBISJCsttYrvgMrqUt26Ch7fQuQ2VCieTy01QkdVcufHdGTaa4icFIGjV658sIKRnTg==}
+
+  '@iconify-json/skill-icons@1.2.4':
+    resolution: {integrity: sha512-S6iRKHGlGCb/zfx3Isv1TBe5PunbDE5FEwJcaXji60+yRZMrcFFtYEI1xivKqaGKXyVZ508yjGDItsehQdJmSg==}
 
   '@iconify-json/solar@1.2.5':
     resolution: {integrity: sha512-WMAiNwchU8zhfrySww6KQBRIBbsQ6SvgIu2yA+CHGyMima/0KQwT5MXogrZPJGoQF+1Ye3Qj6K+1CiyNn3YkoA==}
@@ -7540,6 +7546,10 @@ snapshots:
       '@iconify/types': 2.0.0
 
   '@iconify-json/selfhst@1.2.9':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/skill-icons@1.2.4':
     dependencies:
       '@iconify/types': 2.0.0
 

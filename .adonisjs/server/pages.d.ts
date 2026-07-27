@@ -10,9 +10,13 @@ type ExtractProps<T> = Omit<
 declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
     'about': ExtractProps<(typeof import('../../inertia/pages/about.vue'))['default']>
+    'app/ai/index': ExtractProps<(typeof import('../../inertia/pages/app/ai/index.vue'))['default']>
     'app/billing/index': ExtractProps<(typeof import('../../inertia/pages/app/billing/index.vue'))['default']>
+    'app/catalog/index': ExtractProps<(typeof import('../../inertia/pages/app/catalog/index.vue'))['default']>
+    'app/channels/index': ExtractProps<(typeof import('../../inertia/pages/app/channels/index.vue'))['default']>
     'app/chats/index': ExtractProps<(typeof import('../../inertia/pages/app/chats/index.vue'))['default']>
     'app/contacts/index': ExtractProps<(typeof import('../../inertia/pages/app/contacts/index.vue'))['default']>
+    'app/organization/index': ExtractProps<(typeof import('../../inertia/pages/app/organization/index.vue'))['default']>
     'app/settings/index': ExtractProps<(typeof import('../../inertia/pages/app/settings/index.vue'))['default']>
     'auth/forgot-password': ExtractProps<(typeof import('../../inertia/pages/auth/forgot-password.vue'))['default']>
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.vue'))['default']>
@@ -30,6 +34,8 @@ declare module '@adonisjs/inertia/types' {
     'pricing': ExtractProps<(typeof import('../../inertia/pages/pricing.vue'))['default']>
     'privacy': ExtractProps<(typeof import('../../inertia/pages/privacy.vue'))['default']>
     'roadmap': ExtractProps<(typeof import('../../inertia/pages/roadmap.vue'))['default']>
+    'super/index': ExtractProps<(typeof import('../../inertia/pages/super/index.vue'))['default']>
     'terms': ExtractProps<(typeof import('../../inertia/pages/terms.vue'))['default']>
+    'app/analytics/index': ExtractProps<(typeof import('../../inertia/pages/app/analytics/index.vue'))['default']>
   }
 }

@@ -10,10 +10,21 @@ export type ScannedRoutes = {
     'health': { paramsTuple?: []; params?: {} }
     'sitemap.xml': { paramsTuple?: []; params?: {} }
     'robots.txt': { paramsTuple?: []; params?: {} }
+    'about': { paramsTuple?: []; params?: {} }
+    'contact': { paramsTuple?: []; params?: {} }
+    'pricing': { paramsTuple?: []; params?: {} }
+    'privacy': { paramsTuple?: []; params?: {} }
+    'terms': { paramsTuple?: []; params?: {} }
+    'help': { paramsTuple?: []; params?: {} }
+    'docs': { paramsTuple?: []; params?: {} }
+    'career': { paramsTuple?: []; params?: {} }
+    'blog': { paramsTuple?: []; params?: {} }
+    'roadmap': { paramsTuple?: []; params?: {} }
     'webhooks.waha': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
     'webhooks.meta': { paramsTuple?: []; params?: {} }
     'webhooks.telegram': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webhooks.xendit': { paramsTuple?: []; params?: {} }
     'webchat.session': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'webchat.send': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'webchat.poll': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
@@ -41,6 +52,7 @@ export type ScannedRoutes = {
     'app.team.store': { paramsTuple?: []; params?: {} }
     'app.team.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.team.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.channels.page': { paramsTuple?: []; params?: {} }
     'app.channels.index': { paramsTuple?: []; params?: {} }
     'app.channels.store': { paramsTuple?: []; params?: {} }
     'app.channels.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -50,6 +62,7 @@ export type ScannedRoutes = {
     'app.channels.qr': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.disconnect': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.page': { paramsTuple?: []; params?: {} }
     'app.ai.agents.index': { paramsTuple?: []; params?: {} }
     'app.ai.agents.store': { paramsTuple?: []; params?: {} }
     'app.ai.agents.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -57,12 +70,29 @@ export type ScannedRoutes = {
     'app.ai.agents.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.models': { paramsTuple?: []; params?: {} }
     'app.ai.credits': { paramsTuple?: []; params?: {} }
+    'app.ai.playbooks.index': { paramsTuple?: []; params?: {} }
+    'app.ai.playbooks.store': { paramsTuple?: []; params?: {} }
+    'app.ai.playbooks.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.playbooks.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.assets.index': { paramsTuple?: []; params?: {} }
+    'app.ai.assets.store': { paramsTuple?: []; params?: {} }
+    'app.ai.assets.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.knowledge.index': { paramsTuple?: []; params?: {} }
     'app.ai.knowledge.store': { paramsTuple?: []; params?: {} }
     'app.ai.knowledge.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.knowledge.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.webchat.embed': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.settings.page': { paramsTuple?: []; params?: {} }
+    'app.billing.page': { paramsTuple?: []; params?: {} }
+    'app.billing.plans': { paramsTuple?: []; params?: {} }
+    'app.billing.subscription': { paramsTuple?: []; params?: {} }
+    'app.billing.checkout': { paramsTuple?: []; params?: {} }
+    'app.billing.invoices': { paramsTuple?: []; params?: {} }
+    'app.billing.invoices.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.search': { paramsTuple?: []; params?: {} }
+    'app.contacts.page': { paramsTuple?: []; params?: {} }
+    'app.catalog.page': { paramsTuple?: []; params?: {} }
+    'app.organization.page': { paramsTuple?: []; params?: {} }
     'app.contacts.index': { paramsTuple?: []; params?: {} }
     'app.contacts.export': { paramsTuple?: []; params?: {} }
     'app.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -90,6 +120,11 @@ export type ScannedRoutes = {
     'app.conversations.unassign': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.conversations.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.conversations.reopen': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'super.page': { paramsTuple?: []; params?: {} }
+    'super.metrics': { paramsTuple?: []; params?: {} }
+    'super.tenants': { paramsTuple?: []; params?: {} }
+    'super.plans': { paramsTuple?: []; params?: {} }
+    'super.tenants.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
     'prometheus.metrics': { paramsTuple?: []; params?: {} }
@@ -98,6 +133,16 @@ export type ScannedRoutes = {
     'health': { paramsTuple?: []; params?: {} }
     'sitemap.xml': { paramsTuple?: []; params?: {} }
     'robots.txt': { paramsTuple?: []; params?: {} }
+    'about': { paramsTuple?: []; params?: {} }
+    'contact': { paramsTuple?: []; params?: {} }
+    'pricing': { paramsTuple?: []; params?: {} }
+    'privacy': { paramsTuple?: []; params?: {} }
+    'terms': { paramsTuple?: []; params?: {} }
+    'help': { paramsTuple?: []; params?: {} }
+    'docs': { paramsTuple?: []; params?: {} }
+    'career': { paramsTuple?: []; params?: {} }
+    'blog': { paramsTuple?: []; params?: {} }
+    'roadmap': { paramsTuple?: []; params?: {} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
     'webchat.poll': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
@@ -111,16 +156,29 @@ export type ScannedRoutes = {
     'app.chats.index': { paramsTuple?: []; params?: {} }
     'app.divisions.index': { paramsTuple?: []; params?: {} }
     'app.team.index': { paramsTuple?: []; params?: {} }
+    'app.channels.page': { paramsTuple?: []; params?: {} }
     'app.channels.index': { paramsTuple?: []; params?: {} }
     'app.channels.qr': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.page': { paramsTuple?: []; params?: {} }
     'app.ai.agents.index': { paramsTuple?: []; params?: {} }
     'app.ai.agents.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.models': { paramsTuple?: []; params?: {} }
     'app.ai.credits': { paramsTuple?: []; params?: {} }
+    'app.ai.playbooks.index': { paramsTuple?: []; params?: {} }
+    'app.ai.assets.index': { paramsTuple?: []; params?: {} }
     'app.ai.knowledge.index': { paramsTuple?: []; params?: {} }
     'app.channels.webchat.embed': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.settings.page': { paramsTuple?: []; params?: {} }
+    'app.billing.page': { paramsTuple?: []; params?: {} }
+    'app.billing.plans': { paramsTuple?: []; params?: {} }
+    'app.billing.subscription': { paramsTuple?: []; params?: {} }
+    'app.billing.invoices': { paramsTuple?: []; params?: {} }
+    'app.billing.invoices.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.search': { paramsTuple?: []; params?: {} }
+    'app.contacts.page': { paramsTuple?: []; params?: {} }
+    'app.catalog.page': { paramsTuple?: []; params?: {} }
+    'app.organization.page': { paramsTuple?: []; params?: {} }
     'app.contacts.index': { paramsTuple?: []; params?: {} }
     'app.contacts.export': { paramsTuple?: []; params?: {} }
     'app.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -129,6 +187,10 @@ export type ScannedRoutes = {
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
     'app.conversations.messages': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'super.page': { paramsTuple?: []; params?: {} }
+    'super.metrics': { paramsTuple?: []; params?: {} }
+    'super.tenants': { paramsTuple?: []; params?: {} }
+    'super.plans': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
     'prometheus.metrics': { paramsTuple?: []; params?: {} }
@@ -137,6 +199,16 @@ export type ScannedRoutes = {
     'health': { paramsTuple?: []; params?: {} }
     'sitemap.xml': { paramsTuple?: []; params?: {} }
     'robots.txt': { paramsTuple?: []; params?: {} }
+    'about': { paramsTuple?: []; params?: {} }
+    'contact': { paramsTuple?: []; params?: {} }
+    'pricing': { paramsTuple?: []; params?: {} }
+    'privacy': { paramsTuple?: []; params?: {} }
+    'terms': { paramsTuple?: []; params?: {} }
+    'help': { paramsTuple?: []; params?: {} }
+    'docs': { paramsTuple?: []; params?: {} }
+    'career': { paramsTuple?: []; params?: {} }
+    'blog': { paramsTuple?: []; params?: {} }
+    'roadmap': { paramsTuple?: []; params?: {} }
     'webhooks.meta.verify': { paramsTuple?: []; params?: {} }
     'webchat.poll': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
@@ -150,16 +222,29 @@ export type ScannedRoutes = {
     'app.chats.index': { paramsTuple?: []; params?: {} }
     'app.divisions.index': { paramsTuple?: []; params?: {} }
     'app.team.index': { paramsTuple?: []; params?: {} }
+    'app.channels.page': { paramsTuple?: []; params?: {} }
     'app.channels.index': { paramsTuple?: []; params?: {} }
     'app.channels.qr': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.status': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.page': { paramsTuple?: []; params?: {} }
     'app.ai.agents.index': { paramsTuple?: []; params?: {} }
     'app.ai.agents.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.models': { paramsTuple?: []; params?: {} }
     'app.ai.credits': { paramsTuple?: []; params?: {} }
+    'app.ai.playbooks.index': { paramsTuple?: []; params?: {} }
+    'app.ai.assets.index': { paramsTuple?: []; params?: {} }
     'app.ai.knowledge.index': { paramsTuple?: []; params?: {} }
     'app.channels.webchat.embed': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.settings.page': { paramsTuple?: []; params?: {} }
+    'app.billing.page': { paramsTuple?: []; params?: {} }
+    'app.billing.plans': { paramsTuple?: []; params?: {} }
+    'app.billing.subscription': { paramsTuple?: []; params?: {} }
+    'app.billing.invoices': { paramsTuple?: []; params?: {} }
+    'app.billing.invoices.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.search': { paramsTuple?: []; params?: {} }
+    'app.contacts.page': { paramsTuple?: []; params?: {} }
+    'app.catalog.page': { paramsTuple?: []; params?: {} }
+    'app.organization.page': { paramsTuple?: []; params?: {} }
     'app.contacts.index': { paramsTuple?: []; params?: {} }
     'app.contacts.export': { paramsTuple?: []; params?: {} }
     'app.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -168,11 +253,16 @@ export type ScannedRoutes = {
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
     'app.conversations.messages': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'super.page': { paramsTuple?: []; params?: {} }
+    'super.metrics': { paramsTuple?: []; params?: {} }
+    'super.tenants': { paramsTuple?: []; params?: {} }
+    'super.plans': { paramsTuple?: []; params?: {} }
   }
   POST: {
     'webhooks.waha': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'webhooks.meta': { paramsTuple?: []; params?: {} }
     'webhooks.telegram': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
+    'webhooks.xendit': { paramsTuple?: []; params?: {} }
     'webchat.session': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'webchat.send': { paramsTuple: [ParamValue]; params: {'channelId': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
@@ -188,7 +278,10 @@ export type ScannedRoutes = {
     'app.channels.connect': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.disconnect': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.agents.store': { paramsTuple?: []; params?: {} }
+    'app.ai.playbooks.store': { paramsTuple?: []; params?: {} }
+    'app.ai.assets.store': { paramsTuple?: []; params?: {} }
     'app.ai.knowledge.store': { paramsTuple?: []; params?: {} }
+    'app.billing.checkout': { paramsTuple?: []; params?: {} }
     'app.contacts.block': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.contacts.unblock': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.labels.store': { paramsTuple?: []; params?: {} }
@@ -208,16 +301,20 @@ export type ScannedRoutes = {
     'app.channels.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.configure': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.agents.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.playbooks.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.knowledge.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.contacts.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.labels.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.quick-replies.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'super.tenants.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
     'app.divisions.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.team.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.channels.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.agents.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.playbooks.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.ai.assets.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.ai.knowledge.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.contacts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.labels.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

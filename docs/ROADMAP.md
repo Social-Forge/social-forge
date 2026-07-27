@@ -17,6 +17,7 @@
 | **3**  | Meta & Telegram           | WA Business, Messenger, IG, Telegram                |
 | **4**  | Chat Portal Web UI        | Conversation room realtime, semua fitur chat        |
 | **5**  | AI Layer                  | Multi-provider, auto-reply, webchat bot, credits    |
+| **5.6** | Advanced AI Sales Agent  | Persona, playbook keyword+aset, safety/guardrails   |
 | **6**  | Search & Contacts         | Typesense, kontak, label, quick reply               |
 | **7**  | Billing & Komersil        | Plans, entitlements, Xendit, invoice                |
 | **8**  | Landing & Admin polish    | Landing page i18n, admin panel, super admin         |
@@ -161,6 +162,23 @@
 
 ---
 
+### Fase 5.6 — Advanced AI Sales Agent ✅ SELESAI (2026-07-27)
+
+**Tujuan:** AI agent jadi fitur **unggulan** platform — closer yang di-tune untuk menaikkan rate closing, di atas human agent. Selain "system prompt", tiap agent kini punya **identitas/persona**, **pipelead pelatihan** (playbook keyword-triggered + asset), **safety/guardrails**, dan **resource library** (image/video/dokumen yang bisa dikirim otomatis).
+
+- [x] **Migrasi** ([1790000000032](../database/migrations/1790000000032_add_persona_to_ai_agents.ts)–35): `ai_agents` +`persona`/`safety`/`guardrails` (jsonb); tabel **`ai_playbooks`** (keywords jsonb, instruction, asset_ids jsonb, priority, is_active) + **`ai_assets`** (type image/video/document, storage_key MinIO, mime, size, description) + RLS. Schema regen otomatis.
+- [x] **Model**: [AiPlaybook](../app/models/ai_playbook.ts) + [AiAsset](../app/models/ai_asset.ts) (TenantScoped, getter list); [AiAgent](../app/models/ai_agent.ts) diperluas — tipe `AgentPersona` (agentName/soul/styleTone/gender/characterStyle/greeting), `AgentSafety` (avoidTopics/onSensitive handoff|disclaimer/escalationMessage), getter `personaConfig`/`safetyConfig`/`guardrailList` + hasMany playbooks/assets.
+- [x] **PromptBuilder** ([prompt_builder.ts](../app/services/ai/prompt_builder.ts)): rakit system prompt berlapis — Identity (persona) → **Objective (selalu sales/closing)** → Mission (systemPrompt user) → Style & tone → Guardrails → Safety → Playbook yang ter-trigger → Knowledge base. `matchPlaybooks()` (keyword includes, active-only, sort priority desc) + `touchesAvoidTopic()`.
+- [x] **AiReplyService advanced**: sebelum generate → **safety handoff** (bila pesan menyentuh avoid-topic & mode `handoff` → kirim escalation message sekali lalu stand-down utk human); match playbook by keyword; retrieve RAG; build prompt; generate; `sendAi`; debit; lalu **kirim aset otomatis** dari playbook prioritas tertinggi (resolve `AiAsset` → presigned URL MinIO → `OutboundService.sendAi` dgn contentType image/video/document).
+- [x] **Backend CRUD**: [ai_playbooks_controller](../app/controllers/app/ai_playbooks_controller.ts) (index/store/update/destroy) + [ai_assets_controller](../app/controllers/app/ai_assets_controller.ts) (upload multipart → MinIO `ai-assets/{tenant}/{uuid}.{ext}`, index dgn presigned preview, destroy) + validator [ai_advanced.ts](../app/validators/ai_advanced.ts) (file 25mb, jpg/png/gif/webp/mp4/mov/webm/pdf) + persona/safety/guardrails di [validator agent](../app/validators/ai_agent.ts) & controller update. Routes `ai/playbooks`, `ai/assets`.
+- [x] **UI agent advanced** ([app/ai/index.vue](../inertia/pages/app/ai/index.vue)): form ber-tab — **Basics** (+ working hours), **Identity** (agent name/gender/soul/style & tone/character style/greeting), **Safety & guardrails** (avoid topics + handoff/disclaimer + escalation message + guardrails per-baris), **Playbooks** (CRUD keyword+instruction+priority+link asset+toggle), **Assets** (upload multipart via FormData+XSRF, grid preview, delete), **Knowledge** (RAG dari 5.5).
+
+**Exit criteria:** ✅ tiap agent bisa dikonfigurasi jadi sales-closer bernama & berkarakter, dgn playbook keyword-triggered yang otomatis mengirim aset (foto produk/testimoni/video) & guardrails/safety-handoff; ✅ CI hijau (lint 0 · typecheck 0 (tsc + vue-tsc) · **81 test passed**, +PromptBuilder matchPlaybooks/touchesAvoidTopic/assembly). Pengiriman aset & handoff riil butuh MinIO + provider AI + channel aktif.
+
+> **Catatan implementasi:** Objective "sales/closing" selalu di-inject PromptBuilder terlepas dari systemPrompt user, sesuai target platform (AI di atas human agent). Upload aset pakai `fetch` + `FormData` langsung (composable `api` JSON-only tak bisa multipart) dgn header `X-XSRF-TOKEN` dari cookie. `AiPlaybook`/`AiAsset` mengikuti pola `static table` bila perlu; asset_ids/keywords disimpan jsonb array.
+
+---
+
 ## Fase 6 — Search, Contacts & Quick Reply ✅ SELESAI (backend + picker, 2026-07-25)
 
 **Tujuan:** pencarian cepat & manajemen kontak/label.
@@ -200,20 +218,21 @@
 
 ---
 
-## Fase 8 — Landing Page & Admin Polish 🔶 SEBAGIAN (landing + billing UI, 2026-07-25)
+## Fase 8 — Landing Page & Admin Polish ✅ SELESAI (2026-07-27)
 
 **Tujuan:** wajah publik & panel admin.
 
 - [x] **Landing home** ([home.vue](../inertia/pages/home.vue)): hero + badge, 6 feature cards, pricing 2-tier (Free/Pro), CTA band, footer 4-kolom (link ke About/Contact/Privacy/Terms/Blog/Docs/Help/Career/Roadmap) — semua via `useTrans` `t()`, theme-aware, responsive. Header sticky + `LanguageSwitcher` + `ThemeToggle` + login/signup / open-app.
 - [x] **i18n EN + ID** dwibahasa: infra sudah ada (`useTrans` baca `page.props.translations` + `?lang=` switch); ditambah ~60 key `landing.*` + `billing.*` di `resources/lang/{en,id}/messages.json`.
 - [x] **Billing UI** ([app/billing/index.vue](../inertia/pages/app/billing/index.vue), route `/app/billing`): current plan + status + saldo AI credits, plans grid + tombol upgrade (checkout → redirect `checkout_url`), beli AI credits, daftar invoice + "pay now" — wiring endpoint Fase 7. Menutup gap UI Fase 7.
-- [x] **Settings hub** ([app/settings/index.vue](../inertia/pages/app/settings/index.vue), route `/app/settings`): kartu link ke Billing/Chats/Contacts.
-- [ ] Konten legal/info pages (About, Contact, Privacy, Terms, Blog, Help, Career, Docs) — halaman ada tapi masih stub; **isi konten ditunda**.
-- [ ] Admin panel management screens (channel/division/member/AI agent/knowledge/contacts/labels/quick-reply **forms**) — API lengkap; **UI form ditunda** (incremental).
-- [ ] **Super Admin panel** (platform: kelola tenant, plan, billing global, metrics) — **ditunda**.
-- [ ] Auto-response & working hours UI — **ditunda** (backend `ai_agents.working_hours` sudah ada).
+- [x] **Settings hub** ([app/settings/index.vue](../inertia/pages/app/settings/index.vue), route `/app/settings`): kartu link ke AI Agents / Channels / Contacts / Catalog / Organization / Billing.
+- [x] **AI Agents management UI** ([app/ai/index.vue](../inertia/pages/app/ai/index.vue), route `/app/ai`): CRUD agent (provider/model dari `/ai/models`, system prompt, max tokens, temperature khusus OpenAI, toggle auto-reply/active), **working hours per-hari** (timezone + buka/tutup + aksi di luar jam silent/reply + pesan), **knowledge base** per agent (add/delete, status embedded), + saldo credits. Menutup item "Auto-response & working hours UI".
+- [x] **Channels management UI** ([app/channels/index.vue](../inertia/pages/app/channels/index.vue), route `/app/channels`): list + create (type + WAHA engine, entitlement dari backend), **WAHA connect + QR + polling status + disconnect**, **configure Meta/Telegram credentials** (token disimpan encrypted), **webchat embed snippet + copy**, **assign AI bot** ke channel (PUT `aiAgentId`), delete. Wiring endpoint Fase 2/3/5.5. _(Catatan: route JSON list dipindah ke `channels/list` agar `/app/channels` jadi halaman.)_
+- [x] **Admin management screens** (semua wiring endpoint yang sudah ada): **Contacts** ([app/contacts/index.vue](../inertia/pages/app/contacts/index.vue), `/app/contacts` — search/filter/paginate/edit/block/delete/export CSV; JSON list pindah ke `contacts/list`), **Labels & Quick Replies** ([app/catalog/index.vue](../inertia/pages/app/catalog/index.vue), `/app/catalog` — tab CRUD), **Team & Divisions** ([app/organization/index.vue](../inertia/pages/app/organization/index.vue), `/app/organization` — tambah member supervisor/agent + divisi). Semua dilink dari settings hub.
+- [x] **Konten halaman legal/info** — komponen reusable [MarketingShell.vue](../inertia/components/MarketingShell.vue) (header + footer) + isi konten: About, Contact, Privacy (8 seksi), Terms (9 seksi), Help (FAQ accordion), Docs (getting-started + topics), Career (openings), Blog (coming-soon), Roadmap (status shipped/progress/planned), Pricing (2-tier i18n). **Route publik ditambahkan** untuk semua (`/about`, `/privacy`, dst) — sebelumnya belum ada, footer/nav link 404.
+- [x] **Super Admin panel** ([super/index.vue](../inertia/pages/super/index.vue), route `/super`, guard `superAdmin` middleware): metrics platform (tenant/user/subscription aktif/invoice paid + revenue/AI credits outstanding) + tabel semua tenant (cross-tenant, bypassed) dengan ubah plan/status + grant AI credits. `SuperAdminController` + validator.
 
-**Exit criteria (sebagian):** ✅ landing publik dwibahasa (EN/ID) dengan pricing + feature + footer, language switcher jalan; ✅ billing UI operasional (upgrade/checkout/invoice/top-up credits) menutup gap Fase 7; ✅ CI hijau (lint 0 · typecheck 0 (tsc + **vue-tsc**) · 69 test passed). Super-admin panel + form CRUD management + konten legal = **incremental lanjutan** (bukan blocker fungsional; backend semua sudah siap).
+**Exit criteria:** ✅ landing publik dwibahasa (EN/ID) + semua halaman legal/info berisi + ber-route; ✅ admin panel tenant lengkap (AI Agents, Channels, Contacts, Catalog, Organization, Billing) + **Super Admin panel** platform operasional; ✅ CI hijau (lint 0 · typecheck 0 (tsc + **vue-tsc**) · 69 test passed). Seluruh permukaan produk kini punya UI end-to-end dari landing → signup → setup → chat → billing → admin.
 
 > **Catatan implementasi:** page Inertia baru butuh entry di `.adonisjs/server/pages.d.ts` (typegen — di-regen otomatis saat `serve`/`build`) agar `renderInertia('app/billing/index', {})` lolos vue-tsc. Landing pakai `<a href>` biasa (full-reload) untuk nav marketing; halaman app self-contained (tak pakai `app-shell` yang butuh `AppSidebar`).
 
