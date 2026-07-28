@@ -9,6 +9,16 @@
 |
 */
 
+const vueRuntimeFlags = globalThis as typeof globalThis & {
+  __VUE_PROD_DEVTOOLS__?: boolean
+  __VUE_OPTIONS_API__?: boolean
+  __VUE_PROD_HYDRATION_MISMATCH_DETAILS__?: boolean
+}
+
+vueRuntimeFlags.__VUE_PROD_DEVTOOLS__ ??= false
+vueRuntimeFlags.__VUE_OPTIONS_API__ ??= true
+vueRuntimeFlags.__VUE_PROD_HYDRATION_MISMATCH_DETAILS__ ??= false
+
 await import('reflect-metadata')
 const { Ignitor, prettyPrintError } = await import('@adonisjs/core')
 

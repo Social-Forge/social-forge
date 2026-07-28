@@ -5,7 +5,7 @@ const inertiaConfig = defineConfig({
   // build an SSR bundle) — enabling SSR here without the vite SSR build makes
   // production boot look for a non-existent ssr/ssr.js and 500 on every page.
   ssr: {
-    enabled: false,
+    enabled: true,
     entrypoint: 'inertia/ssr.ts',
   },
 })

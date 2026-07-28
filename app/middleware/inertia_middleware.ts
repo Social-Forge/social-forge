@@ -22,6 +22,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
      */
     const error = session?.flashMessages.get('error') as string
     const success = session?.flashMessages.get('success') as string
+    const locale = ctx.i18n?.locale ?? i18nManager.defaultLocale
 
     /**
      * Data shared with all Inertia pages. Make sure you are using
@@ -38,8 +39,8 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
       centrifugoUrl: ctx.inertia.always(
         env.get('CENTRIFUGO_WS_URL', 'ws://localhost:8000/connection/websocket')
       ),
-      locale: ctx.inertia.always(ctx.i18n.locale),
-      translations: ctx.inertia.always(i18nManager.getTranslationsFor(ctx.i18n.locale)),
+      locale: ctx.inertia.always(locale),
+      translations: ctx.inertia.always(i18nManager.getTranslationsFor(locale)),
     }
   }
 

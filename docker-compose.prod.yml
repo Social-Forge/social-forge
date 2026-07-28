@@ -30,7 +30,7 @@ x-app: &app
     RABBITMQ_HOST: rabbitmq
     TYPESENSE_HOST: typesense
     CENTRIFUGO_URL: http://centrifugo:8000 # app → centrifugo (internal)
-    CENTRIFUGO_WS_URL: ws://localhost:8000 # browser → centrifugo (host)
+    CENTRIFUGO_WS_URL: ws://localhost:8000/connection/websocket # browser → centrifugo (host)
     WAHA_WEBHOOK_BASE_URL: http://app:3333 # WAHA → app (internal, same network)
     WAHA_GOWS_URL: http://waha-gows:3000
     WAHA_NOWEB_URL: http://waha-noweb:3000

@@ -1,3 +1,4 @@
+import '~/runtime-shims'
 import './css/app.css'
 import 'vue-sonner/style.css'
 import { client } from '~/client'

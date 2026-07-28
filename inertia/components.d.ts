@@ -179,11 +179,6 @@ declare module 'vue' {
     DropdownMenuSubTrigger: typeof import('./components/ui/dropdown-menu/DropdownMenuSubTrigger.vue')['default']
     DropdownMenuTrigger: typeof import('./components/ui/dropdown-menu/DropdownMenuTrigger.vue')['default']
     EmojiPicker: typeof import('./components/ui/emoji-picker/emoji-picker.vue')['default']
-    EmojiPickerCategoryHeader: typeof import('./components/ui/emoji-picker/emoji-picker-category-header.vue')['default']
-    EmojiPickerContent: typeof import('./components/ui/emoji-picker/emoji-picker-content.vue')['default']
-    EmojiPickerEmoji: typeof import('./components/ui/emoji-picker/emoji-picker-emoji.vue')['default']
-    EmojiPickerFooter: typeof import('./components/ui/emoji-picker/emoji-picker-footer.vue')['default']
-    EmojiPickerSearch: typeof import('./components/ui/emoji-picker/emoji-picker-search.vue')['default']
     Empty: typeof import('./components/ui/empty/Empty.vue')['default']
     EmptyContent: typeof import('./components/ui/empty/EmptyContent.vue')['default']
     EmptyDescription: typeof import('./components/ui/empty/EmptyDescription.vue')['default']
@@ -404,7 +399,6 @@ declare module 'vue' {
     TooltipContent: typeof import('./components/ui/tooltip/TooltipContent.vue')['default']
     TooltipProvider: typeof import('./components/ui/tooltip/TooltipProvider.vue')['default']
     TooltipTrigger: typeof import('./components/ui/tooltip/TooltipTrigger.vue')['default']
-    VisualHidden: typeof import('./components/VisualHidden.vue')['default']
     VisuallyHidden: typeof import('./components/VisuallyHidden.vue')['default']
   }
 }

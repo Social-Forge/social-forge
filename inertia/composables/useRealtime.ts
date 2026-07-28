@@ -9,10 +9,19 @@ import { api } from '~/composables/useApi'
  */
 let centrifuge: Centrifuge | null = null
 
+function normalizeCentrifugoUrl(input: string): string {
+  const url = new URL(input)
+  if (!url.pathname || url.pathname === '/') {
+    url.pathname = '/connection/websocket'
+  }
+  return url.toString()
+}
+
 function ensure(): Centrifuge {
   if (centrifuge) return centrifuge
   const page = usePage<any>()
-  const url = (page.props.centrifugoUrl as string) || 'ws://localhost:8000/connection/websocket'
+  const rawUrl = (page.props.centrifugoUrl as string) || 'ws://localhost:8000/connection/websocket'
+  const url = normalizeCentrifugoUrl(rawUrl)
 
   centrifuge = new Centrifuge(url, {
     getToken: async () => {

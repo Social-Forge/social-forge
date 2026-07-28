@@ -16,6 +16,14 @@ const isTest = process.env.NODE_ENV === 'test'
 
 export default defineConfig({
   publicDir: 'public',
+  define: {
+    __VUE_PROD_DEVTOOLS__: false,
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+  },
+  ssr: {
+    noExternal: ['pinia'],
+  },
   optimizeDeps: isTest ? { noDiscovery: true, include: [] } : {},
   plugins: [
     AutoImport({
@@ -68,7 +76,7 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
-    inertia({ ssr: { enabled: false, entrypoint: 'inertia/ssr.ts' } }),
+    inertia({ ssr: { enabled: true, entrypoint: 'inertia/ssr.ts' } }),
     adonisjs({
       entrypoints: ['inertia/app.ts', 'inertia/css/app.css'],
       reload: ['resources/views/**/*.edge', 'inertia/pages/**/*.vue'],

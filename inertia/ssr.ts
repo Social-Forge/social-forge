@@ -1,3 +1,4 @@
+import '~/runtime-shims'
 import { client } from '~/client'
 import { createPinia } from 'pinia'
 import Layout from '~/layouts/default.vue'
