@@ -214,6 +214,39 @@ export class AiPlaybookSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class AuditLogSchema extends BaseModel {
+  static $columns = [
+    'action',
+    'actorId',
+    'createdAt',
+    'entityId',
+    'entityType',
+    'id',
+    'ipAddress',
+    'metadata',
+    'tenantId',
+  ] as const
+  $columns = AuditLogSchema.$columns
+  @column()
+  declare action: string
+  @column()
+  declare actorId: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare entityId: string | null
+  @column()
+  declare entityType: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare ipAddress: string | null
+  @column()
+  declare metadata: any | null
+  @column()
+  declare tenantId: string | null
+}
+
 export class ChannelSchema extends BaseModel {
   static $columns = [
     'aiAgentId',

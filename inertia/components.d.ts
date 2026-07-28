@@ -29,6 +29,7 @@ declare module 'vue' {
     AlertDialogTitle: typeof import('./components/ui/alert-dialog/AlertDialogTitle.vue')['default']
     AlertDialogTrigger: typeof import('./components/ui/alert-dialog/AlertDialogTrigger.vue')['default']
     AlertTitle: typeof import('./components/ui/alert/AlertTitle.vue')['default']
+    AnalyticsBarChart: typeof import('./components/AnalyticsBarChart.vue')['default']
     AppShell: typeof import('./layouts/app-shell.vue')['default']
     AppSidebar: typeof import('./components/admin/AppSidebar.vue')['default']
     AppTooltip: typeof import('./components/AppTooltip.vue')['default']

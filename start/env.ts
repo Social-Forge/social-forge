@@ -120,6 +120,13 @@ export default await Env.create(new URL('../', import.meta.url), {
   ANTHROPIC_API_KEY: Env.schema.string.optional(),
   OPENAI_API_KEY: Env.schema.string.optional(),
 
+  // Observability & hardening (Phase 9)
+  // Cloudflare Turnstile CAPTCHA (signup + webchat). No-op when secret unset.
+  TURNSTILE_SECRET_KEY: Env.schema.string.optional(),
+  TURNSTILE_SITE_KEY: Env.schema.string.optional(),
+  // Sentry / GlitchTip DSN for error reporting. No-op when unset.
+  ERROR_REPORTING_DSN: Env.schema.string.optional(),
+
   // Other
   ENABLE_REGISTRATION: Env.schema.boolean.optional(),
   DEFAULT_ADMIN_EMAIL: Env.schema.string.optional(),

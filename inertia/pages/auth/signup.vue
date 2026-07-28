@@ -4,6 +4,8 @@ import { Form, Link } from '@adonisjs/inertia/vue'
 import { Icon } from '@iconify/vue'
 import { AlertCircleIcon } from '@lucide/vue'
 
+const props = defineProps<{ turnstileSiteKey?: string | null }>()
+
 const page = usePage<Data.SharedProps>()
 
 const { t } = useTrans()
@@ -16,6 +18,16 @@ const typeConfirmPassword = ref('password')
 const currentYear = ref(new Date().getFullYear())
 
 watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
+
+// Load the Cloudflare Turnstile widget script only when a site key is provided.
+onMounted(() => {
+  if (!props.turnstileSiteKey) return
+  const script = document.createElement('script')
+  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
+  script.async = true
+  script.defer = true
+  document.head.appendChild(script)
+})
 </script>
 
 <template>
@@ -163,6 +175,11 @@ watch(flash, (value) => flashStore.setFlash(value), { immediate: true })
               </button>
             </div>
             <FieldError v-if="errors.confirmPassword">{{ errors.confirmPassword }}</FieldError>
+          </Field>
+
+          <Field v-if="turnstileSiteKey">
+            <div class="cf-turnstile" :data-sitekey="turnstileSiteKey" />
+            <FieldError v-if="errors.captcha">{{ errors.captcha }}</FieldError>
           </Field>
 
           <Field>

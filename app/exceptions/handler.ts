@@ -1,6 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
+import ErrorReporter from '#services/observability/error_reporter'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**
@@ -40,6 +41,15 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * @note You should not attempt to send a response from this method.
    */
   async report(error: unknown, ctx: HttpContext) {
+    // Only forward unexpected/server errors to the monitoring service, not
+    // client 4xx (validation, auth, not-found). No-op unless a DSN is set.
+    const status = (error as { status?: number })?.status
+    if (!status || status >= 500) {
+      await ErrorReporter.capture(error, {
+        url: ctx.request.url(true),
+        method: ctx.request.method(),
+      })
+    }
     return super.report(error, ctx)
   }
 }

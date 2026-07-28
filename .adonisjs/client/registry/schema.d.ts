@@ -1279,6 +1279,138 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['destroy']>>>
     }
   }
+  'app.quick-replies.send': {
+    methods: ["POST"]
+    pattern: '/app/conversations/:id/quick-reply'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/catalog').sendQuickReplyValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/catalog').sendQuickReplyValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['send']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/quick_replies_controller').default['send']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.uploads.store': {
+    methods: ["POST"]
+    pattern: '/app/uploads'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/upload').uploadValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/upload').uploadValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/uploads_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/uploads_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.uploads.delete': {
+    methods: ["DELETE"]
+    pattern: '/app/uploads/delete'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/upload').deleteUploadValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/upload').deleteUploadValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/uploads_controller').default['delete']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/uploads_controller').default['delete']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'app.uploads.validate': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/uploads/validate-url'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/uploads_controller').default['validateMinioUrl']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/uploads_controller').default['validateMinioUrl']>>>
+    }
+  }
+  'app.analytics.page': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/analytics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'app.analytics.overview': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/analytics/overview'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['overview']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['overview']>>>
+    }
+  }
+  'app.analytics.agents': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/analytics/agents'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['agents']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['agents']>>>
+    }
+  }
+  'app.analytics.ai': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/analytics/ai'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['ai']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['ai']>>>
+    }
+  }
+  'app.analytics.sla': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/analytics/sla'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['sla']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['sla']>>>
+    }
+  }
+  'app.analytics.contacts': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/analytics/contacts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['contacts']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/analytics_controller').default['contacts']>>>
+    }
+  }
+  'app.audit-logs.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/app/audit-logs'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/app/audit_logs_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/app/audit_logs_controller').default['index']>>>
+    }
+  }
   'app.realtime.token': {
     methods: ["GET","HEAD"]
     pattern: '/app/realtime/token'

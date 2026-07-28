@@ -45,6 +45,9 @@ const SearchController = () => import('#controllers/app/search_controller')
 const ContactsController = () => import('#controllers/app/contacts_controller')
 const LabelsController = () => import('#controllers/app/labels_controller')
 const QuickRepliesController = () => import('#controllers/app/quick_replies_controller')
+const UploadsController = () => import('#controllers/app/uploads_controller')
+const AnalyticsController = () => import('#controllers/app/analytics_controller')
+const AuditLogsController = () => import('#controllers/app/audit_logs_controller')
 const BillingController = () => import('#controllers/app/billing_controller')
 const BillingWebhooksController = () => import('#controllers/billing_webhooks_controller')
 const SuperAdminController = () => import('#controllers/super_admin_controller')
@@ -62,6 +65,10 @@ router
 
 // Payment gateway webhook (public — verified by callback token, CSRF-exempt).
 router.post('/webhooks/xendit', [BillingWebhooksController, 'xendit']).as('webhooks.xendit')
+
+// NOTE: GET /metrics is served by @julr/adonisjs-prometheus (see config/prometheus.ts).
+// Custom business counters/gauges register on prom-client's default registry in
+// app/services/observability/metrics.ts and appear there automatically.
 
 // Public webchat widget API (embedded on external sites — permissive CORS,
 // CSRF-exempt, no auth; isolation via the channel's tenant).
@@ -244,6 +251,27 @@ router
     router
       .delete('quick-replies/:id', [QuickRepliesController, 'destroy'])
       .as('app.quick-replies.destroy')
+    router
+      .post('conversations/:id/quick-reply', [QuickRepliesController, 'send'])
+      .as('app.quick-replies.send')
+
+    // Generic media upload (quick replies, channel first-reply, …) → MinIO
+    router.post('uploads', [UploadsController, 'store']).as('app.uploads.store')
+    router.delete('uploads/delete', [UploadsController, 'delete']).as('app.uploads.delete')
+    router
+      .get('uploads/validate-url', [UploadsController, 'validateMinioUrl'])
+      .as('app.uploads.validate')
+
+    // Analytics dashboard (Inertia page) + JSON endpoints
+    router.on('analytics').renderInertia('app/analytics/index', {}).as('app.analytics.page')
+    router.get('analytics/overview', [AnalyticsController, 'overview']).as('app.analytics.overview')
+    router.get('analytics/agents', [AnalyticsController, 'agents']).as('app.analytics.agents')
+    router.get('analytics/ai', [AnalyticsController, 'ai']).as('app.analytics.ai')
+    router.get('analytics/sla', [AnalyticsController, 'sla']).as('app.analytics.sla')
+    router.get('analytics/contacts', [AnalyticsController, 'contacts']).as('app.analytics.contacts')
+
+    // Audit log (owner only)
+    router.get('audit-logs', [AuditLogsController, 'index']).as('app.audit-logs.index')
 
     // Realtime (Centrifugo) tokens
     router.get('realtime/token', [RealtimeController, 'token']).as('app.realtime.token')

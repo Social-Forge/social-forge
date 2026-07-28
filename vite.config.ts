@@ -98,5 +98,6 @@ export default defineConfig({
     watch: {
       ignored: ['**/storage/**', '**/tmp/**'],
     },
+    // allowedHosts: process.env.NODE_ENV === 'development' ? ['socialforge.loca.lt'] : undefined,
   },
 })

@@ -9,17 +9,10 @@ import rabbitmq from '#services/messaging/rabbitmq'
 import wahaClient from '#services/waha/waha_client'
 import MessageIngestService from '#services/messaging/message_ingest_service'
 import { WahaAdapter } from '#services/waha/waha_adapter'
+import { WAHA_STATUS_MAP } from '#services/waha/waha_session_service'
 import { EXCHANGES } from '#services/messaging/topology'
 import type { WahaEngine } from '#services/messaging/constants'
 import type { InboundJob } from '#services/messaging/types'
-
-const WAHA_SESSION_STATUS: Record<string, string> = {
-  STARTING: 'connecting',
-  SCAN_QR_CODE: 'connecting',
-  WORKING: 'connected',
-  FAILED: 'failed',
-  STOPPED: 'disconnected',
-}
 
 /** Routes WAHA webhook events into the shared ingest core. */
 export default class WahaInbound {
@@ -54,7 +47,7 @@ export default class WahaInbound {
 
   static async #handleSessionStatus(channel: Channel, job: InboundJob) {
     const wahaStatus = job.payload?.payload?.status as string | undefined
-    const mapped = wahaStatus ? WAHA_SESSION_STATUS[wahaStatus] : undefined
+    const mapped = wahaStatus ? WAHA_STATUS_MAP[wahaStatus] : undefined
     if (mapped && mapped !== channel.status) {
       channel.status = mapped
       await channel.save()

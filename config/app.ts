@@ -1,5 +1,6 @@
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/core/http'
+import env from '#start/env'
 
 /**
  * The configuration settings used by the HTTP server
@@ -73,4 +74,6 @@ export const http = defineConfig({
      */
     sameSite: 'lax',
   },
+
+  trustProxy: () => (env.get('NODE_ENV') === 'development' ? true : false),
 })

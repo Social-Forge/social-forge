@@ -3,6 +3,7 @@ import AiAgent from '#models/ai_agent'
 import AiAgentPolicy from '#policies/ai_agent_policy'
 import AiCreditService from '#services/ai/ai_credit_service'
 import AiCreditLedger from '#models/ai_credit_ledger'
+import AuditService from '#services/audit/audit_service'
 import aiRegistry from '#services/ai/registry'
 import { AI_MODELS } from '#config/ai'
 import { createAiAgentValidator, updateAiAgentValidator } from '#validators/ai_agent'
@@ -35,6 +36,15 @@ export default class AiAgentsController {
       isActive: payload.isActive ?? true,
     })
 
+    await AuditService.record({
+      action: 'ai_agent.create',
+      tenantId: agent.tenantId,
+      actorId: auth.user!.id,
+      entityType: 'ai_agent',
+      entityId: agent.id,
+      metadata: { name: agent.name, provider: agent.provider, model: agent.model },
+      ipAddress: request.ip(),
+    })
     return response.created(agent)
   }
 
@@ -66,10 +76,19 @@ export default class AiAgentsController {
     return response.ok(agent)
   }
 
-  async destroy({ bouncer, params, response }: HttpContext) {
+  async destroy({ bouncer, params, request, auth, response }: HttpContext) {
     const agent = await AiAgent.findOrFail(params.id)
     await bouncer.with(AiAgentPolicy).authorize('delete', agent)
     await agent.delete()
+    await AuditService.record({
+      action: 'ai_agent.delete',
+      tenantId: agent.tenantId,
+      actorId: auth.user!.id,
+      entityType: 'ai_agent',
+      entityId: agent.id,
+      metadata: { name: agent.name },
+      ipAddress: request.ip(),
+    })
     return response.noContent()
   }
 

@@ -110,6 +110,17 @@ export type ScannedRoutes = {
     'app.quick-replies.store': { paramsTuple?: []; params?: {} }
     'app.quick-replies.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.quick-replies.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.quick-replies.send': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.uploads.store': { paramsTuple?: []; params?: {} }
+    'app.uploads.delete': { paramsTuple?: []; params?: {} }
+    'app.uploads.validate': { paramsTuple?: []; params?: {} }
+    'app.analytics.page': { paramsTuple?: []; params?: {} }
+    'app.analytics.overview': { paramsTuple?: []; params?: {} }
+    'app.analytics.agents': { paramsTuple?: []; params?: {} }
+    'app.analytics.ai': { paramsTuple?: []; params?: {} }
+    'app.analytics.sla': { paramsTuple?: []; params?: {} }
+    'app.analytics.contacts': { paramsTuple?: []; params?: {} }
+    'app.audit-logs.index': { paramsTuple?: []; params?: {} }
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.realtime.subscribe': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
@@ -184,6 +195,14 @@ export type ScannedRoutes = {
     'app.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.labels.index': { paramsTuple?: []; params?: {} }
     'app.quick-replies.index': { paramsTuple?: []; params?: {} }
+    'app.uploads.validate': { paramsTuple?: []; params?: {} }
+    'app.analytics.page': { paramsTuple?: []; params?: {} }
+    'app.analytics.overview': { paramsTuple?: []; params?: {} }
+    'app.analytics.agents': { paramsTuple?: []; params?: {} }
+    'app.analytics.ai': { paramsTuple?: []; params?: {} }
+    'app.analytics.sla': { paramsTuple?: []; params?: {} }
+    'app.analytics.contacts': { paramsTuple?: []; params?: {} }
+    'app.audit-logs.index': { paramsTuple?: []; params?: {} }
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
     'app.conversations.messages': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -250,6 +269,14 @@ export type ScannedRoutes = {
     'app.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.labels.index': { paramsTuple?: []; params?: {} }
     'app.quick-replies.index': { paramsTuple?: []; params?: {} }
+    'app.uploads.validate': { paramsTuple?: []; params?: {} }
+    'app.analytics.page': { paramsTuple?: []; params?: {} }
+    'app.analytics.overview': { paramsTuple?: []; params?: {} }
+    'app.analytics.agents': { paramsTuple?: []; params?: {} }
+    'app.analytics.ai': { paramsTuple?: []; params?: {} }
+    'app.analytics.sla': { paramsTuple?: []; params?: {} }
+    'app.analytics.contacts': { paramsTuple?: []; params?: {} }
+    'app.audit-logs.index': { paramsTuple?: []; params?: {} }
     'app.realtime.token': { paramsTuple?: []; params?: {} }
     'app.conversations.index': { paramsTuple?: []; params?: {} }
     'app.conversations.messages': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -287,6 +314,8 @@ export type ScannedRoutes = {
     'app.labels.store': { paramsTuple?: []; params?: {} }
     'app.conversations.labels.attach': { paramsTuple: [ParamValue]; params: {'conversationId': ParamValue} }
     'app.quick-replies.store': { paramsTuple?: []; params?: {} }
+    'app.quick-replies.send': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.uploads.store': { paramsTuple?: []; params?: {} }
     'app.realtime.subscribe': { paramsTuple?: []; params?: {} }
     'app.conversations.messages.store': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.conversations.read': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -320,6 +349,7 @@ export type ScannedRoutes = {
     'app.labels.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'app.conversations.labels.detach': { paramsTuple: [ParamValue,ParamValue]; params: {'conversationId': ParamValue,'labelId': ParamValue} }
     'app.quick-replies.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'app.uploads.delete': { paramsTuple?: []; params?: {} }
   }
 }
 declare module '@adonisjs/core/types/http' {

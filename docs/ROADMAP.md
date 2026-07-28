@@ -21,7 +21,8 @@
 | **6**  | Search & Contacts         | Typesense, kontak, label, quick reply               |
 | **7**  | Billing & Komersil        | Plans, entitlements, Xendit, invoice                |
 | **8**  | Landing & Admin polish    | Landing page i18n, admin panel, super admin         |
-| **9**  | Observability & Hardening | Monitoring, security, load test, prod deploy        |
+| **8.5** | Auto-reply & Analytics   | Per-channel first-reply, media quick reply, dashboard |
+| **9**  | Observability & Hardening | Metrics, audit log, CAPTCHA, error reporting, ops   |
 | **10** | Mobile (React Native)     | App chat-only + push notif                          |
 
 ---
@@ -173,7 +174,7 @@
 - [x] **Backend CRUD**: [ai_playbooks_controller](../app/controllers/app/ai_playbooks_controller.ts) (index/store/update/destroy) + [ai_assets_controller](../app/controllers/app/ai_assets_controller.ts) (upload multipart → MinIO `ai-assets/{tenant}/{uuid}.{ext}`, index dgn presigned preview, destroy) + validator [ai_advanced.ts](../app/validators/ai_advanced.ts) (file 25mb, jpg/png/gif/webp/mp4/mov/webm/pdf) + persona/safety/guardrails di [validator agent](../app/validators/ai_agent.ts) & controller update. Routes `ai/playbooks`, `ai/assets`.
 - [x] **UI agent advanced** ([app/ai/index.vue](../inertia/pages/app/ai/index.vue)): form ber-tab — **Basics** (+ working hours), **Identity** (agent name/gender/soul/style & tone/character style/greeting), **Safety & guardrails** (avoid topics + handoff/disclaimer + escalation message + guardrails per-baris), **Playbooks** (CRUD keyword+instruction+priority+link asset+toggle), **Assets** (upload multipart via FormData+XSRF, grid preview, delete), **Knowledge** (RAG dari 5.5).
 
-**Exit criteria:** ✅ tiap agent bisa dikonfigurasi jadi sales-closer bernama & berkarakter, dgn playbook keyword-triggered yang otomatis mengirim aset (foto produk/testimoni/video) & guardrails/safety-handoff; ✅ CI hijau (lint 0 · typecheck 0 (tsc + vue-tsc) · **81 test passed**, +PromptBuilder matchPlaybooks/touchesAvoidTopic/assembly). Pengiriman aset & handoff riil butuh MinIO + provider AI + channel aktif.
+**Exit criteria:** ✅ tiap agent bisa dikonfigurasi jadi sales-closer bernama & berkarakter, dgn playbook keyword-triggered yang otomatis mengirim aset (foto produk/testimoni/video) & guardrails/safety-handoff; ✅ CI hijau (lint 0 · typecheck 0 (tsc + vue-tsc) · **75 test passed**, +PromptBuilder matchPlaybooks/touchesAvoidTopic/assembly). Pengiriman aset & handoff riil butuh MinIO + provider AI + channel aktif.
 
 > **Catatan implementasi:** Objective "sales/closing" selalu di-inject PromptBuilder terlepas dari systemPrompt user, sesuai target platform (AI di atas human agent). Upload aset pakai `fetch` + `FormData` langsung (composable `api` JSON-only tak bisa multipart) dgn header `X-XSRF-TOKEN` dari cookie. `AiPlaybook`/`AiAsset` mengikuti pola `static table` bila perlu; asset_ids/keywords disimpan jsonb array.
 
@@ -238,19 +239,37 @@
 
 ---
 
-## Fase 9 — Observability & Hardening
+## Fase 8.5 — Auto-Reply, Rich Quick Replies & Analytics ✅ SELESAI (2026-07-27)
 
-**Tujuan:** siap production.
+**Tujuan:** melengkapi fitur operasional yang belum ada — auto first-reply per channel, quick reply berbasis media, dan dashboard analitik. _Tanpa migrasi baru: `channels.settings` & `quick_replies.media` (jsonb) sudah tersedia; analitik dihitung dari tabel operasional._
 
-- [ ] Grafana dashboards SocialForge (throughput, channel health, queue depth, billing, AI usage).
-- [ ] Sentry/GlitchTip integrasi.
-- [ ] Audit log lengkap.
-- [ ] Security pass: RLS audit, secret encryption, webhook verify, rate limits, CAPTCHA (Turnstile) signup/webchat.
-- [ ] `docker-compose.prod.yml` + Nginx TLS + CI/CD deploy.
-- [ ] Backup (pg_dump terjadwal + MinIO).
-- [ ] Load test (target ribuan chat/hari/tenant) + tuning prefetch/rate-limit.
+- [x] **Upload media generik** ([uploads_controller.ts](../app/controllers/app/uploads_controller.ts), `POST /app/uploads`): multipart 1 file (1–5 MB, jpg/png/gif/webp/mp4/mov/webm/pdf) → MinIO `uploads/{tenant}/{uuid}.ext`, balikin `key` durable + preview URL. Helper [media_helpers.ts](../app/services/storage/media_helpers.ts) (`MediaKind`, `mediaKindFromExt`, `MediaItem`) + composable FE [useUpload.ts](../inertia/composables/useUpload.ts) (FormData + XSRF).
+- [x] **Auto first-reply per channel** (disimpan di `channels.settings.firstReply`): validator [firstReplySchema](../app/validators/channel.ts) + getter `firstReplyConfig` di [Channel](../app/models/channel.ts). [AutoReplyService](../app/services/messaging/auto_reply_service.ts) dipanggil [MessageIngestService](../app/services/messaging/message_ingest_service.ts) saat **kontak baru** (`#resolveContact` kini balikin `isNew`) **dan channel belum punya AI agent** → kirim first-reply (text/media/hybrid, mint URL MinIO fresh). **AI meng-override**: bila `aiAgentId` terisi, first-reply dilewati (AI yang menyapa). UI di [channels/index.vue](../inertia/pages/app/channels/index.vue) auto-disabled + note saat bot aktif.
+- [x] **Rich quick replies**: `contentType` text/image/video/document/**hybrid** + `mediaItems` (jsonb array). Aturan di [quick_reply_content.ts](../app/services/catalog/quick_reply_content.ts) (text=body saja; hybrid=body+1 media; media-only=1–5 file sejenis). Getter `mediaItems` [QuickReply](../app/models/quick_reply.ts) (backward-compat `{url}` lama). Endpoint kirim `POST /app/conversations/:id/quick-reply` (resolve key→URL, kirim tiap media; caption di file pertama) + wiring "/" picker [ChatInput](../inertia/components/chat/ChatInput.vue) (media reply terkirim sekali klik). UI [catalog/index.vue](../inertia/pages/app/catalog/index.vue): pilih tipe + upload (multi ≤5 / single hybrid) + thumbnail.
+- [x] **Analytics** ([analytics_service.ts](../app/services/analytics/analytics_service.ts) + [controller](../app/controllers/app/analytics_controller.ts), supervisor+): **General** (volume in/out, kontak baru, avg first-response, conversations, seri harian), **Performa Agen** (pesan terkirim + percakapan per agen), **Laporan AI** (reply terhitung + kredit + est. biaya USD + per-model + seri harian dari `ai_credit_ledger`), **SLA** (compliance first-response < 15 mnt), **Contacts** (total/blocked/baru + per-channel + seri). **CSAT** ditandai jujur "butuh survei rating" (belum ada sumber data). UI [analytics/index.vue](../inertia/pages/app/analytics/index.vue) — stat cards + tabel + **bar chart interaktif** self-contained [AnalyticsBarChart.vue](../inertia/components/AnalyticsBarChart.vue) (tanpa dependency), dilink dari Settings hub.
 
-**Exit criteria:** deploy ke Ubuntu server; monitoring & alert jalan; lolos load test.
+**Exit criteria:** ✅ tiap channel bisa set auto first-reply (text/media/hybrid) yang otomatis membalas kontak baru & di-override AI; quick reply mendukung media (upload + kirim); dashboard analitik 5 tab operasional; ✅ CI hijau (lint 0 · typecheck 0 (tsc + vue-tsc) · **80 test passed**, +quick-reply content rules & media classification). Angka analitik nyata butuh data trafik; CSAT butuh mekanisme survei (future).
+
+> **Catatan implementasi:** URL media disimpan sebagai `key` MinIO (bukan presigned URL yang kadaluarsa 7 hari) lalu di-mint fresh saat kirim. Auto first-reply & AI keduanya di-cek di ingest — mutually exclusive lewat `aiAgentId`. Analitik pakai raw SQL Postgres (`FILTER`, `date_trunc`) tenant-scoped eksplisit; ESLint `no-await-expression-member` → hasil query di-assign ke variabel lokal dulu.
+
+---
+
+## Fase 9 — Observability & Hardening ✅ SELESAI (app-layer, 2026-07-27)
+
+**Tujuan:** siap production. _App-layer (kode teruji CI) selesai; artefak ops (deploy/monitoring/backup/load-test) disiapkan sebagai config — butuh server Ubuntu nyata untuk divalidasi end-to-end._
+
+- [x] **Prometheus `/metrics`**: endpoint sudah disediakan `@julr/adonisjs-prometheus` (config/prometheus.ts — HTTP/Lucid/mail/system collectors). Ditambah **metrik bisnis** ([metrics.ts](../app/services/observability/metrics.ts)) via prom-client di registry default (otomatis muncul di `/metrics` yang sama): counter `sf_messages_inbound/outbound_total`, `sf_ai_replies_total` (di-wire di ingest/outbound/AI) + gauge `sf_process_uptime_seconds`/`_resident_memory_bytes`, `sf_tenants_total`, `sf_conversations_active`, `sf_outbox_pending`. Akses dibatasi `ipsWhitelist` paket + allow-list Nginx di edge. + **Grafana dashboard** ([socialforge.json](../monitoring/grafana/dashboards/socialforge.json)) + **prometheus.yml** scrape config.
+- [x] **Error reporting** ([error_reporter.ts](../app/services/observability/error_reporter.ts)): abstraksi env-gated (`ERROR_REPORTING_DSN`) — kirim Sentry/GlitchTip envelope via fetch (tanpa SDK) di-wire ke [exception handler](../app/exceptions/handler.ts) `report()` (hanya 5xx/unexpected). No-op bila DSN kosong.
+- [x] **Audit log** (migration `audit_logs` + [model](../app/models/audit_log.ts) + [AuditService](../app/services/audit/audit_service.ts)): rekam aksi sensitif (channel create/delete/configure, ai_agent create/delete, super.tenant.update) — best-effort, tak pernah melempar. Endpoint owner-only `GET /app/audit-logs` (paginate + preload actor).
+- [x] **Security pass**: **CAPTCHA Turnstile** ([turnstile_service.ts](../app/services/security/turnstile_service.ts)) env-gated di **signup** ([controller](../app/controllers/new_account_controller.ts) + widget di [signup.vue](../inertia/pages/auth/signup.vue)) & **webchat session** ([controller](../app/controllers/webchat_controller.ts)); secret encryption (sudah ada di Channel), webhook verify (per-channel secret / callback token, sudah ada), rate limit (auth throttle + per-visitor webchat, sudah ada). **RLS audit**: command `node ace rls:check` ([rls_check.ts](../commands/rls_check.ts)) + SQL role dedicated ([setup-app-role.sql](../deploy/rls/setup-app-role.sql)) untuk mengaktifkan enforcement RLS (saat ini backstop dorman; isolasi utama = `TenantScoped`, teruji).
+- [x] **`docker-compose.prod.yml`** (image build + workers + Nginx + exporters) + **Nginx TLS** ([socialforge.conf](../deploy/nginx/socialforge.conf), TLS + security headers + `/metrics` allow-list) + **[deploy/README.md](../deploy/README.md)** (checklist deploy + hardening).
+- [x] **Backup** ([scripts/backup.sh](../scripts/backup.sh)): `pg_dump` gzip + MinIO `mc mirror` + retensi, siap dijadwalkan cron.
+- [x] **Load test** ([load-test/k6-smoke.js](../load-test/k6-smoke.js)): k6 smoke + ramping VUs (health + webchat session/poll), threshold p95<500ms & error<1%; catatan tuning prefetch/rate-limit.
+- [ ] CI/CD deploy pipeline (GitHub Actions → server) — **ditunda** (butuh kredensial server & registry).
+
+**Exit criteria:** ✅ app-layer observability & hardening lengkap + teruji (lint 0 · typecheck 0 (tsc + vue-tsc) · **83 test passed**, +metrics registry, Turnstile disabled-path, error reporter no-op); artefak ops (compose prod, Nginx TLS, backup, k6, Prometheus/Grafana, RLS role) tersedia. **Deploy nyata ke Ubuntu + jalankan load test + aktifkan RLS role = langkah operasional di server** (di luar jangkauan CI). CAPTCHA/error-reporting/metrics aktif otomatis begitu env-nya diisi.
+
+> **Catatan implementasi:** semua fitur hardening **env-gated & no-op saat unset** (Turnstile lolos, `/metrics` 404, error reporter diam) supaya dev/test jalan tanpa konfigurasi. Metrics & error-reporter sengaja **dependency-free** (text exposition + Sentry envelope manual) agar tak menambah paket; SDK nyata bisa menggantikan di belakang antarmuka yang sama. RLS tetap **dorman** sampai role `socialforge_app` dipasang (SQL disediakan) — isolasi utama tetap application-level `TenantScoped`.
 
 ---
 

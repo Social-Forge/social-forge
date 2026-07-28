@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import redis from '@adonisjs/redis/services/main'
 import WebchatService from '#services/webchat/webchat_service'
+import TurnstileService from '#services/security/turnstile_service'
 
 /** Per-visitor send throttle: messages allowed per rolling window. */
 const SEND_LIMIT = 10
@@ -18,6 +19,12 @@ export default class WebchatController {
   async session({ params, request, response }: HttpContext) {
     const channel = await WebchatService.loadChannel(params.channelId)
     if (!channel) return response.notFound({ message: 'Webchat channel not found.' })
+
+    // Bot protection on session creation (no-op when Turnstile isn't configured).
+    if (TurnstileService.enabled) {
+      const ok = await TurnstileService.verify(request.input('captchaToken'), request.ip())
+      if (!ok) return response.forbidden({ message: 'CAPTCHA verification required.' })
+    }
 
     const { visitorId, conversationId } = await WebchatService.session(channel, {
       visitorId: request.input('visitorId'),

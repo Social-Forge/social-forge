@@ -1,4 +1,5 @@
 import { defineConfig } from '@adonisjs/shield'
+import type { HttpContext } from '@adonisjs/core/http'
 
 const shieldConfig = defineConfig({
   /**
@@ -33,10 +34,15 @@ const shieldConfig = defineConfig({
     enabled: true,
 
     /**
-     * Route patterns to exclude from CSRF checks.
-     * Useful for external webhooks or API endpoints.
+     * Exclude external, no-session endpoints from CSRF: provider webhooks
+     * (WAHA/Meta/Telegram/Xendit) and the public webchat widget API. A prefix
+     * check (not a glob) so nested paths like /webhooks/waha/:id are covered —
+     * the `*` glob only matches a single segment and would miss those.
      */
-    exceptRoutes: ['/webhooks/*', '/webchat/*'],
+    exceptRoutes: (ctx: HttpContext) => {
+      const url = ctx.request.url()
+      return url.startsWith('/webhooks/') || url.startsWith('/webchat/')
+    },
 
     /**
      * Expose an encrypted XSRF-TOKEN cookie for frontend HTTP clients.

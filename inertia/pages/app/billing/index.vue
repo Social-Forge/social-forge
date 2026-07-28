@@ -33,6 +33,7 @@ interface Invoice {
 
 const loading = ref(true)
 const working = ref(false)
+const errorMsg = ref('')
 const sub = ref<Subscription | null>(null)
 const plans = ref<Plan[]>([])
 const invoices = ref<Invoice[]>([])
@@ -55,10 +56,14 @@ async function load() {
 
 async function checkout(body: Record<string, unknown>) {
   working.value = true
+  errorMsg.value = ''
   try {
     const res = await api.post<{ checkoutUrl?: string }>('/app/billing/checkout', body)
     if (res?.checkoutUrl) window.location.href = res.checkoutUrl
     else await load()
+  } catch (e) {
+    errorMsg.value =
+      (e as Error).message || 'Checkout is unavailable. Check your billing configuration.'
   } finally {
     working.value = false
   }
@@ -93,6 +98,12 @@ onMounted(load)
       <div v-if="loading" class="text-muted-foreground py-16 text-center text-sm">Loading…</div>
 
       <template v-else>
+        <div
+          v-if="errorMsg"
+          class="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+        >
+          {{ errorMsg }}
+        </div>
         <!-- Current plan -->
         <div class="bg-card grid gap-4 rounded-2xl border p-6 sm:grid-cols-3">
           <div>

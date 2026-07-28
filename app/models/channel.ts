@@ -9,6 +9,17 @@ import Division from '#models/division'
 import Contact from '#models/contact'
 import Conversation from '#models/conversation'
 import AiAgent from '#models/ai_agent'
+import type { MediaItem } from '#services/storage/media_helpers'
+
+export type FirstReplyContentType = 'text' | 'image' | 'video' | 'document' | 'hybrid'
+
+/** Auto first-reply config persisted in `channels.settings.firstReply`. */
+export type FirstReplyConfig = {
+  enabled: boolean
+  contentType: FirstReplyContentType
+  body?: string | null
+  mediaItems?: MediaItem[]
+}
 
 export default class Channel extends compose(ChannelSchema, TenantScoped) {
   @belongsTo(() => Tenant)
@@ -28,6 +39,12 @@ export default class Channel extends compose(ChannelSchema, TenantScoped) {
 
   get isWaha() {
     return this.type === 'whatsapp_waha'
+  }
+
+  /** Parsed auto first-reply config (null when unset). */
+  get firstReplyConfig(): FirstReplyConfig | null {
+    const settings = this.settings as Record<string, unknown> | null
+    return (settings?.firstReply as FirstReplyConfig | undefined) ?? null
   }
 
   /** Read a provider credential, decrypting it. Returns null if absent/invalid. */

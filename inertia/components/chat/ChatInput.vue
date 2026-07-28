@@ -9,6 +9,7 @@ interface QuickReply {
   shortcut: string
   contentType: string
   body: string | null
+  mediaItems?: { key: string; type: string }[]
 }
 
 interface Emoji {
@@ -66,7 +67,18 @@ const quickReplyMatches = computed<QuickReply[]>(() => {
 })
 const showQuickReplies = computed(() => quickReplyMatches.value.length > 0)
 
-function applyQuickReply(reply: QuickReply) {
+async function applyQuickReply(reply: QuickReply) {
+  // Media replies are sent directly (media can't live in the text composer);
+  // text replies expand into the composer for editing before sending.
+  if (reply.mediaItems && reply.mediaItems.length) {
+    const id = chat.activeId
+    text.value = ''
+    if (!id) return
+    await api
+      .post(`/app/conversations/${id}/quick-reply`, { quickReplyId: reply.id })
+      .catch(() => {})
+    return
+  }
   text.value = reply.body ?? ''
 }
 
@@ -108,8 +120,18 @@ const onEmojiClick = (emoji: Emoji) => {
         class="hover:bg-muted flex w-full flex-col items-start gap-0.5 rounded-md px-3 py-2 text-left"
         @click="applyQuickReply(reply)"
       >
-        <span class="text-primary text-xs font-semibold">/{{ reply.shortcut }}</span>
-        <span class="text-muted-foreground line-clamp-1 text-sm">{{ reply.body }}</span>
+        <span class="text-primary text-xs font-semibold">
+          /{{ reply.shortcut }}
+          <span
+            v-if="reply.mediaItems && reply.mediaItems.length"
+            class="text-muted-foreground ml-1 font-normal"
+          >
+            · {{ reply.mediaItems.length }} {{ reply.contentType }} · sends on click
+          </span>
+        </span>
+        <span v-if="reply.body" class="text-muted-foreground line-clamp-1 text-sm">
+          {{ reply.body }}
+        </span>
       </button>
     </div>
     <div v-if="showEmoji" class="bg-card mb-2 rounded-lg border p-2">

@@ -7,7 +7,9 @@ import Message from '#models/message'
 import type Channel from '#models/channel'
 import centrifugo from '#services/realtime/centrifugo_service'
 import rabbitmq from '#services/messaging/rabbitmq'
+import AutoReplyService from '#services/messaging/auto_reply_service'
 import SearchIndexer from '#services/search/search_indexer'
+import metrics from '#services/observability/metrics'
 import { EXCHANGES } from '#services/messaging/topology'
 import {
   hasServiceWindow,
@@ -40,8 +42,8 @@ export default class MessageIngestService {
     const seen = await Message.query().where('provider_message_id', n.providerMessageId).first()
     if (seen) return
 
-    const { conversation, message } = await db.transaction(async (trx) => {
-      const contact = await this.#resolveContact(channel, n, trx)
+    const { conversation, message, contactIsNew } = await db.transaction(async (trx) => {
+      const { contact, isNew } = await this.#resolveContact(channel, n, trx)
       const conv = await this.#resolveConversation(channel, contact.id, trx)
 
       const msg = await Message.create(
@@ -70,7 +72,7 @@ export default class MessageIngestService {
       }
       await conv.save()
 
-      return { conversation: conv, message: msg }
+      return { conversation: conv, message: msg, contactIsNew: isNew }
     })
 
     await centrifugo.publish(centrifugo.conversationChannel(channel.tenantId, conversation.id), {
@@ -92,6 +94,8 @@ export default class MessageIngestService {
       })
     }
 
+    metrics.inc('sf_messages_inbound_total')
+
     // Index the new message + contact for search (best-effort).
     await SearchIndexer.enqueue('upsert', 'message', message.id, channel.tenantId)
     await SearchIndexer.enqueue('upsert', 'contact', conversation.contactId, channel.tenantId)
@@ -105,6 +109,9 @@ export default class MessageIngestService {
         conversationId: conversation.id,
         tenantId: channel.tenantId,
       })
+    } else if (contactIsNew) {
+      // Brand-new contact + no bot → send the channel's canned first-reply.
+      await AutoReplyService.maybeSendFirstReply(channel, conversation)
     }
   }
 
@@ -129,24 +136,32 @@ export default class MessageIngestService {
     channel: Channel,
     n: NormalizedInboundMessage,
     trx: TransactionClientContract
-  ) {
-    const contact = await Contact.firstOrCreate(
-      { channelId: channel.id, externalId: n.externalContactId },
-      {
-        tenantId: channel.tenantId,
-        channelId: channel.id,
-        externalId: n.externalContactId,
-        displayName: n.contactName,
-        avatarUrl: n.contactAvatar ?? null,
-      },
-      { client: trx }
-    )
-    if (n.contactName && contact.displayName !== n.contactName) {
-      contact.useTransaction(trx)
-      contact.displayName = n.contactName
-      await contact.save()
+  ): Promise<{ contact: Contact; isNew: boolean }> {
+    const existing = await Contact.query({ client: trx })
+      .where('channel_id', channel.id)
+      .where('external_id', n.externalContactId)
+      .first()
+
+    if (!existing) {
+      const contact = await Contact.create(
+        {
+          tenantId: channel.tenantId,
+          channelId: channel.id,
+          externalId: n.externalContactId,
+          displayName: n.contactName,
+          avatarUrl: n.contactAvatar ?? null,
+        },
+        { client: trx }
+      )
+      return { contact, isNew: true }
     }
-    return contact
+
+    if (n.contactName && existing.displayName !== n.contactName) {
+      existing.useTransaction(trx)
+      existing.displayName = n.contactName
+      await existing.save()
+    }
+    return { contact: existing, isNew: false }
   }
 
   static #resolveConversation(channel: Channel, contactId: string, trx: TransactionClientContract) {

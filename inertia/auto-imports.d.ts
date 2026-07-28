@@ -13,6 +13,7 @@ declare global {
   const Icon: typeof import('./lib/iconify-offline').Icon
   const InfiniteScroll: typeof import('@inertiajs/vue3').InfiniteScroll
   const IsoLanguages: typeof import('./utils/iso').IsoLanguages
+  const MAX_UPLOAD_BYTES: typeof import('./composables/useUpload').MAX_UPLOAD_BYTES
   const TimezoneList: typeof import('./utils/iso').TimezoneList
   const WhenVisible: typeof import('@inertiajs/vue3').WhenVisible
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
@@ -50,9 +51,12 @@ declare global {
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
   const defineStore: typeof import('pinia').defineStore
+  const deleteFile: typeof import('./composables/useUpload').deleteFile
+  const deleteFiles: typeof import('./composables/useMediaBatch').deleteFiles
   const eagerComputed: typeof import('@vueuse/core').eagerComputed
   const effectScope: typeof import('vue').effectScope
   const extendRef: typeof import('@vueuse/core').extendRef
+  const extractKeyFromMinioUrl: typeof import('./composables/useUpload').extractKeyFromMinioUrl
   const fmtDateTime: typeof import('./utils/time').fmtDateTime
   const formatDate: typeof import('./utils/time').formatDate
   const generateLicenseKey: typeof import('./lib/utils').generateLicenseKey
@@ -66,6 +70,7 @@ declare global {
   const inject: typeof import('vue').inject
   const injectLocal: typeof import('@vueuse/core').injectLocal
   const isDefined: typeof import('@vueuse/core').isDefined
+  const isMinioUrl: typeof import('./composables/useUpload').isMinioUrl
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
   const isReadonly: typeof import('vue').isReadonly
@@ -148,6 +153,7 @@ declare global {
   const unref: typeof import('vue').unref
   const unrefElement: typeof import('@vueuse/core').unrefElement
   const until: typeof import('@vueuse/core').until
+  const uploadFile: typeof import('./composables/useUpload').uploadFile
   const useAbs: typeof import('@vueuse/math').useAbs
   const useActiveElement: typeof import('@vueuse/core').useActiveElement
   const useAlert: typeof import('./composables/useAlert').useAlert
@@ -348,6 +354,10 @@ declare global {
   const useWindowFocus: typeof import('@vueuse/core').useWindowFocus
   const useWindowScroll: typeof import('@vueuse/core').useWindowScroll
   const useWindowSize: typeof import('@vueuse/core').useWindowSize
+  const validateMinioUrl: typeof import('./composables/useUpload').validateMinioUrl
+  const validateMinioUrls: typeof import('./composables/useMediaBatch').validateMinioUrls
+  const validateUrl: typeof import('./composables/useUpload').validateUrl
+  const validateUrls: typeof import('./composables/useMediaBatch').validateUrls
   const watch: typeof import('vue').watch
   const watchArray: typeof import('@vueuse/core').watchArray
   const watchAtMost: typeof import('@vueuse/core').watchAtMost
@@ -377,6 +387,12 @@ declare global {
   export type { ApiError } from './composables/useApi'
   import('./composables/useApi')
   // @ts-ignore
+  export type { BatchDeleteMinioResult, BatchValidationMinioResult } from './composables/useMediaBatch'
+  import('./composables/useMediaBatch')
+  // @ts-ignore
+  export type { UploadedMedia, MinioValidationResult, DeleteFileResult } from './composables/useUpload'
+  import('./composables/useUpload')
+  // @ts-ignore
   export type { ChatContact, ChatChannel, ChatMessage, Conversation, ChatFilter } from './stores/chat'
   import('./stores/chat')
   // @ts-ignore
@@ -399,6 +415,7 @@ declare module 'vue' {
     readonly Icon: UnwrapRef<typeof import('./lib/iconify-offline')['Icon']>
     readonly InfiniteScroll: UnwrapRef<typeof import('@inertiajs/vue3')['InfiniteScroll']>
     readonly IsoLanguages: UnwrapRef<typeof import('./utils/iso')['IsoLanguages']>
+    readonly MAX_UPLOAD_BYTES: UnwrapRef<typeof import('./composables/useUpload')['MAX_UPLOAD_BYTES']>
     readonly TimezoneList: UnwrapRef<typeof import('./utils/iso')['TimezoneList']>
     readonly WhenVisible: UnwrapRef<typeof import('@inertiajs/vue3')['WhenVisible']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
@@ -436,9 +453,12 @@ declare module 'vue' {
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
+    readonly deleteFile: UnwrapRef<typeof import('./composables/useUpload')['deleteFile']>
+    readonly deleteFiles: UnwrapRef<typeof import('./composables/useMediaBatch')['deleteFiles']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly extendRef: UnwrapRef<typeof import('@vueuse/core')['extendRef']>
+    readonly extractKeyFromMinioUrl: UnwrapRef<typeof import('./composables/useUpload')['extractKeyFromMinioUrl']>
     readonly fmtDateTime: UnwrapRef<typeof import('./utils/time')['fmtDateTime']>
     readonly formatDate: UnwrapRef<typeof import('./utils/time')['formatDate']>
     readonly generateLicenseKey: UnwrapRef<typeof import('./lib/utils')['generateLicenseKey']>
@@ -452,6 +472,7 @@ declare module 'vue' {
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
+    readonly isMinioUrl: UnwrapRef<typeof import('./composables/useUpload')['isMinioUrl']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
@@ -534,6 +555,7 @@ declare module 'vue' {
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly unrefElement: UnwrapRef<typeof import('@vueuse/core')['unrefElement']>
     readonly until: UnwrapRef<typeof import('@vueuse/core')['until']>
+    readonly uploadFile: UnwrapRef<typeof import('./composables/useUpload')['uploadFile']>
     readonly useAbs: UnwrapRef<typeof import('@vueuse/math')['useAbs']>
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
     readonly useAlert: UnwrapRef<typeof import('./composables/useAlert')['useAlert']>
@@ -734,6 +756,8 @@ declare module 'vue' {
     readonly useWindowFocus: UnwrapRef<typeof import('@vueuse/core')['useWindowFocus']>
     readonly useWindowScroll: UnwrapRef<typeof import('@vueuse/core')['useWindowScroll']>
     readonly useWindowSize: UnwrapRef<typeof import('@vueuse/core')['useWindowSize']>
+    readonly validateMinioUrl: UnwrapRef<typeof import('./composables/useUpload')['validateMinioUrl']>
+    readonly validateMinioUrls: UnwrapRef<typeof import('./composables/useMediaBatch')['validateMinioUrls']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchArray: UnwrapRef<typeof import('@vueuse/core')['watchArray']>
     readonly watchAtMost: UnwrapRef<typeof import('@vueuse/core')['watchAtMost']>

@@ -27,6 +27,12 @@ const items = [
     desc: 'Conversation inbox',
     href: '/app/chats',
   },
+  {
+    icon: 'lucide:bar-chart-3',
+    title: 'Analytics',
+    desc: 'Volume, agent & AI performance, SLA, contacts',
+    href: '/app/analytics',
+  },
   { icon: 'lucide:users', title: 'Contacts', desc: 'Manage your contacts', href: '/app/contacts' },
   {
     icon: 'lucide:tags',

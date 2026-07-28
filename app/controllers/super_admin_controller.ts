@@ -6,6 +6,7 @@ import Invoice from '#models/invoice'
 import Plan from '#models/plan'
 import TenantContext from '#services/tenant_context'
 import AiCreditService from '#services/ai/ai_credit_service'
+import AuditService from '#services/audit/audit_service'
 import { updateTenantValidator } from '#validators/super_admin'
 
 const num = (rows: any[], key = 'total') => Number((rows[0] as any)?.$extras?.[key] ?? 0)
@@ -57,7 +58,7 @@ export default class SuperAdminController {
     return response.ok(plans)
   }
 
-  async updateTenant({ params, request, response }: HttpContext) {
+  async updateTenant({ params, request, auth, response }: HttpContext) {
     const payload = await request.validateUsing(updateTenantValidator)
     return TenantContext.runBypassed(async () => {
       const tenant = await Tenant.findOrFail(params.id)
@@ -69,6 +70,20 @@ export default class SuperAdminController {
         await AiCreditService.grant(tenant.id, payload.grantCredits, 'adjustment')
         await tenant.refresh()
       }
+
+      await AuditService.record({
+        action: 'super.tenant.update',
+        tenantId: tenant.id,
+        actorId: auth.user?.id ?? null,
+        entityType: 'tenant',
+        entityId: tenant.id,
+        metadata: {
+          plan: payload.plan,
+          status: payload.status,
+          grantCredits: payload.grantCredits,
+        },
+        ipAddress: request.ip(),
+      })
       return response.ok(tenant)
     })
   }

@@ -7,6 +7,7 @@ import Tenant from '#models/tenant'
 import AiAgent from '#models/ai_agent'
 import ChannelPolicy from '#policies/channel_policy'
 import EntitlementService, { ChannelLimitReachedException } from '#services/entitlement_service'
+import AuditService from '#services/audit/audit_service'
 import WahaSessionService from '#services/waha/waha_session_service'
 import telegramClient from '#services/telegram/telegram_client'
 import {
@@ -25,7 +26,6 @@ export default class ChannelsController {
   async store({ bouncer, request, auth, response }: HttpContext) {
     await bouncer.with(ChannelPolicy).authorize('create')
     const payload = await request.validateUsing(createChannelValidator)
-
     const tenant = await Tenant.findOrFail(auth.user!.tenantId!)
     try {
       await EntitlementService.assertCanCreateChannel(tenant, payload.type)
@@ -49,6 +49,15 @@ export default class ChannelsController {
       webhookSecret: string.random(32),
     })
 
+    await AuditService.record({
+      action: 'channel.create',
+      tenantId: tenant.id,
+      actorId: auth.user!.id,
+      entityType: 'channel',
+      entityId: channel.id,
+      metadata: { type: channel.type, name: channel.name },
+      ipAddress: request.ip(),
+    })
     return response.created(channel)
   }
 
@@ -66,17 +75,35 @@ export default class ChannelsController {
       }
       channel.aiAgentId = payload.aiAgentId
     }
+    if (payload.firstReply !== undefined) {
+      const settings = { ...((channel.settings as Record<string, unknown> | null) ?? {}) }
+      if (payload.firstReply === null) {
+        delete settings.firstReply
+      } else {
+        settings.firstReply = payload.firstReply
+      }
+      channel.settings = settings
+    }
     await channel.save()
     return response.ok(channel)
   }
 
-  async destroy({ bouncer, params, response }: HttpContext) {
+  async destroy({ bouncer, params, request, auth, response }: HttpContext) {
     const channel = await Channel.findOrFail(params.id)
     await bouncer.with(ChannelPolicy).authorize('delete', channel)
     if (channel.isWaha && channel.wahaSessionName) {
       await WahaSessionService.remove(channel)
     }
     await channel.delete()
+    await AuditService.record({
+      action: 'channel.delete',
+      tenantId: channel.tenantId,
+      actorId: auth.user!.id,
+      entityType: 'channel',
+      entityId: channel.id,
+      metadata: { type: channel.type, name: channel.name },
+      ipAddress: request.ip(),
+    })
     return response.noContent()
   }
 
@@ -85,7 +112,7 @@ export default class ChannelsController {
    * Telegram this also registers the bot webhook; Meta channels rely on the
    * app-level webhook so storing a valid token marks them connected.
    */
-  async configure({ bouncer, params, request, response }: HttpContext) {
+  async configure({ bouncer, params, request, auth, response }: HttpContext) {
     const channel = await Channel.findOrFail(params.id)
     await bouncer.with(ChannelPolicy).authorize('update', channel)
 
@@ -121,6 +148,16 @@ export default class ChannelsController {
     }
 
     await channel.save()
+    // Record the action, never the secret values.
+    await AuditService.record({
+      action: 'channel.configure',
+      tenantId: channel.tenantId,
+      actorId: auth.user!.id,
+      entityType: 'channel',
+      entityId: channel.id,
+      metadata: { type: channel.type, credentialKeys: Object.keys(credentials) },
+      ipAddress: request.ip(),
+    })
     return response.ok({ status: channel.status, externalId: channel.externalId })
   }
 
@@ -171,7 +208,9 @@ export default class ChannelsController {
       return response.ok({ status: channel.status })
     }
     try {
-      const session = await WahaSessionService.status(channel)
+      // Reconcile our stored status with WAHA's live session so the UI reflects
+      // reality even when the session.status webhook can't reach us.
+      const session = await WahaSessionService.syncStatus(channel)
       return response.ok({ status: channel.status, session })
     } catch (error) {
       return response.badGateway({ message: (error as Error).message })

@@ -19,4 +19,16 @@ export default class MinioService {
   static presignedGetUrl(key: string, ttl = PRESIGN_TTL_SECONDS): Promise<string> {
     return minioClient.presignedGetObject(MINIO_BUCKET, key, ttl)
   }
+
+  static async deleteObject(key: string): Promise<void> {
+    await minioClient.removeObject(MINIO_BUCKET, key)
+  }
+  static async objectExists(key: string): Promise<boolean> {
+    try {
+      await minioClient.statObject(MINIO_BUCKET, key)
+      return true
+    } catch {
+      return false
+    }
+  }
 }

@@ -181,6 +181,23 @@ export interface ApiDefinition {
       store: typeof routes['app.quick-replies.store']
       update: typeof routes['app.quick-replies.update']
       destroy: typeof routes['app.quick-replies.destroy']
+      send: typeof routes['app.quick-replies.send']
+    }
+    uploads: {
+      store: typeof routes['app.uploads.store']
+      delete: typeof routes['app.uploads.delete']
+      validate: typeof routes['app.uploads.validate']
+    }
+    analytics: {
+      page: typeof routes['app.analytics.page']
+      overview: typeof routes['app.analytics.overview']
+      agents: typeof routes['app.analytics.agents']
+      ai: typeof routes['app.analytics.ai']
+      sla: typeof routes['app.analytics.sla']
+      contacts: typeof routes['app.analytics.contacts']
+    }
+    auditLogs: {
+      index: typeof routes['app.audit-logs.index']
     }
     realtime: {
       token: typeof routes['app.realtime.token']

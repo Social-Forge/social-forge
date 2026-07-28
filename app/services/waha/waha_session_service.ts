@@ -8,6 +8,15 @@ import type { WahaEngine } from '#services/messaging/constants'
  * disconnect) and keeps the channel row's status in sync. Used by the channel
  * controller and, later, by reconnection jobs.
  */
+/** WAHA session status → our channel status. */
+export const WAHA_STATUS_MAP: Record<string, string> = {
+  STARTING: 'connecting',
+  SCAN_QR_CODE: 'connecting',
+  WORKING: 'connected',
+  FAILED: 'failed',
+  STOPPED: 'disconnected',
+}
+
 export default class WahaSessionService {
   private static engineOf(channel: Channel): WahaEngine {
     return (channel.wahaEngine as WahaEngine) ?? 'gows'
@@ -49,6 +58,22 @@ export default class WahaSessionService {
 
   static status(channel: Channel) {
     return wahaClient.getSession(this.engineOf(channel), channel.wahaSessionName!)
+  }
+
+  /**
+   * Fetch the live WAHA session and reconcile the channel's stored status with
+   * it. Lets status polling reflect reality even if the `session.status`
+   * webhook never reached us (e.g. unreachable webhook URL in local dev).
+   */
+  static async syncStatus(channel: Channel): Promise<unknown> {
+    const session = await this.status(channel)
+    const wahaStatus = (session as { status?: string } | null)?.status
+    const mapped = wahaStatus ? WAHA_STATUS_MAP[wahaStatus] : undefined
+    if (mapped && mapped !== channel.status) {
+      channel.status = mapped
+      await channel.save()
+    }
+    return session
   }
 
   static qr(channel: Channel) {

@@ -1,5 +1,17 @@
 import vine from '@vinejs/vine'
 import { CHANNEL_TYPES, WAHA_ENGINES } from '#services/messaging/constants'
+import { mediaItemSchema } from '#validators/media'
+
+/**
+ * Per-channel auto first-reply: a canned message sent to a brand-new contact's
+ * first message. Overridden (and ignored) when the channel has an AI agent.
+ */
+export const firstReplySchema = vine.object({
+  enabled: vine.boolean(),
+  contentType: vine.enum(['text', 'image', 'video', 'document', 'hybrid']),
+  body: vine.string().trim().maxLength(4000).nullable().optional(),
+  mediaItems: vine.array(mediaItemSchema).maxLength(5).optional(),
+})
 
 export const createChannelValidator = vine.create({
   type: vine.enum(CHANNEL_TYPES),
@@ -14,6 +26,7 @@ export const updateChannelValidator = vine.create({
   divisionId: vine.string().uuid().nullable().optional(),
   // AI agent that auto-replies on this channel (null = no bot).
   aiAgentId: vine.string().uuid().nullable().optional(),
+  firstReply: firstReplySchema.nullable().optional(),
 })
 
 /**

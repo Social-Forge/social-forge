@@ -12,6 +12,7 @@ import RagService from '#services/ai/rag_service'
 import PromptBuilder from '#services/ai/prompt_builder'
 import MinioService from '#services/storage/minio_service'
 import OutboundService from '#services/messaging/outbound_service'
+import metrics from '#services/observability/metrics'
 import { isWithinWorkingHours } from '#services/ai/working_hours'
 import type { MessageContentType } from '#services/messaging/constants'
 import type { AiMessage } from '#services/ai/types'
@@ -106,6 +107,7 @@ export default class AiReplyService {
       if (!text) return
 
       const message = await OutboundService.sendAi(conversation, text)
+      metrics.inc('sf_ai_replies_total')
 
       // Price against the agent's configured model so the catalog always matches.
       await AiCreditService.debit({

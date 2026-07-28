@@ -23,7 +23,21 @@ export default class BillingController {
   /** Current subscription + resolved entitlements + credit balance. */
   async subscription({ bouncer, auth, response }: HttpContext) {
     await bouncer.with(BillingPolicy).authorize('view')
-    const tenant = await Tenant.findOrFail(auth.user!.tenantId!)
+
+    // Platform admins (and any tenant-less session) have no billing subscription.
+    const tenant = auth.user!.tenantId ? await Tenant.find(auth.user!.tenantId) : null
+    if (!tenant) {
+      return response.ok({
+        plan: null,
+        status: null,
+        trialEndsAt: null,
+        aiCredits: 0,
+        subscription: null,
+        features: null,
+        noTenant: true,
+      })
+    }
+
     const subscription = await Subscription.query().preload('plan').first()
     const features = await EntitlementService.featuresFor(tenant)
 
@@ -57,7 +71,10 @@ export default class BillingController {
       input = { type: 'ai_credits', quantity: payload.quantity ?? 1 }
     }
 
-    const tenant = await Tenant.findOrFail(auth.user!.tenantId!)
+    const tenant = auth.user!.tenantId ? await Tenant.find(auth.user!.tenantId) : null
+    if (!tenant) {
+      return response.badRequest({ message: 'This account is not linked to a billable tenant.' })
+    }
     try {
       const invoice = await BillingService.checkout(tenant, auth.user!, input)
       return response.created({

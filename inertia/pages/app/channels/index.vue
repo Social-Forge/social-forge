@@ -1,9 +1,24 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { Link } from '@adonisjs/inertia/vue'
 import { Icon } from '@iconify/vue'
 import { api } from '~/composables/useApi'
+import { uploadFile, type UploadedMedia } from '~/composables/useUpload'
 
+type FirstReplyType = 'text' | 'image' | 'video' | 'document' | 'hybrid'
+interface FrMediaItem {
+  key: string
+  type: 'image' | 'video' | 'document'
+  name?: string | null
+  size?: number | null
+  url?: string | null
+}
+interface FirstReplyConfig {
+  enabled: boolean
+  contentType: FirstReplyType
+  body?: string | null
+  mediaItems?: FrMediaItem[]
+}
 interface Channel {
   id: string
   type: string
@@ -12,6 +27,7 @@ interface Channel {
   wahaEngine: string | null
   externalId: string | null
   aiAgentId: string | null
+  settings: { firstReply?: FirstReplyConfig } | null
 }
 interface AgentOption {
   id: string
@@ -36,6 +52,7 @@ const channels = ref<Channel[]>([])
 const agents = ref<AgentOption[]>([])
 const expandedId = ref<string | null>(null)
 const busy = ref(false)
+const channelError = ref('')
 
 const showCreate = ref(false)
 const create = reactive({ name: '', type: 'webchat', wahaEngine: 'gows' })
@@ -47,6 +64,119 @@ const embed = ref<string | null>(null)
 const creds = reactive<Record<string, string>>({})
 const credExternalId = ref('')
 let statusTimer: ReturnType<typeof setInterval> | null = null
+
+// First-reply (auto greeting for new contacts) editor for the expanded channel.
+const fr = reactive({
+  enabled: false,
+  contentType: 'text' as FirstReplyType,
+  body: '',
+  mediaItems: [] as FrMediaItem[],
+})
+const frUploading = ref(false)
+const frError = ref('')
+const frSaved = ref(false)
+const frAllowsBody = computed(() => fr.contentType === 'text' || fr.contentType === 'hybrid')
+const frAllowsMedia = computed(() => fr.contentType !== 'text')
+const frMaxFiles = computed(() => (fr.contentType === 'hybrid' ? 1 : 5))
+const frAccept = computed(() => {
+  switch (fr.contentType) {
+    case 'image':
+      return '.jpg,.jpeg,.png,.gif,.webp'
+    case 'video':
+      return '.mp4,.mov,.webm'
+    case 'document':
+      return '.pdf'
+    case 'hybrid':
+      return '.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.webm,.pdf'
+    default:
+      return ''
+  }
+})
+
+function loadFirstReply(channel: Channel) {
+  const cfg = channel.settings?.firstReply
+  fr.enabled = cfg?.enabled ?? false
+  fr.contentType = cfg?.contentType ?? 'text'
+  fr.body = cfg?.body ?? ''
+  fr.mediaItems = cfg?.mediaItems ? [...cfg.mediaItems] : []
+  frError.value = ''
+  frSaved.value = false
+}
+
+function onFrType() {
+  if (fr.contentType === 'text') fr.mediaItems = []
+  else if (fr.contentType !== 'hybrid')
+    fr.mediaItems = fr.mediaItems.filter((m) => m.type === fr.contentType)
+  if (fr.mediaItems.length > frMaxFiles.value)
+    fr.mediaItems = fr.mediaItems.slice(0, frMaxFiles.value)
+}
+
+async function onFrFiles(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  input.value = ''
+  frError.value = ''
+  frUploading.value = true
+  try {
+    for (const file of files) {
+      if (fr.mediaItems.length >= frMaxFiles.value) break
+      const up: UploadedMedia = await uploadFile(file)
+      if (fr.contentType !== 'hybrid' && up.type !== fr.contentType) {
+        frError.value = `"${up.name}" is not a ${fr.contentType} file.`
+        continue
+      }
+      fr.mediaItems.push({ key: up.key, type: up.type, name: up.name, size: up.size, url: up.url })
+    }
+  } catch (err) {
+    frError.value = (err as Error).message
+  } finally {
+    frUploading.value = false
+  }
+}
+
+function removeFrMedia(i: number) {
+  fr.mediaItems.splice(i, 1)
+}
+
+async function saveFirstReply(channel: Channel) {
+  frError.value = ''
+  if (fr.enabled) {
+    if (
+      frAllowsBody.value &&
+      (fr.contentType === 'text' || fr.contentType === 'hybrid') &&
+      !fr.body.trim()
+    ) {
+      frError.value = 'A message body is required for this type.'
+      return
+    }
+    if (frAllowsMedia.value && !fr.mediaItems.length) {
+      frError.value = 'Add at least one media file.'
+      return
+    }
+  }
+  busy.value = true
+  try {
+    const firstReply: FirstReplyConfig = {
+      enabled: fr.enabled,
+      contentType: fr.contentType,
+      body: frAllowsBody.value ? fr.body : null,
+      mediaItems: fr.mediaItems.map((m) => ({
+        key: m.key,
+        type: m.type,
+        name: m.name,
+        size: m.size,
+      })),
+    }
+    await api.put(`/app/channels/${channel.id}`, { firstReply })
+    channel.settings = { ...(channel.settings ?? {}), firstReply }
+    frSaved.value = true
+    setTimeout(() => (frSaved.value = false), 1500)
+  } catch (err) {
+    frError.value = (err as Error).message
+  } finally {
+    busy.value = false
+  }
+}
 
 const typeMeta = (type: string) => CHANNEL_TYPES.find((c) => c.value === type)
 const statusColor: Record<string, string> = {
@@ -96,6 +226,7 @@ async function removeChannel(channel: Channel) {
 
 function collapse() {
   expandedId.value = null
+  channelError.value = ''
   qr.value = null
   embed.value = null
   credExternalId.value = ''
@@ -108,6 +239,7 @@ async function expand(channel: Channel) {
   if (expandedId.value === channel.id) return collapse()
   collapse()
   expandedId.value = channel.id
+  loadFirstReply(channel)
   if (channel.type === 'webchat') await loadEmbed(channel)
 }
 
@@ -119,13 +251,27 @@ async function assignBot(channel: Channel, agentId: string) {
 // --- WAHA ------------------------------------------------------------------
 async function connect(channel: Channel) {
   busy.value = true
+  channelError.value = ''
   try {
     await api.post(`/app/channels/${channel.id}/connect`)
     await refreshQr(channel)
     startStatusPolling(channel)
+  } catch (e) {
+    channelError.value = wahaHint((e as Error).message)
   } finally {
     busy.value = false
   }
+}
+
+/** Turn a raw WAHA error into an actionable hint. */
+function wahaHint(msg: string): string {
+  if (msg.includes('401')) {
+    return 'WAHA rejected the API key (401). Recreate the WAHA container so its WHATSAPP_API_KEY matches your .env: docker compose up -d --force-recreate waha-gows waha-noweb waha-webjs'
+  }
+  if (msg.includes('fetch failed') || msg.includes('ECONNREFUSED')) {
+    return 'Cannot reach the WAHA server. Is the container running? docker compose up -d waha-gows'
+  }
+  return msg
 }
 
 async function refreshQr(channel: Channel) {
@@ -174,6 +320,7 @@ const credFields = (type: string): { key: string; label: string; needsExternalId
 
 async function saveConfigure(channel: Channel) {
   busy.value = true
+  channelError.value = ''
   try {
     const res = await api.put<{ status: string }>(`/app/channels/${channel.id}/configure`, {
       credentials: { ...creds },
@@ -182,9 +329,22 @@ async function saveConfigure(channel: Channel) {
     if (res?.status) channel.status = res.status
     Object.keys(creds).forEach((k) => delete creds[k])
     credExternalId.value = ''
+  } catch (e) {
+    channelError.value = configureHint((e as Error).message, channel.type)
   } finally {
     busy.value = false
   }
+}
+
+/** Turn a raw provider error into an actionable hint. */
+function configureHint(msg: string, type: string): string {
+  if (type === 'telegram' && /HTTPS URL must be provided|bad webhook/i.test(msg)) {
+    return 'Telegram needs a public HTTPS webhook URL and cannot reach http://localhost. Expose the app with an HTTPS tunnel (e.g. ngrok / cloudflared) and set WAHA_WEBHOOK_BASE_URL to that https URL, then try again.'
+  }
+  if (/401|invalid.*token|Unauthorized/i.test(msg)) {
+    return 'The provider rejected the token. Double-check the credential you pasted.'
+  }
+  return msg
 }
 
 // --- Webchat ---------------------------------------------------------------
@@ -328,6 +488,12 @@ onMounted(load)
 
             <!-- Expanded -->
             <div v-if="expandedId === channel.id" class="space-y-4 border-t p-4">
+              <div
+                v-if="channelError"
+                class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
+              >
+                {{ channelError }}
+              </div>
               <!-- AI bot -->
               <label class="block max-w-sm">
                 <span class="text-sm font-medium">AI bot (auto-reply)</span>
@@ -340,6 +506,119 @@ onMounted(load)
                   <option v-for="a in agents" :key="a.id" :value="a.id">{{ a.name }}</option>
                 </select>
               </label>
+
+              <!-- Auto first-reply -->
+              <div class="rounded-xl border p-4">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <div class="text-sm font-semibold">Auto first-reply</div>
+                    <p class="text-muted-foreground text-xs">
+                      Sent automatically to a brand-new contact's first message.
+                    </p>
+                  </div>
+                  <label class="flex items-center gap-2 text-sm">
+                    <input
+                      v-model="fr.enabled"
+                      type="checkbox"
+                      class="size-4"
+                      :disabled="!!channel.aiAgentId"
+                    />
+                    Enabled
+                  </label>
+                </div>
+
+                <div
+                  v-if="channel.aiAgentId"
+                  class="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                >
+                  An AI bot is attached to this channel — it overrides the auto first-reply, so this
+                  is disabled. Remove the bot above to use a canned first-reply instead.
+                </div>
+
+                <div v-else-if="fr.enabled" class="mt-3 space-y-3">
+                  <label class="block max-w-xs">
+                    <span class="text-sm font-medium">Type</span>
+                    <select
+                      v-model="fr.contentType"
+                      class="bg-background mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                      @change="onFrType"
+                    >
+                      <option value="text">Text only</option>
+                      <option value="hybrid">Text + media (hybrid)</option>
+                      <option value="image">Image(s)</option>
+                      <option value="video">Video(s)</option>
+                      <option value="document">Document(s)</option>
+                    </select>
+                  </label>
+
+                  <label v-if="frAllowsBody" class="block">
+                    <span class="text-sm font-medium">
+                      Message {{ fr.contentType === 'hybrid' ? '(caption)' : '' }}
+                    </span>
+                    <textarea
+                      v-model="fr.body"
+                      rows="2"
+                      placeholder="Halo Kak! 👋 Terima kasih sudah menghubungi kami…"
+                      class="bg-background mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                  </label>
+
+                  <div v-if="frAllowsMedia" class="space-y-2">
+                    <span class="text-sm font-medium">
+                      Media
+                      <span class="text-muted-foreground font-normal">
+                        ({{ fr.contentType === 'hybrid' ? '1 file' : 'up to 5 files' }}, 1–5 MB)
+                      </span>
+                    </span>
+                    <div v-if="fr.mediaItems.length" class="flex flex-wrap gap-2">
+                      <div
+                        v-for="(m, i) in fr.mediaItems"
+                        :key="m.key"
+                        class="bg-muted relative flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg border"
+                      >
+                        <img
+                          v-if="m.type === 'image' && m.url"
+                          :src="m.url"
+                          :alt="m.name ?? ''"
+                          class="size-full object-cover"
+                        />
+                        <Icon
+                          v-else
+                          :icon="m.type === 'video' ? 'lucide:video' : 'lucide:file-text'"
+                          class="text-muted-foreground size-6"
+                        />
+                        <button
+                          class="bg-background/90 absolute right-1 top-1 rounded p-0.5 text-red-600 shadow"
+                          @click="removeFrMedia(i)"
+                        >
+                          <Icon icon="lucide:x" class="size-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      v-if="fr.mediaItems.length < frMaxFiles"
+                      type="file"
+                      :accept="frAccept"
+                      :multiple="fr.contentType !== 'hybrid'"
+                      class="text-sm"
+                      @change="onFrFiles"
+                    />
+                    <p v-if="frUploading" class="text-muted-foreground text-xs">Uploading…</p>
+                  </div>
+                </div>
+
+                <p v-if="frError" class="mt-2 text-sm text-red-600">{{ frError }}</p>
+                <div v-if="!channel.aiAgentId" class="mt-3 flex items-center gap-2">
+                  <button
+                    class="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                    :disabled="busy || frUploading"
+                    @click="saveFirstReply(channel)"
+                  >
+                    Save first-reply
+                  </button>
+                  <span v-if="frSaved" class="text-xs text-green-600">Saved</span>
+                </div>
+              </div>
 
               <!-- WAHA connect -->
               <div v-if="channel.type === 'whatsapp_waha'" class="space-y-3">

@@ -11,6 +11,7 @@ declare module '@adonisjs/inertia/types' {
   export interface InertiaPages {
     'about': ExtractProps<(typeof import('../../inertia/pages/about.vue'))['default']>
     'app/ai/index': ExtractProps<(typeof import('../../inertia/pages/app/ai/index.vue'))['default']>
+    'app/analytics/index': ExtractProps<(typeof import('../../inertia/pages/app/analytics/index.vue'))['default']>
     'app/billing/index': ExtractProps<(typeof import('../../inertia/pages/app/billing/index.vue'))['default']>
     'app/catalog/index': ExtractProps<(typeof import('../../inertia/pages/app/catalog/index.vue'))['default']>
     'app/channels/index': ExtractProps<(typeof import('../../inertia/pages/app/channels/index.vue'))['default']>
@@ -36,6 +37,5 @@ declare module '@adonisjs/inertia/types' {
     'roadmap': ExtractProps<(typeof import('../../inertia/pages/roadmap.vue'))['default']>
     'super/index': ExtractProps<(typeof import('../../inertia/pages/super/index.vue'))['default']>
     'terms': ExtractProps<(typeof import('../../inertia/pages/terms.vue'))['default']>
-    'app/analytics/index': ExtractProps<(typeof import('../../inertia/pages/app/analytics/index.vue'))['default']>
   }
 }
